@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import type { FormState } from "@/lib/auth/schemas";
+import { PLAN_LIMIT_MESSAGE } from "@/lib/billing/limits";
 import { AppError, toSafeError } from "@/lib/utils/errors";
 import { logger } from "@/lib/utils/logger";
 
@@ -16,6 +17,7 @@ export function throwIfDbError(error: DbError, context: string): void {
   logger.error(`${context} failed`, { code: error.code, error: error.message });
   if (error.code === "42501")
     throw new AppError("You don't have permission to do that.", "FORBIDDEN", 403);
+  if (error.code === "P0020") throw new AppError(PLAN_LIMIT_MESSAGE, "PLAN_LIMIT", 402);
   if (error.code === "23503")
     throw new AppError(
       "A selected customer, source or assignee is not valid.",

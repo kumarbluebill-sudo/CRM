@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   if (!session.organization || !session.permissions.has("documents.upload"))
     return fail(403, "You don't have permission to upload documents.");
 
-  const limit = rateLimit(`doc-upload:${session.userId}`, 20, 60_000);
+  const limit = await rateLimit(`doc-upload:${session.userId}`, 20, 60_000);
   if (!limit.allowed) return fail(429, "Too many uploads. Please wait a moment.");
   if (Number(request.headers.get("content-length") ?? 0) > MAX_DOCUMENT_BYTES + 64 * 1024)
     return fail(413, "The file is larger than 4 MB.");

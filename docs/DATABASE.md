@@ -105,3 +105,37 @@ Tables: `quotations`, `quotation_options` (A/B/C…), `quotation_items`, `quotat
 - `014_documents`: metadata only. Files live in the private `documents` bucket, which has no client policies: the server
   uses the service role after RLS has authorised the caller. Passport/visa documents need `passengers.view_sensitive`.
 - Supabase setup: the bucket is created by the migration. Set `SUPABASE_SERVICE_ROLE_KEY` on the server (never in the browser).
+
+## Phase 8: payments (016)
+
+`payment_schedules` (instalments, sum capped at the booking total by trigger), `payments` (read-only to clients; manual and Razorpay), `invoices` (snapshots, one active per booking), `payment_webhook_events` (service role only), `payment_reminders` (idempotent follow-up tasks), view `payment_schedule_status` (security invoker; allocates paid money to instalments in due-date order). Functions: `record_payment`, `prepare_online_payment`, `attach_razorpay_order`, `discard_pending_payment`, `issue_invoice`, `void_invoice`, `create_payment_reminders`, `apply_razorpay_event` (service_role only).
+
+Razorpay setup: set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` (server only) and `SUPABASE_SERVICE_ROLE_KEY`; in the Razorpay dashboard add a webhook to `https://<your-domain>/api/webhooks/razorpay` for `payment.captured`, `payment.failed` and `order.paid`, using the same secret.
+
+## Phase 9: communications (017)
+
+`message_templates`, `automation_rules`, `communications` (outbox/log), `customers.do_not_contact`. Functions: `queue_communication`, `finish_communication`, `cancel_communication`, `run_automation` (service_role only). Permissions: `communications.view/send/manage`.
+
+Env: `RESEND_API_KEY` and `EMAIL_FROM` (a Resend-verified sender) for email; `CRON_SECRET` (min 16 chars) for the daily job in `vercel.json`.
+
+## Phase 10: customer portal (019)
+
+`portal_links` (hashed tokens), `portal_requests`, `documents.portal_visible`. Staff functions: `create_portal_link`, `revoke_portal_link`, `set_document_portal_visible` (permission `portal.manage`). Customer-side functions, all service_role only: `portal_view`, `portal_document`, `portal_prepare_payment`, `portal_attach_order`, `portal_discard_payment`, `portal_submit_request`.
+
+## Phase 11: AI assistant (020)
+
+Permission `ai.use`; `ai_requests.feature` gains SUMMARIZE, DRAFT_MESSAGE, ASK; `itinerary_imports.file_type` gains `AI`; function `ai_requests_last_day_user()`. Optional env `OPENAI_MODEL` (default gpt-4o-mini).
+
+## Phase 12: reports (021)
+
+`report_summary(from, to)`, security invoker, returns jsonb sections `pipeline`, `quotations`, `bookings`, `collections`.
+
+## Phase 13: subscriptions (022)
+
+`plans` (FREE / STARTER / PRO; **placeholder prices and limits, set them before launch**), `subscriptions` (every organization starts on a 14-day Pro trial; existing organizations were backfilled), functions `effective_plan`, `org_limits`, `org_usage`, `prepare_subscription`, `attach_subscription`, `mark_cancel_requested`, `apply_subscription_event` (service role only), limit triggers on `organization_members`, `bookings` and `documents`. Permission `billing.manage` (owner).
+
+Setup: create the plans in the Razorpay dashboard (Subscriptions → Plans), then `update plans set razorpay_plan_id = 'plan_...' where key = 'STARTER'` (and PRO). Add `subscription.activated`, `.charged`, `.pending`, `.halted`, `.cancelled`, `.completed` and `.resumed` to the webhook already pointed at `/api/webhooks/razorpay`.
+
+## Phase 14: security hardening (023)
+
+`organization_payment_settings` (encrypted Razorpay credentials, no client access), `organization_invites`, functions `payment_settings_status`, `payments_online_enabled`, `create_invite`, `revoke_invite`, `my_invite`, `accept_invite`, `portal_org`, `portal_payments_ready`; `apply_razorpay_event` now takes the organization (7 arguments). New env: `ENCRYPTION_KEY` (32 random bytes, base64). Full findings: `docs/SECURITY_AUDIT.md`.

@@ -31,7 +31,7 @@ export async function GET(
   ) {
     return json(403, "Forbidden.");
   }
-  if (!rateLimit(`voucher:${session.userId}`, 30, 60_000).allowed)
+  if (!(await rateLimit(`voucher:${session.userId}`, 30, 60_000)).allowed)
     return json(429, "Too many requests.");
 
   try {

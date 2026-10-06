@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_IMPORT_BYTES, safeDisplayName, validateImportFile } from "@/lib/import/validate";
 import { redactForAi } from "@/lib/import/ai";
 import { rateLimit, resetRateLimits } from "@/lib/rate-limit";
@@ -86,15 +86,65 @@ describe("redactForAi (data minimization)", () => {
   });
 });
 
-describe("rateLimit", () => {
+describe("rateLimit (in-memory fallback)", () => {
   beforeEach(() => resetRateLimits());
-  it("blocks after the limit and recovers after the window", () => {
+  it("blocks after the limit and recovers after the window", async () => {
     const t = 1_000_000;
-    for (let i = 0; i < 3; i++) expect(rateLimit("k", 3, 1000, t).allowed).toBe(true);
-    const blocked = rateLimit("k", 3, 1000, t);
+    for (let i = 0; i < 3; i++) expect((await rateLimit("k", 3, 1000, t)).allowed).toBe(true);
+    const blocked = await rateLimit("k", 3, 1000, t);
     expect(blocked.allowed).toBe(false);
     expect(blocked.retryAfterSeconds).toBeGreaterThan(0);
-    expect(rateLimit("k", 3, 1000, t + 1001).allowed).toBe(true);
-    expect(rateLimit("other", 3, 1000, t).allowed).toBe(true);
+    expect((await rateLimit("k", 3, 1000, t + 1001)).allowed).toBe(true);
+    expect((await rateLimit("other", 3, 1000, t)).allowed).toBe(true);
+  });
+});
+
+describe("rateLimit (Upstash)", () => {
+  beforeEach(() => {
+    resetRateLimits();
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.upstash.io");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "tok");
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+  const redis = (count: number, ttl = 30000) =>
+    vi.fn(
+      async () => new Response(JSON.stringify([{ result: count }, { result: 1 }, { result: ttl }])),
+    );
+
+  it("uses shared counters and authenticates with the token", async () => {
+    const fetchMock = redis(2);
+    vi.stubGlobal("fetch", fetchMock);
+    const r = await rateLimit("login:1.2.3.4", 3, 60_000);
+    expect(r).toEqual({ allowed: true, remaining: 1, retryAfterSeconds: 0 });
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("https://example.upstash.io/pipeline");
+    expect((init.headers as Record<string, string>).authorization).toBe("Bearer tok");
+    expect(String(init.body)).toContain("rl:login:1.2.3.4");
+  });
+  it("blocks above the limit and reports when to retry", async () => {
+    vi.stubGlobal("fetch", redis(4, 12_000));
+    expect(await rateLimit("k", 3, 60_000)).toEqual({
+      allowed: false,
+      remaining: 0,
+      retryAfterSeconds: 12,
+    });
+  });
+  it("falls back to the in-memory limiter when Redis is down (still limits, never throws)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("network");
+      }),
+    );
+    for (let i = 0; i < 2; i++) expect((await rateLimit("k", 2, 60_000)).allowed).toBe(true);
+    expect((await rateLimit("k", 2, 60_000)).allowed).toBe(false);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("nope", { status: 500 })),
+    );
+    expect((await rateLimit("fresh", 2, 60_000)).allowed).toBe(true);
   });
 });

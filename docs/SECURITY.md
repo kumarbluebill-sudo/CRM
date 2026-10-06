@@ -68,3 +68,53 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - **Audit**: conversion, status changes, passport view/update/delete, document upload/download and voucher downloads are recorded.
 - Known gaps: service-role key is required for document storage (keep it server-only); virus scanning is not available;
   supplier payables/costs on bookings arrive with the payments phase.
+
+## Payments (Phase 8)
+
+- Clients can only read `payments`, `invoices` and receipts. All writes go through SECURITY DEFINER functions that check `payments.create`, lock the booking row and validate the amount against the booking balance (overpayment is rejected in the database).
+- `bookings.paid_amount` is derived (sum of CAPTURED payments) and only written by `sync_booking_paid()`.
+- Online payments: the server creates the PENDING row and the Razorpay order for the amount the database approved. The browser receives only the public key id and order id. A payment becomes CAPTURED **only** via `/api/webhooks/razorpay`; the checkout "success" callback is never trusted.
+- Webhook: public route, trusted only after an HMAC-SHA256 check of the raw body (constant-time compare), 64 KB body cap, per-IP rate limit. `apply_razorpay_event()` is executable by `service_role` only, de-duplicates by `X-Razorpay-Event-Id`, and refuses to capture when the amount or currency differs from the stored payment (logged as `amount_mismatch`). Errors return 500 so Razorpay retries; the ledger insert rolls back with the failed transaction.
+- The webhook ledger stores event id, type and outcome only, not payloads (they contain customer contact details).
+- CSP allows only `checkout.razorpay.com` (script/frame) and `api.razorpay.com` / `lumberjack.razorpay.com` (connect).
+- Invoices are immutable snapshots (bill-to, lines, total); changes mean void + reissue. Receipt and invoice downloads are audited.
+
+## Communications (Phase 9)
+
+- Clients can only read `communications`. Writes go through `queue_communication` / `finish_communication` / `cancel_communication`, which check `communications.send`. The recipient address is copied from the customer record inside the database; the browser never supplies it. Template variables are validated (strings only, 500 chars, 20 keys, snake_case names).
+- `customers.do_not_contact` blocks queueing for people and automation alike.
+- Templates substitute only an allow-list of variables; unknown placeholders render blank, values are stripped of control characters, email HTML is escaped, subjects are collapsed to one line (no header injection), and display names are sanitised.
+- Automation (`run_automation`, service_role only, called by `/api/cron/automation` with a constant-time `CRON_SECRET` check) only **drafts** messages, de-duplicated per rule and instalment. A person reviews and sends each draft.
+- WhatsApp uses click-to-chat links (`wa.me`): no API tokens exist anywhere. Delivery to WhatsApp can't be confirmed; "Sent" means the link was opened.
+
+## Customer portal (Phase 10)
+
+- Links hold a random 256-bit token; only its SHA-256 is stored. Staff see the URL once at creation. Links expire (max 180 days), can be revoked, and are scoped to one booking.
+- Portal functions are executable by `service_role` only and return a fixed projection: no supplier names/costs, profit, passport data, internal notes or other bookings. A test asserts the payload contains none of those.
+- Routes under `/portal` send `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` and `X-Robots-Tag: noindex`, and all lookups are rate limited per IP (and per token for payments).
+- Documents are visible only when staff flag them shared; passport/visa documents can never be flagged (database constraint). Downloads use 60-second signed URLs and are audited.
+- Customer payments reuse the Phase 8 pipeline (amount validated in the database, captured only by the signed webhook). Customer requests become tasks, limited to 5 per link per day.
+
+## AI assistant (Phase 11)
+
+- The assistant has **no tools and no write path**. It receives one record the caller can already open (loaded through the caller's own RLS session, so other organizations are unreachable), and returns plain text that a person reads. It cannot send, change or delete anything.
+- Prompt injection: record text is wrapped in `<crm_data>` and declared as data; attempts to forge the closing tag are stripped; the worst outcome of a successful injection is odd text shown to the staff member who asked.
+- Data minimisation: free text is redacted (emails, phone numbers, ID-like numbers). Never sent: contact details, passport data, supplier names or costs, quotation profit, payment references. Money is included only for users with `payments.view`.
+- Output is shown as text (never HTML), control characters are stripped and length is capped; the UI labels it as AI-generated and unverified.
+- AI itinerary drafts are saved as imports in REVIEW, so the Phase 5 review gate applies (cannot publish until a person confirms).
+- Quotas: 40 successful requests per user and 100 per organization per rolling 24 hours (`ai_requests_last_day_user`, `ai_requests_last_day`), plus 10 requests/minute per user. Prompts and outputs are never stored; only feature, model and token counts.
+- Requires `ai.use`. Without `OPENAI_API_KEY` the page says AI isn't set up and the rest of the CRM is unaffected.
+
+## Reports (Phase 12)
+
+- One read-only SQL function, `report_summary`, runs as the **caller** (security invoker), so RLS applies to every row. It requires `reports.view`; each section also requires the permission of its underlying data (`leads.view`, `quotes.view`, `bookings.view`, `payments.view`) and is omitted otherwise.
+- No supplier costs, quotation profit, passport data or contact details appear in reports or exports. Money is grouped by currency and never summed across currencies. Ranges are capped at ~2 years.
+- CSV export (`/api/reports/export`): same permissions plus the underlying view permission, 5,000-row cap, 10/min rate limit, audited as EXPORT, cells that start with `= + - @` are neutralised against spreadsheet formula injection, and the exported columns are an allow-list.
+
+## Plans and billing (Phase 13)
+
+- Plans are read-only reference data; subscriptions are read-only to clients (the Razorpay subscription id is not even selectable). Changes happen only through owner-only functions (`billing.manage`) or `apply_subscription_event` (service role only).
+- Limits (seats, bookings per month, document storage) are enforced by database triggers on the growing tables, so they apply to every code path; AI daily caps come from the same plan. Error code `P0020`. Existing data is never deleted or hidden when a plan lapses.
+- Access is computed on read: an ended trial, an expired subscription or a cancelled one past its paid period falls back to the Free plan, so nothing depends on a cron job. Past-due keeps access while Razorpay retries.
+- Checkout: the Razorpay plan id comes from the database, the organization from the session; only an https URL is returned to the browser. A plan becomes active **only** from a signature-verified `subscription.*` webhook, de-duplicated by event id, that names the stored subscription id and a plan we recognise. An unknown plan never grants access.
+- Billing events share the existing signed webhook endpoint with customer payments.

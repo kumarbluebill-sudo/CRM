@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      - name: Tests (unit, RLS integration, migration runner)
+        run: npm test
+      - name: Build
+        run: npm run build
+      - name: Dependency audit (production, high and above)
+        run: npm audit --omit=dev --audit-level=high
+
+  secrets-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Look for committed secrets
+        run: |
+          set -e
+          # Real-looking keys must never be in the repository (placeholders in .env.example are empty).
+          if git grep -nE '(rzp_live_[A-Za-z0-9]{8,}|sk_live_[A-Za-z0-9]{8,}|sk-[A-Za-z0-9]{32,}|eyJ[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' -- . ':!package-lock.json' ':!docs/*' ':!tests/*'; then
+            echo "Possible secret committed. Remove it and rotate the credential."; exit 1
+          fi
+          if git ls-files | grep -E '(^|/)\.env(\.|$)' | grep -v '\.env\.example$'; then
+            echo ".env file is tracked."; exit 1
+          fi

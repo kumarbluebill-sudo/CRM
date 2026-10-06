@@ -1,3 +1,5 @@
+import { reportToSentry } from "@/lib/utils/sentry";
+
 type Level = "debug" | "info" | "warn" | "error";
 
 const SENSITIVE_KEY =
@@ -29,8 +31,10 @@ function write(level: Level, message: string, context?: Record<string, unknown>)
     ...(context ? { context: redact(context) } : {}),
   };
   const line = JSON.stringify(entry);
-  if (level === "error") console.error(line);
-  else if (level === "warn") console.warn(line);
+  if (level === "error") {
+    console.error(line);
+    reportToSentry("error", message, entry.context);
+  } else if (level === "warn") console.warn(line);
   else console.log(line);
 }
 

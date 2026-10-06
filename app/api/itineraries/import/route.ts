@@ -13,7 +13,7 @@ import { MAX_IMPORT_BYTES, validateImportFile } from "@/lib/import/validate";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const AI_DAILY_LIMIT = 100; // per organization; becomes plan-based in the subscription phase
+const AI_DAILY_LIMIT = 10; // fallback only; the real cap is the organization's plan (org_limits)
 
 const fail = (status: number, error: string, headers?: Record<string, string>) =>
   NextResponse.json({ error }, { status, headers });
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 3. Rate limit.
-  const limit = rateLimit(`import:${session.userId}`, 10, 60_000);
+  const limit = await rateLimit(`import:${session.userId}`, 10, 60_000);
   if (!limit.allowed) {
     return fail(429, "Too many uploads. Please wait a moment.", {
       "retry-after": String(limit.retryAfterSeconds),
@@ -85,7 +85,10 @@ export async function POST(request: NextRequest) {
   let parsed = parseItineraryText(text);
   if (isAiConfigured()) {
     const { data: used } = await supabase.rpc("ai_requests_last_day");
-    if (typeof used === "number" && used >= AI_DAILY_LIMIT) {
+    const { data: plan } = await supabase.rpc("org_limits");
+    const cap =
+      (plan as { limits?: { aiOrgDaily?: number } } | null)?.limits?.aiOrgDaily ?? AI_DAILY_LIMIT;
+    if (typeof used === "number" && used >= cap) {
       parsed.warnings.push("The daily AI limit was reached, so the rule-based parser was used.");
       await supabase.from("ai_requests").insert({ feature: "ITINERARY_IMPORT", status: "SKIPPED" });
     } else {

@@ -28,7 +28,7 @@ const NEXT: Record<string, { to: string; label: string; text: string; primary?: 
     {
       to: "CONFIRMED",
       label: "Confirm booking",
-      text: "Marks the booking as confirmed. Payments will do this automatically once they are connected.",
+      text: "Marks the booking as confirmed.",
       primary: true,
     },
   ],
