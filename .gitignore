@@ -12,3 +12,5 @@ Thumbs.db
 
 *.tsbuildinfo
 .test-tmp-*
+test-results/
+playwright-report/
