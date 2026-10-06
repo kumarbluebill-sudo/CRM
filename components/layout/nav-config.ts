@@ -36,10 +36,10 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "CRM",
     items: [
-      { label: "Leads", href: "/leads", icon: UserPlus, soon: true },
-      { label: "Customers", href: "/customers", icon: Users, soon: true },
-      { label: "Tasks", href: "/tasks", icon: CheckSquare, soon: true },
-      { label: "Follow-ups", href: "/tasks?view=followups", icon: CalendarCheck, soon: true },
+      { label: "Leads", href: "/leads", icon: UserPlus },
+      { label: "Customers", href: "/customers", icon: Users },
+      { label: "Tasks", href: "/tasks", icon: CheckSquare },
+      { label: "Follow-ups", href: "/tasks?scope=open", icon: CalendarCheck },
     ],
   },
   {
