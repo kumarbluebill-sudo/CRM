@@ -18,7 +18,8 @@ export async function GET(
   const { token, id } = await ctx.params;
   if (!isPortalToken(token) || !uuid.safeParse(id).success) return json(404, "Not found.");
   const ip = await clientIp();
-  if (!(await rateLimit(`portal-doc:${ip}`, 30, 60_000)).allowed) return json(429, "Too many requests.");
+  if (!(await rateLimit(`portal-doc:${ip}`, 30, 60_000)).allowed)
+    return json(429, "Too many requests.");
   const admin = createAdminClient();
   if (!admin) return json(503, "Downloads aren't available right now.");
   const { data, error } = await admin.rpc("portal_document", {

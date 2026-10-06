@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 3. Rate limit.
-  const limit = (await rateLimit(`import:${session.userId}`, 10, 60_000));
+  const limit = await rateLimit(`import:${session.userId}`, 10, 60_000);
   if (!limit.allowed) {
     return fail(429, "Too many uploads. Please wait a moment.", {
       "retry-after": String(limit.retryAfterSeconds),
