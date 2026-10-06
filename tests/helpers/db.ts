@@ -8,7 +8,7 @@ import { pgcrypto } from "@electric-sql/pglite/contrib/pgcrypto";
  * auth.users, auth.uid() (reads request.jwt.claim.sub like PostgREST) and the
  * anon/authenticated roles. All real migrations are applied in order.
  */
-const SUPABASE_STUB = `
+export const SUPABASE_STUB = `
 create schema auth;
 create table auth.users (
   id uuid primary key default gen_random_uuid(),

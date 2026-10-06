@@ -11,7 +11,8 @@ import { cn } from "@/lib/utils";
 export type FormField = {
   name: string;
   label: string;
-  type?: "text" | "password" | "email" | "tel" | "number" | "date" | "textarea" | "select" | "checkbox";
+  type?:
+    "text" | "password" | "email" | "tel" | "number" | "date" | "textarea" | "select" | "checkbox";
   options?: { value: string; label: string }[];
   defaultValue?: string | number | boolean | null;
   required?: boolean;
