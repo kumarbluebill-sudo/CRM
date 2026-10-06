@@ -45,8 +45,8 @@ describe("customerSchema", () => {
 });
 
 describe("taskSchema", () => {
-  it("only allows lead/customer links", () => {
-    expect(taskSchema.safeParse({ title: "Call", relatedType: "BOOKING" }).success).toBe(false);
+  it("only allows lead, customer and booking links", () => {
+    expect(taskSchema.safeParse({ title: "Call", relatedType: "QUOTATION" }).success).toBe(false);
   });
 });
 

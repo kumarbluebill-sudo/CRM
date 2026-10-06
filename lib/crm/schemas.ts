@@ -73,7 +73,7 @@ export const taskSchema = z.object({
   assignedTo: optional(uuid),
   dueDate: optional(isoDate),
   priority: z.enum(PRIORITIES).default("MEDIUM"),
-  relatedType: optional(z.enum(["LEAD", "CUSTOMER"])),
+  relatedType: optional(z.enum(["LEAD", "CUSTOMER", "BOOKING"])),
   relatedId: optional(uuid),
 });
 

@@ -53,8 +53,8 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Travel",
     items: [
       { label: "Itineraries", href: "/itineraries", icon: MapPinned },
-      { label: "Bookings", href: "/bookings", icon: Briefcase, soon: true },
-      { label: "Suppliers", href: "/suppliers", icon: Truck, soon: true },
+      { label: "Bookings", href: "/bookings", icon: Briefcase },
+      { label: "Suppliers", href: "/suppliers", icon: Truck },
     ],
   },
   {
@@ -65,7 +65,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Receipts", href: "/payments/receipts", icon: Receipt, soon: true },
     ],
   },
-  { items: [{ label: "Documents", href: "/documents", icon: FolderLock, soon: true }] },
+  { items: [{ label: "Documents", href: "/documents", icon: FolderLock }] },
   {
     title: "Communications",
     items: [

@@ -92,6 +92,14 @@ export default async function TasksPage({
                       {overdue ? " (overdue)" : ""}
                       {t.assigned_to ? ` · ${names.get(t.assigned_to) ?? "Teammate"}` : ""}
                     </p>
+                    {t.related_type === "BOOKING" && t.related_id && (
+                      <Link
+                        href={`/bookings/${t.related_id}`}
+                        className="text-primary text-xs underline"
+                      >
+                        Open booking
+                      </Link>
+                    )}
                     {t.related_type === "LEAD" && t.related_id && (
                       <Link
                         href={`/leads/${t.related_id}`}

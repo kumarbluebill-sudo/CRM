@@ -55,3 +55,16 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - `GET /api/quotations/[id]/pdf`: session + `quotes.view`, 20/min rate limit, `private, no-store`, UUID-validated id, RLS-scoped data.
 - Standard PDF fonts are used; amounts print with the currency code (no remote font fetching).
 - Not yet implemented: audit-log entries for PDF downloads and price changes (price changes are already versioned with the user id).
+
+## Bookings, passports and documents (Phase 7)
+
+- **Passport data** is stored apart from general passenger data and protected by RLS (`passengers.view_sensitive`:
+  owner, admin, operations, sales manager). Lists show a masked value; "Reveal" fetches the full number on demand, auto-hides after
+  30 s, and is written to the audit log (the number itself is never logged).
+- **Documents**: upload route checks origin, session, permission, rate limit, size (4 MB), extension, MIME and magic bytes; objects
+  are stored under `<org-id>/<random-uuid>.<ext>` (client filenames never reach storage). Downloads are authorised by RLS, logged,
+  and served by a 60-second signed URL. Failed metadata inserts delete the uploaded object.
+- **Vouchers** contain guest names, supplier and confirmation reference only; no prices, costs or passport data.
+- **Audit**: conversion, status changes, passport view/update/delete, document upload/download and voucher downloads are recorded.
+- Known gaps: service-role key is required for document storage (keep it server-only); virus scanning is not available;
+  supplier payables/costs on bookings arrive with the payments phase.
