@@ -62,4 +62,4 @@ against live Supabase, Razorpay, Resend or OpenAI accounts.
 | Monitoring | Alert on `amount_mismatch` webhook outcomes, repeated `login throttled` warnings and 5xx rates. |
 | Data protection | No retention/erasure workflow yet (customer deletion requests, passport purge after travel). Needed for GDPR/DPDP. |
 | Verification | A professional penetration test and a review against the real Supabase project (policies are tested on a local Postgres stand-in) before taking real customers. |
-| Browser testing | The UI has not been exercised in a real browser. |
+| Browser testing | Signed-out pages, headers and route protection are now covered by real-browser tests (Playwright + axe). Signed-in screens still need a manual pass against a real Supabase project. |
