@@ -49,7 +49,17 @@ export default async function DashboardPage() {
               <Plus className="size-4" aria-hidden /> New Customer
             </Button>
           )}
-          {["New Quotation", "Create Itinerary"].map((l) => (
+          {session.permissions.has("itineraries.create") && (
+            <Button
+              size="sm"
+              variant="outline"
+              nativeButton={false}
+              render={<Link href="/itineraries/new" />}
+            >
+              <Plus className="size-4" aria-hidden /> Create Itinerary
+            </Button>
+          )}
+          {["New Quotation"].map((l) => (
             <Button key={l} size="sm" variant="outline" disabled title="Available in a later phase">
               <Plus className="size-4" aria-hidden /> {l}
             </Button>

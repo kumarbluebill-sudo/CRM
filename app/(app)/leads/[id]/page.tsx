@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { EntityForm } from "@/components/forms/entity-form";
 import { ConfirmActionButton } from "@/components/crm/confirm-action-button";
 import { leadFields } from "@/components/crm/lead-fields";
@@ -60,6 +61,16 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               >
                 {lead.customers.name}
               </Link>
+            )}
+            {session.permissions.has("itineraries.create") && (
+              <Button
+                size="sm"
+                variant="outline"
+                nativeButton={false}
+                render={<Link href={`/itineraries/new?lead=${id}`} />}
+              >
+                Create itinerary
+              </Button>
             )}
             {canDelete && (
               <ConfirmActionButton
