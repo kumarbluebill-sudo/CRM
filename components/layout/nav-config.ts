@@ -60,9 +60,9 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Finance",
     items: [
-      { label: "Payments", href: "/payments", icon: CreditCard, soon: true },
-      { label: "Invoices", href: "/payments/invoices", icon: ScrollText, soon: true },
-      { label: "Receipts", href: "/payments/receipts", icon: Receipt, soon: true },
+      { label: "Payments", href: "/payments", icon: CreditCard },
+      { label: "Invoices", href: "/payments/invoices", icon: ScrollText },
+      { label: "Receipts", href: "/payments/receipts", icon: Receipt },
     ],
   },
   { items: [{ label: "Documents", href: "/documents", icon: FolderLock }] },

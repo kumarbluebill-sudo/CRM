@@ -68,3 +68,13 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - **Audit**: conversion, status changes, passport view/update/delete, document upload/download and voucher downloads are recorded.
 - Known gaps: service-role key is required for document storage (keep it server-only); virus scanning is not available;
   supplier payables/costs on bookings arrive with the payments phase.
+
+## Payments (Phase 8)
+
+- Clients can only read `payments`, `invoices` and receipts. All writes go through SECURITY DEFINER functions that check `payments.create`, lock the booking row and validate the amount against the booking balance (overpayment is rejected in the database).
+- `bookings.paid_amount` is derived (sum of CAPTURED payments) and only written by `sync_booking_paid()`.
+- Online payments: the server creates the PENDING row and the Razorpay order for the amount the database approved. The browser receives only the public key id and order id. A payment becomes CAPTURED **only** via `/api/webhooks/razorpay`; the checkout "success" callback is never trusted.
+- Webhook: public route, trusted only after an HMAC-SHA256 check of the raw body (constant-time compare), 64 KB body cap, per-IP rate limit. `apply_razorpay_event()` is executable by `service_role` only, de-duplicates by `X-Razorpay-Event-Id`, and refuses to capture when the amount or currency differs from the stored payment (logged as `amount_mismatch`). Errors return 500 so Razorpay retries; the ledger insert rolls back with the failed transaction.
+- The webhook ledger stores event id, type and outcome only, not payloads (they contain customer contact details).
+- CSP allows only `checkout.razorpay.com` (script/frame) and `api.razorpay.com` / `lumberjack.razorpay.com` (connect).
+- Invoices are immutable snapshots (bill-to, lines, total); changes mean void + reissue. Receipt and invoice downloads are audited.

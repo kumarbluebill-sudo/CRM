@@ -105,3 +105,9 @@ Tables: `quotations`, `quotation_options` (A/B/C…), `quotation_items`, `quotat
 - `014_documents`: metadata only. Files live in the private `documents` bucket, which has no client policies: the server
   uses the service role after RLS has authorised the caller. Passport/visa documents need `passengers.view_sensitive`.
 - Supabase setup: the bucket is created by the migration. Set `SUPABASE_SERVICE_ROLE_KEY` on the server (never in the browser).
+
+## Phase 8: payments (016)
+
+`payment_schedules` (instalments, sum capped at the booking total by trigger), `payments` (read-only to clients; manual and Razorpay), `invoices` (snapshots, one active per booking), `payment_webhook_events` (service role only), `payment_reminders` (idempotent follow-up tasks), view `payment_schedule_status` (security invoker; allocates paid money to instalments in due-date order). Functions: `record_payment`, `prepare_online_payment`, `attach_razorpay_order`, `discard_pending_payment`, `issue_invoice`, `void_invoice`, `create_payment_reminders`, `apply_razorpay_event` (service_role only).
+
+Razorpay setup: set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` (server only) and `SUPABASE_SERVICE_ROLE_KEY`; in the Razorpay dashboard add a webhook to `https://<your-domain>/api/webhooks/razorpay` for `payment.captured`, `payment.failed` and `order.paid`, using the same secret.
