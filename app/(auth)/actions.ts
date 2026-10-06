@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPublicEnv, isSupabaseConfigured } from "@/lib/env";
 import { logger } from "@/lib/utils/logger";
+import { audit } from "@/lib/audit";
+import { rateLimit } from "@/lib/rate-limit";
+import { clientIp } from "@/lib/utils/request";
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -19,6 +22,9 @@ const NOT_CONFIGURED: FormState = {
   message: "The service is not configured yet. Please contact support.",
 };
 const GENERIC: FormState = { message: "Something went wrong. Please try again." };
+const TOO_MANY: FormState = {
+  message: "Too many attempts. Please wait a few minutes and try again.",
+};
 
 function formObject(formData: FormData) {
   return Object.fromEntries(formData.entries());
@@ -29,8 +35,20 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
   if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
   if (!isSupabaseConfigured()) return NOT_CONFIGURED;
 
+  // Throttle by address AND by target account, so neither one attacker nor a spread-out attack can guess passwords freely.
+  const ip = await clientIp();
+  const email = parsed.data.email.toLowerCase();
+  const [byIp, byEmail] = await Promise.all([
+    rateLimit(`login-ip:${ip}`, 20, 10 * 60_000),
+    rateLimit(`login-email:${email}`, 8, 10 * 60_000),
+  ]);
+  if (!byIp.allowed || !byEmail.allowed) {
+    logger.warn("login throttled", { ip });
+    return TOO_MANY;
+  }
+
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
     logger.warn("login failed", { code: error.code });
     // Same message for unknown user / wrong password to avoid account enumeration.
@@ -41,6 +59,7 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
           : "Invalid email or password.",
     };
   }
+  if (data.user) await audit(supabase, "LOGIN", "user", data.user.id); // no-op until the user belongs to an organization
   redirect("/dashboard");
 }
 
@@ -48,6 +67,9 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
   const parsed = registerSchema.safeParse(formObject(formData));
   if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
   if (!isSupabaseConfigured()) return NOT_CONFIGURED;
+
+  const ip = await clientIp();
+  if (!(await rateLimit(`register-ip:${ip}`, 10, 60 * 60_000)).allowed) return TOO_MANY;
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
@@ -77,6 +99,18 @@ export async function forgotPasswordAction(
   const parsed = forgotPasswordSchema.safeParse(formObject(formData));
   if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
   if (!isSupabaseConfigured()) return NOT_CONFIGURED;
+
+  const ip = await clientIp();
+  const [byIp, byEmail] = await Promise.all([
+    rateLimit(`reset-ip:${ip}`, 10, 60 * 60_000),
+    rateLimit(`reset-email:${parsed.data.email.toLowerCase()}`, 3, 60 * 60_000),
+  ]);
+  // Same response either way, so throttling can't be used to probe which emails exist.
+  if (!byIp.allowed || !byEmail.allowed)
+    return {
+      ok: true,
+      message: "If an account exists for that email, a reset link is on its way.",
+    };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
@@ -113,6 +147,7 @@ export async function resetPasswordAction(
 export async function logoutAction() {
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
+    await audit(supabase, "LOGOUT", "user", null);
     await supabase.auth.signOut();
   }
   redirect("/login");
@@ -134,6 +169,22 @@ export async function createOrganizationAction(
   if (error) {
     logger.error("create_organization failed", { error: error.message });
     return GENERIC;
+  }
+  redirect("/dashboard");
+}
+
+/** Joins the organization that invited the signed-in user's verified email address. */
+export async function acceptInviteAction(): Promise<FormState> {
+  const session = await getSessionContext();
+  if (!session) redirect("/login");
+  if (session.organization) redirect("/dashboard");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("accept_invite");
+  if (error) {
+    logger.warn("accept invite failed", { code: error.code });
+    if (error.code === "P0020")
+      return { message: "That organization has no free seats. Ask them to upgrade their plan." };
+    return { message: "This invitation is no longer valid." };
   }
   redirect("/dashboard");
 }

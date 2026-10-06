@@ -65,7 +65,7 @@ export async function runAssistantAction(
     const needed = v.entityType === "BOOKING" ? "bookings.view" : "leads.view";
     if (!session.permissions.has(needed))
       throw new AppError("You don't have permission to view that record.", "FORBIDDEN", 403);
-    if (!rateLimit(`ai:${session.userId}`, 10, 60_000).allowed)
+    if (!(await rateLimit(`ai:${session.userId}`, 10, 60_000)).allowed)
       throw new AppError("Too many requests. Please wait a moment.", "RATE_LIMITED", 429);
 
     const supabase = await createClient();
@@ -122,7 +122,7 @@ export async function generateItineraryAction(
     for (const p of ["itineraries.create", "leads.view"] as const)
       if (!session.permissions.has(p))
         throw new AppError("You don't have permission to do that.", "FORBIDDEN", 403);
-    if (!rateLimit(`ai-itin:${session.userId}`, 5, 60_000).allowed)
+    if (!(await rateLimit(`ai-itin:${session.userId}`, 5, 60_000)).allowed)
       throw new AppError("Too many requests. Please wait a moment.", "RATE_LIMITED", 429);
     if (!isAiConfigured())
       throw new AppError(

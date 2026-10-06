@@ -1,5 +1,5 @@
 import "server-only";
-import { headers } from "next/headers";
+import { clientIp } from "@/lib/utils/request";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rateLimit } from "@/lib/rate-limit";
 import { hashPortalToken, isPortalToken } from "@/lib/portal/token";
@@ -36,10 +36,7 @@ export type PortalView = {
   documents: { id: string; name: string; category: string }[];
 };
 
-export async function clientIp(): Promise<string> {
-  const h = await headers();
-  return h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? h.get("x-real-ip") ?? "unknown";
-}
+export { clientIp };
 
 /**
  * Looks up a portal link. The token is checked for shape first, the lookup is rate limited per IP, and the database
@@ -51,8 +48,17 @@ export async function getPortalView(token: string): Promise<PortalView | null> {
   const admin = createAdminClient();
   if (!admin) return null;
   const ip = await clientIp();
-  if (!rateLimit(`portal-view:${ip}`, 60, 60_000).allowed) return null;
+  if (!(await rateLimit(`portal-view:${ip}`, 60, 60_000)).allowed) return null;
   const { data, error } = await admin.rpc("portal_view", { p_hash: hashPortalToken(token) });
   if (error || !data) return null;
   return data as PortalView;
+}
+
+/** Whether the booking's agency has connected Razorpay, so the portal can offer "Pay securely". */
+export async function portalPaymentsReady(token: string): Promise<boolean> {
+  if (!isPortalToken(token)) return false;
+  const admin = createAdminClient();
+  if (!admin) return false;
+  const { data } = await admin.rpc("portal_payments_ready", { p_hash: hashPortalToken(token) });
+  return data === true;
 }

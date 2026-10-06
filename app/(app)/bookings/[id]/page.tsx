@@ -6,7 +6,7 @@ import { BookingStatusActions } from "@/components/booking/booking-status-action
 import { SendMessageForm } from "@/components/comms/send-message-form";
 import { PortalCard } from "@/components/portal/portal-card";
 import { PaymentsPanel } from "@/components/payments/payments-panel";
-import { getServerEnv } from "@/lib/env.server";
+import { isOnlinePaymentsEnabled } from "@/lib/payments/queries";
 import { PassengerPanel } from "@/components/booking/passenger-panel";
 import { PageHeader } from "@/components/crm/page-header";
 import { StatusBadge } from "@/components/crm/status-badge";
@@ -290,11 +290,7 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
           balance={Number(booking.balance_amount)}
           bookingStatus={booking.status}
           canManage={session.permissions.has("payments.create")}
-          onlineEnabled={Boolean(
-            getServerEnv().RAZORPAY_KEY_ID &&
-            getServerEnv().RAZORPAY_KEY_SECRET &&
-            getServerEnv().RAZORPAY_WEBHOOK_SECRET,
-          )}
+          onlineEnabled={await isOnlinePaymentsEnabled()}
         />
       )}
 

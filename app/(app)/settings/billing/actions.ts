@@ -38,7 +38,7 @@ export type CheckoutResult = FormState & { url?: string };
 export async function startCheckoutAction(planKey: string): Promise<CheckoutResult> {
   try {
     const session = await requirePermission("billing.manage");
-    if (!rateLimit(`billing:${session.userId}`, 5, 60_000).allowed)
+    if (!(await rateLimit(`billing:${session.userId}`, 5, 60_000)).allowed)
       throw new AppError("Too many attempts. Please wait a moment.", "RATE_LIMITED", 429);
     const env = getServerEnv();
     if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET || !env.RAZORPAY_WEBHOOK_SECRET)
@@ -86,7 +86,7 @@ export async function startCheckoutAction(planKey: string): Promise<CheckoutResu
 export async function cancelSubscriptionAction(): Promise<FormState> {
   try {
     const session = await requirePermission("billing.manage");
-    if (!rateLimit(`billing:${session.userId}`, 5, 60_000).allowed)
+    if (!(await rateLimit(`billing:${session.userId}`, 5, 60_000)).allowed)
       throw new AppError("Too many attempts. Please wait a moment.", "RATE_LIMITED", 429);
     const env = getServerEnv();
     const admin = createAdminClient();

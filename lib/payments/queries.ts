@@ -116,3 +116,10 @@ export async function listDueSchedules(days = 7) {
   if (error) throw error;
   return (data ?? []) as unknown as ScheduleRow[];
 }
+
+/** Whether the caller's organization has connected its own Razorpay account (nothing secret is returned). */
+export async function isOnlinePaymentsEnabled(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("payments_online_enabled");
+  return data === true;
+}

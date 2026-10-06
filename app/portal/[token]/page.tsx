@@ -1,9 +1,8 @@
 import { StatusBadge } from "@/components/crm/status-badge";
 import { PayNow, RequestForm } from "@/components/portal/portal-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getServerEnv } from "@/lib/env.server";
 import { label } from "@/lib/crm/constants";
-import { getPortalView } from "@/lib/portal/queries";
+import { getPortalView, portalPaymentsReady } from "@/lib/portal/queries";
 import { formatMoney } from "@/lib/quotation/pricing";
 
 export const dynamic = "force-dynamic";
@@ -23,10 +22,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
     );
   }
 
-  const env = getServerEnv();
-  const onlineEnabled = Boolean(
-    env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET && env.RAZORPAY_WEBHOOK_SECRET,
-  );
+  const onlineEnabled = await portalPaymentsReady(token);
   const { booking: b } = v;
   const money = (n: number) => formatMoney(Number(n), b.currency);
   const accent =

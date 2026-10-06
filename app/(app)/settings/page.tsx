@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CreditCard, FileText, Palette } from "lucide-react";
+import { CreditCard, FileText, Palette, ScrollText, Users, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/crm/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireOrgSession } from "@/lib/auth/session";
@@ -15,6 +15,27 @@ export default async function SettingsPage() {
       title: "Agency branding",
       text: "Logo, colours, contact details and footer used on PDFs.",
       icon: Palette,
+      show: session.permissions.has("settings.manage"),
+    },
+    {
+      href: "/settings/team",
+      title: "Team",
+      text: "Members, roles and invitations.",
+      icon: Users,
+      show: session.permissions.has("users.manage"),
+    },
+    {
+      href: "/settings/payments",
+      title: "Online payments",
+      text: "Connect your own Razorpay account for customer payments.",
+      icon: Wallet,
+      show: session.permissions.has("settings.manage"),
+    },
+    {
+      href: "/settings/audit",
+      title: "Audit log",
+      text: "Who did what, and when.",
+      icon: ScrollText,
       show: session.permissions.has("settings.manage"),
     },
     {

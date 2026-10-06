@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
-import { getServerEnv } from "@/lib/env.server";
+import { getOrgRazorpay } from "@/lib/payments/credentials";
 import type { FormState } from "@/lib/auth/schemas";
 import { AppError } from "@/lib/utils/errors";
 import { logger } from "@/lib/utils/logger";
@@ -69,7 +69,7 @@ export async function recordPaymentAction(
   const v = parsed.data;
   return runAction(async () => {
     const session = await requirePermission("payments.create");
-    if (!rateLimit(`pay:${session.userId}`, 60, 60_000).allowed)
+    if (!(await rateLimit(`pay:${session.userId}`, 60, 60_000)).allowed)
       throw new AppError("Too many requests. Please wait a moment.", "RATE_LIMITED", 429);
     const supabase = await createClient();
     const { error } = await supabase.rpc("record_payment", {
@@ -150,11 +150,16 @@ export async function startOnlinePaymentAction(
   if (!parsed.success) return { message: "Enter a valid amount." };
   try {
     const session = await requirePermission("payments.create");
-    if (!rateLimit(`pay-online:${session.userId}`, 20, 60_000).allowed)
+    if (!(await rateLimit(`pay-online:${session.userId}`, 20, 60_000)).allowed)
       throw new AppError("Too many requests. Please wait a moment.", "RATE_LIMITED", 429);
-    const env = getServerEnv();
-    if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET || !env.RAZORPAY_WEBHOOK_SECRET)
-      throw new AppError("Online payments aren't configured yet.", "NOT_CONFIGURED", 503);
+    // The agency's own Razorpay account: customer money never passes through the platform's.
+    const creds = await getOrgRazorpay(session.organization!.id);
+    if (!creds)
+      throw new AppError(
+        "Online payments aren't set up. An admin can add Razorpay under Settings → Payments.",
+        "NOT_CONFIGURED",
+        503,
+      );
 
     const supabase = await createClient();
     const { data, error } = await supabase.rpc("prepare_online_payment", {
@@ -168,8 +173,8 @@ export async function startOnlinePaymentAction(
 
     try {
       const order = await createRazorpayOrder({
-        keyId: env.RAZORPAY_KEY_ID,
-        keySecret: env.RAZORPAY_KEY_SECRET,
+        keyId: creds.keyId,
+        keySecret: creds.keySecret,
         amountMinor,
         currency: row.currency,
         receipt: row.payment_id.replace(/-/g, ""),
@@ -183,7 +188,7 @@ export async function startOnlinePaymentAction(
       return {
         ok: true,
         checkout: {
-          keyId: env.RAZORPAY_KEY_ID,
+          keyId: creds.keyId,
           orderId: order.id,
           amountMinor,
           currency: row.currency,
