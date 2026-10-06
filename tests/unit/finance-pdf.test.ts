@@ -12,7 +12,7 @@ const text = async (buf: Buffer) => {
 
 describe("finance PDFs", () => {
   it("renders an invoice with lines, tax adjustment, paid and balance", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const buf = await renderToBuffer(
       createElement(InvoicePdf, {
         invoiceNumber: "INV-2026-0001",
@@ -41,7 +41,7 @@ describe("finance PDFs", () => {
     expect(t).toContain("INR 67,150.00");
   });
   it("marks voided invoices", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const buf = await renderToBuffer(
       createElement(InvoicePdf, {
         invoiceNumber: "INV-2026-0002",
@@ -62,7 +62,7 @@ describe("finance PDFs", () => {
     expect(await text(buf)).toContain("VOID");
   });
   it("renders a receipt", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const buf = await renderToBuffer(
       createElement(ReceiptPdf, {
         receiptNumber: "RC-2026-0001",

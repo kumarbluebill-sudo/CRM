@@ -78,3 +78,19 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - The webhook ledger stores event id, type and outcome only, not payloads (they contain customer contact details).
 - CSP allows only `checkout.razorpay.com` (script/frame) and `api.razorpay.com` / `lumberjack.razorpay.com` (connect).
 - Invoices are immutable snapshots (bill-to, lines, total); changes mean void + reissue. Receipt and invoice downloads are audited.
+
+## Communications (Phase 9)
+
+- Clients can only read `communications`. Writes go through `queue_communication` / `finish_communication` / `cancel_communication`, which check `communications.send`. The recipient address is copied from the customer record inside the database; the browser never supplies it. Template variables are validated (strings only, 500 chars, 20 keys, snake_case names).
+- `customers.do_not_contact` blocks queueing for people and automation alike.
+- Templates substitute only an allow-list of variables; unknown placeholders render blank, values are stripped of control characters, email HTML is escaped, subjects are collapsed to one line (no header injection), and display names are sanitised.
+- Automation (`run_automation`, service_role only, called by `/api/cron/automation` with a constant-time `CRON_SECRET` check) only **drafts** messages, de-duplicated per rule and instalment. A person reviews and sends each draft.
+- WhatsApp uses click-to-chat links (`wa.me`): no API tokens exist anywhere. Delivery to WhatsApp can't be confirmed; "Sent" means the link was opened.
+
+## Customer portal (Phase 10)
+
+- Links hold a random 256-bit token; only its SHA-256 is stored. Staff see the URL once at creation. Links expire (max 180 days), can be revoked, and are scoped to one booking.
+- Portal functions are executable by `service_role` only and return a fixed projection: no supplier names/costs, profit, passport data, internal notes or other bookings. A test asserts the payload contains none of those.
+- Routes under `/portal` send `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` and `X-Robots-Tag: noindex`, and all lookups are rate limited per IP (and per token for payments).
+- Documents are visible only when staff flag them shared; passport/visa documents can never be flagged (database constraint). Downloads use 60-second signed URLs and are audited.
+- Customer payments reuse the Phase 8 pipeline (amount validated in the database, captured only by the signed webhook). Customer requests become tasks, limited to 5 per link per day.
