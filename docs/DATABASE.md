@@ -111,3 +111,13 @@ Tables: `quotations`, `quotation_options` (A/B/C…), `quotation_items`, `quotat
 `payment_schedules` (instalments, sum capped at the booking total by trigger), `payments` (read-only to clients; manual and Razorpay), `invoices` (snapshots, one active per booking), `payment_webhook_events` (service role only), `payment_reminders` (idempotent follow-up tasks), view `payment_schedule_status` (security invoker; allocates paid money to instalments in due-date order). Functions: `record_payment`, `prepare_online_payment`, `attach_razorpay_order`, `discard_pending_payment`, `issue_invoice`, `void_invoice`, `create_payment_reminders`, `apply_razorpay_event` (service_role only).
 
 Razorpay setup: set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` (server only) and `SUPABASE_SERVICE_ROLE_KEY`; in the Razorpay dashboard add a webhook to `https://<your-domain>/api/webhooks/razorpay` for `payment.captured`, `payment.failed` and `order.paid`, using the same secret.
+
+## Phase 9: communications (017)
+
+`message_templates`, `automation_rules`, `communications` (outbox/log), `customers.do_not_contact`. Functions: `queue_communication`, `finish_communication`, `cancel_communication`, `run_automation` (service_role only). Permissions: `communications.view/send/manage`.
+
+Env: `RESEND_API_KEY` and `EMAIL_FROM` (a Resend-verified sender) for email; `CRON_SECRET` (min 16 chars) for the daily job in `vercel.json`.
+
+## Phase 10: customer portal (019)
+
+`portal_links` (hashed tokens), `portal_requests`, `documents.portal_visible`. Staff functions: `create_portal_link`, `revoke_portal_link`, `set_document_portal_visible` (permission `portal.manage`). Customer-side functions, all service_role only: `portal_view`, `portal_document`, `portal_prepare_payment`, `portal_attach_order`, `portal_discard_payment`, `portal_submit_request`.

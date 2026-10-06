@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookingItemEditor } from "@/components/booking/item-editor";
 import { BookingStatusActions } from "@/components/booking/booking-status-actions";
+import { SendMessageForm } from "@/components/comms/send-message-form";
+import { PortalCard } from "@/components/portal/portal-card";
 import { PaymentsPanel } from "@/components/payments/payments-panel";
 import { getServerEnv } from "@/lib/env.server";
 import { PassengerPanel } from "@/components/booking/passenger-panel";
@@ -285,10 +287,28 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
           canManage={session.permissions.has("payments.create")}
           onlineEnabled={Boolean(
             getServerEnv().RAZORPAY_KEY_ID &&
-              getServerEnv().RAZORPAY_KEY_SECRET &&
-              getServerEnv().RAZORPAY_WEBHOOK_SECRET,
+            getServerEnv().RAZORPAY_KEY_SECRET &&
+            getServerEnv().RAZORPAY_WEBHOOK_SECRET,
           )}
         />
+      )}
+
+      {session.permissions.has("portal.manage") && (
+        <PortalCard
+          bookingId={id}
+          active={booking.status !== "DRAFT" && booking.status !== "CANCELLED"}
+        />
+      )}
+
+      {session.permissions.has("communications.send") && booking.status !== "CANCELLED" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Message the customer</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SendMessageForm bookingId={id} />
+          </CardContent>
+        </Card>
       )}
 
       {session.permissions.has("documents.view") && (

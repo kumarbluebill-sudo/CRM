@@ -69,8 +69,9 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Communications",
     items: [
-      { label: "WhatsApp", href: "/communications/whatsapp", icon: MessageCircle, soon: true },
-      { label: "Email", href: "/communications/email", icon: Mail, soon: true },
+      { label: "Outbox", href: "/communications", icon: Mail },
+      { label: "WhatsApp", href: "/communications/whatsapp", icon: MessageCircle },
+      { label: "Email", href: "/communications/email", icon: Mail },
     ],
   },
   {
