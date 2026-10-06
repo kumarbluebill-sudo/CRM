@@ -49,6 +49,7 @@ export const PERMISSIONS = [
   "communications.send",
   "communications.manage",
   "portal.manage",
+  "ai.use",
   "users.manage",
   "settings.manage",
 ] as const;

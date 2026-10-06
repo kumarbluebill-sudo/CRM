@@ -94,3 +94,13 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - Routes under `/portal` send `Referrer-Policy: no-referrer`, `Cache-Control: private, no-store` and `X-Robots-Tag: noindex`, and all lookups are rate limited per IP (and per token for payments).
 - Documents are visible only when staff flag them shared; passport/visa documents can never be flagged (database constraint). Downloads use 60-second signed URLs and are audited.
 - Customer payments reuse the Phase 8 pipeline (amount validated in the database, captured only by the signed webhook). Customer requests become tasks, limited to 5 per link per day.
+
+## AI assistant (Phase 11)
+
+- The assistant has **no tools and no write path**. It receives one record the caller can already open (loaded through the caller's own RLS session, so other organizations are unreachable), and returns plain text that a person reads. It cannot send, change or delete anything.
+- Prompt injection: record text is wrapped in `<crm_data>` and declared as data; attempts to forge the closing tag are stripped; the worst outcome of a successful injection is odd text shown to the staff member who asked.
+- Data minimisation: free text is redacted (emails, phone numbers, ID-like numbers). Never sent: contact details, passport data, supplier names or costs, quotation profit, payment references. Money is included only for users with `payments.view`.
+- Output is shown as text (never HTML), control characters are stripped and length is capped; the UI labels it as AI-generated and unverified.
+- AI itinerary drafts are saved as imports in REVIEW, so the Phase 5 review gate applies (cannot publish until a person confirms).
+- Quotas: 40 successful requests per user and 100 per organization per rolling 24 hours (`ai_requests_last_day_user`, `ai_requests_last_day`), plus 10 requests/minute per user. Prompts and outputs are never stored; only feature, model and token counts.
+- Requires `ai.use`. Without `OPENAI_API_KEY` the page says AI isn't set up and the rest of the CRM is unaffected.
