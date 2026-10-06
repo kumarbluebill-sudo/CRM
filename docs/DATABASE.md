@@ -70,3 +70,8 @@ Tables: `itineraries`, `itinerary_days`, `itinerary_items`, `itinerary_versions`
 - Publishing or "Save version" writes a snapshot to `itinerary_versions`; restoring loads a snapshot into the
   editor, and saving creates a new version.
 - Images are `https://` URLs only for now (CSP `img-src` allows https). Uploads to private storage come later.
+
+## Phase 5 tables (008a, 018)
+
+`itinerary_imports` (parsed draft + confidence, review state), `itineraries.needs_review/import_id/reviewed_*`,
+`ai_requests` (usage log). Trigger `itineraries_review_gate` blocks publishing unreviewed imports.

@@ -70,6 +70,8 @@ type Props = {
   initial: Record<string, unknown>;
   versions: Version[];
   canEdit: boolean;
+  /** Imported content that a person has not yet confirmed; publishing is blocked. */
+  needsReview?: boolean;
 };
 
 function move<T>(list: T[], from: number, to: number): T[] {
@@ -80,7 +82,7 @@ function move<T>(list: T[], from: number, to: number): T[] {
   return next;
 }
 
-export function ItineraryBuilder({ id, initial, versions, canEdit }: Props) {
+export function ItineraryBuilder({ id, initial, versions, canEdit, needsReview }: Props) {
   const [doc, setDoc] = useState<EditorDoc>(() => toEditorDoc(initial));
   const [version, setVersion] = useState<number>(Number(initial.version ?? 1));
   const [dirty, setDirty] = useState(false);
@@ -182,7 +184,12 @@ export function ItineraryBuilder({ id, initial, versions, canEdit }: Props) {
               <Save className="size-4" aria-hidden /> Save draft
             </Button>
             {!doc.isTemplate && (
-              <Button size="sm" disabled={pending} onClick={() => save({ publish: true })}>
+              <Button
+                size="sm"
+                disabled={pending || needsReview}
+                title={needsReview ? "Confirm the review first" : undefined}
+                onClick={() => save({ publish: true })}
+              >
                 Publish
               </Button>
             )}

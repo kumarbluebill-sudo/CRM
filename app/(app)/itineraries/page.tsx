@@ -60,6 +60,16 @@ export default async function ItinerariesPage({
               Templates
             </Button>
             {session.permissions.has("itineraries.create") && (
+              <Button
+                size="sm"
+                variant="outline"
+                nativeButton={false}
+                render={<Link href="/itineraries/import" />}
+              >
+                Import
+              </Button>
+            )}
+            {session.permissions.has("itineraries.create") && (
               <Button size="sm" nativeButton={false} render={<Link href="/itineraries/new" />}>
                 <Plus className="size-4" aria-hidden /> New itinerary
               </Button>

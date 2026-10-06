@@ -29,3 +29,21 @@ It is not an authorization layer; routes and Postgres RLS enforce access (Phase 
 
 `lib/utils/logger.ts` redacts keys matching password/secret/token/authorization/api key/
 cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe messages.
+
+## Document import and AI (Phase 5)
+
+- **Upload route** `POST /api/itineraries/import`: Origin check, session + `itineraries.create`, rate limit
+  (10/min/user, in-memory until Upstash is configured), 4 MB cap (Vercel body limit), extension + MIME +
+  magic-byte validation, display-only sanitized filename, extraction in memory with a 25 s timeout.
+  The original file is never stored; only the parsed draft (and extracted text until converted) is kept.
+- **Untrusted content**: document text is data only. The rule parser drops instruction-like lines; the AI call
+  wraps the text in `<document>` tags with a system prompt that forbids following it, uses JSON output only,
+  has no tools, and every response is validated by Zod. Any failure falls back to the rule parser.
+- **Data minimization**: before the AI step, emails, phone numbers and passport-like IDs are replaced with
+  placeholders and text is capped at 60k characters. The AI step is skipped entirely if `OPENAI_API_KEY` is unset.
+- **Human review**: imported itineraries are created as drafts with `needs_review = true`. A database trigger blocks
+  publishing until a user confirms via `mark_itinerary_reviewed()` (records who/when).
+- **Cost control**: each AI call is logged in `ai_requests` (no prompt or output stored); 100 successful calls per
+  organization per 24 h until plan-based limits arrive.
+- Known limit: DOCX/XLSX are zip files; the 4 MB cap and parse timeout bound, but do not fully rule out,
+  decompression-bomb style inputs. Moving extraction to a background worker is a hardening follow-up.
