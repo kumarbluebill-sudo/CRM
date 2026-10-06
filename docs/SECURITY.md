@@ -104,3 +104,17 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - AI itinerary drafts are saved as imports in REVIEW, so the Phase 5 review gate applies (cannot publish until a person confirms).
 - Quotas: 40 successful requests per user and 100 per organization per rolling 24 hours (`ai_requests_last_day_user`, `ai_requests_last_day`), plus 10 requests/minute per user. Prompts and outputs are never stored; only feature, model and token counts.
 - Requires `ai.use`. Without `OPENAI_API_KEY` the page says AI isn't set up and the rest of the CRM is unaffected.
+
+## Reports (Phase 12)
+
+- One read-only SQL function, `report_summary`, runs as the **caller** (security invoker), so RLS applies to every row. It requires `reports.view`; each section also requires the permission of its underlying data (`leads.view`, `quotes.view`, `bookings.view`, `payments.view`) and is omitted otherwise.
+- No supplier costs, quotation profit, passport data or contact details appear in reports or exports. Money is grouped by currency and never summed across currencies. Ranges are capped at ~2 years.
+- CSV export (`/api/reports/export`): same permissions plus the underlying view permission, 5,000-row cap, 10/min rate limit, audited as EXPORT, cells that start with `= + - @` are neutralised against spreadsheet formula injection, and the exported columns are an allow-list.
+
+## Plans and billing (Phase 13)
+
+- Plans are read-only reference data; subscriptions are read-only to clients (the Razorpay subscription id is not even selectable). Changes happen only through owner-only functions (`billing.manage`) or `apply_subscription_event` (service role only).
+- Limits (seats, bookings per month, document storage) are enforced by database triggers on the growing tables, so they apply to every code path; AI daily caps come from the same plan. Error code `P0020`. Existing data is never deleted or hidden when a plan lapses.
+- Access is computed on read: an ended trial, an expired subscription or a cancelled one past its paid period falls back to the Free plan, so nothing depends on a cron job. Past-due keeps access while Razorpay retries.
+- Checkout: the Razorpay plan id comes from the database, the organization from the session; only an https URL is returned to the browser. A plan becomes active **only** from a signature-verified `subscription.*` webhook, de-duplicated by event id, that names the stored subscription id and a plan we recognise. An unknown plan never grants access.
+- Billing events share the existing signed webhook endpoint with customer payments.

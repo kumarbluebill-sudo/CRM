@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getServerEnv } from "@/lib/env.server";
-import { parseWebhookPayload, verifyWebhookSignature } from "@/lib/payments/razorpay";
+import { parseSubscriptionEvent, parseWebhookPayload, verifyWebhookSignature } from "@/lib/payments/razorpay";
 import { rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/utils/logger";
 
@@ -32,21 +32,31 @@ export async function POST(req: NextRequest) {
   }
 
   const eventId = req.headers.get("x-razorpay-event-id");
-  const event = parseWebhookPayload(raw);
-  if (!eventId || eventId.length > 100 || !event)
+  const sub = parseSubscriptionEvent(raw);
+  const event = sub ? null : parseWebhookPayload(raw);
+  if (!eventId || eventId.length > 100 || (!event && !sub))
     return NextResponse.json({ error: "Malformed event." }, { status: 400 });
 
   const admin = createAdminClient();
   if (!admin) return NextResponse.json({ error: "Not configured." }, { status: 503 });
 
-  const { data, error } = await admin.rpc("apply_razorpay_event", {
-    p_event_id: eventId,
-    p_event_type: event.type,
-    p_order_id: event.orderId,
-    p_payment_id: event.paymentId,
-    p_amount_paise: event.amount,
-    p_currency: event.currency,
-  });
+  // Platform billing events (subscription.*) and customer payment events share one signed endpoint.
+  const { data, error } = sub
+    ? await admin.rpc("apply_subscription_event", {
+        p_event_id: eventId,
+        p_type: sub.type,
+        p_sub: sub.subscriptionId,
+        p_rzp_plan: sub.planId,
+        p_period_end: sub.periodEnd,
+      })
+    : await admin.rpc("apply_razorpay_event", {
+        p_event_id: eventId,
+        p_event_type: event!.type,
+        p_order_id: event!.orderId,
+        p_payment_id: event!.paymentId,
+        p_amount_paise: event!.amount,
+        p_currency: event!.currency,
+      });
   if (error) {
     logger.error("razorpay webhook: apply failed", { code: error.code });
     return NextResponse.json({ error: "Could not process." }, { status: 500 }); // Razorpay will retry

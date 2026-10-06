@@ -86,3 +86,94 @@ export async function createRazorpayOrder(input: {
     throw new RazorpayError("Razorpay returned an unexpected response");
   return { id: data.id };
 }
+
+const basicAuth = (keyId: string, keySecret: string) =>
+  `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`;
+
+/** Creates a subscription to a Razorpay plan. Returns the id and the hosted page where the customer authorises it. */
+export async function createRazorpaySubscription(input: {
+  keyId: string;
+  keySecret: string;
+  planId: string;
+  organizationId: string;
+}): Promise<{ id: string; shortUrl: string }> {
+  const res = await fetch("https://api.razorpay.com/v1/subscriptions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: basicAuth(input.keyId, input.keySecret),
+    },
+    body: JSON.stringify({
+      plan_id: input.planId,
+      total_count: 120,
+      customer_notify: 1,
+      notes: { organization_id: input.organizationId },
+    }),
+    signal: AbortSignal.timeout(15_000),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new RazorpayError(`Razorpay subscription failed (${res.status})`);
+  const data = (await res.json()) as { id?: unknown; short_url?: unknown };
+  const url = typeof data.short_url === "string" ? safeHttpsUrl(data.short_url) : null;
+  if (typeof data.id !== "string" || !/^sub_[A-Za-z0-9]+$/.test(data.id) || !url)
+    throw new RazorpayError("Razorpay returned an unexpected response");
+  return { id: data.id, shortUrl: url };
+}
+
+export async function cancelRazorpaySubscription(input: {
+  keyId: string;
+  keySecret: string;
+  subscriptionId: string;
+}): Promise<void> {
+  if (!/^sub_[A-Za-z0-9]+$/.test(input.subscriptionId)) throw new RazorpayError("Invalid subscription id");
+  const res = await fetch(`https://api.razorpay.com/v1/subscriptions/${input.subscriptionId}/cancel`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: basicAuth(input.keyId, input.keySecret),
+    },
+    body: JSON.stringify({ cancel_at_cycle_end: 1 }),
+    signal: AbortSignal.timeout(15_000),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new RazorpayError(`Razorpay cancel failed (${res.status})`);
+}
+
+/** Only https URLs are ever handed to the browser as a redirect target. */
+export function safeHttpsUrl(v: string): string | null {
+  try {
+    const u = new URL(v);
+    return u.protocol === "https:" && u.hostname.length > 3 ? u.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+export type SubscriptionEvent = {
+  type: string;
+  subscriptionId: string | null;
+  planId: string | null;
+  periodEnd: number | null;
+};
+
+/** Extracts only what we use from a subscription.* webhook; null if it isn't one or is malformed. */
+export function parseSubscriptionEvent(raw: string): SubscriptionEvent | null {
+  try {
+    const body = JSON.parse(raw) as {
+      event?: unknown;
+      payload?: { subscription?: { entity?: Record<string, unknown> } };
+    };
+    if (typeof body.event !== "string" || !body.event.startsWith("subscription.")) return null;
+    const e = body.payload?.subscription?.entity;
+    const str = (v: unknown) => (typeof v === "string" && v.length <= 100 ? v : null);
+    return {
+      type: body.event.slice(0, 100),
+      subscriptionId: str(e?.id),
+      planId: str(e?.plan_id),
+      periodEnd:
+        typeof e?.current_end === "number" && Number.isSafeInteger(e.current_end) ? e.current_end : null,
+    };
+  } catch {
+    return null;
+  }
+}

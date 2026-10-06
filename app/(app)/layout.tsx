@@ -1,3 +1,4 @@
+import { BillingBanner } from "@/components/billing/billing-banner";
 import { AppShell } from "@/components/layout/app-shell";
 import { requireOrgSession } from "@/lib/auth/session";
 
@@ -9,6 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <AppShell
       user={{ name: session.fullName || session.email, email: session.email }}
       organizationName={session.organization.name}
+      banner={<BillingBanner />}
     >
       {children}
     </AppShell>
