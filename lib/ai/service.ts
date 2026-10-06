@@ -1,29 +1,29 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { OrgLimits } from "@/lib/billing/limits";
 import { AppError } from "@/lib/utils/errors";
 import { AiFailedError, AiNotConfiguredError, chat, type ChatResult } from "@/lib/ai/openai";
 import { bookingContext, leadContext } from "@/lib/ai/context";
 import { cleanAiText } from "@/lib/ai/output";
 
-/** Org-wide and per-user daily caps. They become plan-based in the subscription phase. */
-export const AI_ORG_DAILY_LIMIT = 100;
-export const AI_USER_DAILY_LIMIT = 40;
-
 export type AiFeature = "SUMMARIZE" | "DRAFT_MESSAGE" | "ASK" | "ITINERARY_GENERATE";
 
 /** Throws a friendly AppError when the caller or their organization has used today's allowance. */
 export async function assertAiQuota(supabase: SupabaseClient): Promise<void> {
-  const [{ data: org }, { data: user }] = await Promise.all([
+  const [{ data: org }, { data: user }, { data: plan }] = await Promise.all([
     supabase.rpc("ai_requests_last_day"),
     supabase.rpc("ai_requests_last_day_user"),
+    supabase.rpc("org_limits"),
   ]);
-  if (typeof org === "number" && org >= AI_ORG_DAILY_LIMIT)
+  // Caps come from the organization's plan (the Free plan's once a trial or subscription has ended).
+  const limits = (plan as OrgLimits | null)?.limits;
+  if (typeof org === "number" && org >= (limits?.aiOrgDaily ?? 10))
     throw new AppError(
-      "Your organization has reached today's AI limit. Try again tomorrow.",
+      "Your organization has reached today's AI limit. Try again tomorrow, or upgrade your plan.",
       "AI_LIMIT",
       429,
     );
-  if (typeof user === "number" && user >= AI_USER_DAILY_LIMIT)
+  if (typeof user === "number" && user >= (limits?.aiUserDaily ?? 5))
     throw new AppError("You've reached your daily AI limit. Try again tomorrow.", "AI_LIMIT", 429);
 }
 

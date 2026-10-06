@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FileText, Palette } from "lucide-react";
+import { CreditCard, FileText, Palette } from "lucide-react";
 import { PageHeader } from "@/components/crm/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireOrgSession } from "@/lib/auth/session";
@@ -16,6 +16,13 @@ export default async function SettingsPage() {
       text: "Logo, colours, contact details and footer used on PDFs.",
       icon: Palette,
       show: session.permissions.has("settings.manage"),
+    },
+    {
+      href: "/settings/billing",
+      title: "Plan and billing",
+      text: "Your plan, usage against limits and subscription.",
+      icon: CreditCard,
+      show: session.permissions.has("settings.manage") || session.permissions.has("billing.manage"),
     },
     {
       href: "/quotations/templates",
