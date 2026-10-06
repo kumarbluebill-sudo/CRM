@@ -72,6 +72,16 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 Create itinerary
               </Button>
             )}
+            {session.permissions.has("quotes.create") && (
+              <Button
+                size="sm"
+                variant="outline"
+                nativeButton={false}
+                render={<Link href={`/quotations/new?lead=${id}`} />}
+              >
+                Create quotation
+              </Button>
+            )}
             {canDelete && (
               <ConfirmActionButton
                 action={deleteLeadAction.bind(null, id)}

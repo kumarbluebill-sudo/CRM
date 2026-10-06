@@ -9,5 +9,11 @@ export default defineConfig({
       "server-only": path.resolve(import.meta.dirname, "tests/helpers/empty.ts"),
     },
   },
-  test: { environment: "node", include: ["tests/**/*.test.ts"] },
+  test: {
+    environment: "node",
+    include: ["tests/**/*.test.ts"],
+    // Several embedded Postgres instances boot in parallel and apply every migration.
+    hookTimeout: 90_000,
+    testTimeout: 60_000,
+  },
 });

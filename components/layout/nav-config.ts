@@ -45,7 +45,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Sales",
     items: [
-      { label: "Quotations", href: "/quotations", icon: FileText, soon: true },
+      { label: "Quotations", href: "/quotations", icon: FileText },
       { label: "Packages", href: "/packages", icon: Package, soon: true },
     ],
   },
@@ -77,7 +77,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Reports", href: "/reports", icon: BarChart3, soon: true },
       { label: "AI Assistant", href: "/ai-assistant", icon: Bot, soon: true },
-      { label: "Settings", href: "/settings", icon: Settings, soon: true },
+      { label: "Settings", href: "/settings", icon: Settings },
     ],
   },
 ];
