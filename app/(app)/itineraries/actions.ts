@@ -20,6 +20,13 @@ function throwItineraryError(error: DbError, context: string) {
       409,
     );
   }
+  if (error?.code === "P0003") {
+    throw new AppError(
+      "Imported content must be reviewed before publishing.",
+      "REVIEW_REQUIRED",
+      409,
+    );
+  }
   if (error?.code === "P0002") throw new AppError("Itinerary not found.", "NOT_FOUND", 404);
   throwIfDbError(error, context);
 }
