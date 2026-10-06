@@ -34,6 +34,7 @@ export default async function ItineraryBuilderPage({
             id={id}
             canCreate={session.permissions.has("itineraries.create")}
             canDelete={session.permissions.has("itineraries.delete")}
+            canQuote={session.permissions.has("quotes.create")}
           />
         }
       />

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
 import { Copy, LayoutTemplate } from "lucide-react";
 import { toast } from "sonner";
@@ -11,10 +12,12 @@ export function ItineraryActions({
   id,
   canCreate,
   canDelete,
+  canQuote,
 }: {
   id: string;
   canCreate: boolean;
   canDelete: boolean;
+  canQuote?: boolean;
 }) {
   const [pending, start] = useTransition();
   const run = (asTemplate: boolean) =>
@@ -34,6 +37,16 @@ export function ItineraryActions({
             <LayoutTemplate className="size-4" aria-hidden /> Save as template
           </Button>
         </>
+      )}
+      {canQuote && (
+        <Button
+          variant="outline"
+          size="sm"
+          nativeButton={false}
+          render={<Link href={`/quotations/new?itinerary=${id}`} />}
+        >
+          Create quotation
+        </Button>
       )}
       {canDelete && (
         <ConfirmActionButton

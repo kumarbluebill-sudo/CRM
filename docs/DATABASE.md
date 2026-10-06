@@ -75,3 +75,19 @@ Tables: `itineraries`, `itinerary_days`, `itinerary_items`, `itinerary_versions`
 
 `itinerary_imports` (parsed draft + confidence, review state), `itineraries.needs_review/import_id/reviewed_*`,
 `ai_requests` (usage log). Trigger `itineraries_review_gate` blocks publishing unreviewed imports.
+
+## Phase 6: quotations (009)
+
+Tables: `quotations`, `quotation_options` (A/B/C…), `quotation_items`, `quotation_item_costs`, `quotation_versions`,
+`quotation_templates`, `organization_counters`; `organization_branding.logo_data` + hex-colour checks.
+
+- **Supplier cost is a separate table.** `quotation_item_costs` is readable/writable only with `quotes.view_cost`.
+  `save_quotation` leaves costs untouched for everyone else, so a sales executive editing a quote never wipes or sees them.
+  Profit needs `quotes.view_cost` + `quotes.view_profit`, and is withheld unless every line has a cost.
+- **Totals are computed by triggers** (`recalc_quotation_option`); clients cannot write totals, status, number or approval fields
+  (column privileges). `src/lib/quotation/pricing.ts` mirrors the maths and is tested for parity with SQL.
+- **Status** changes only through `set_quotation_status()` (definer, checks `quotes.send` / `quotes.update`, valid transitions).
+  Sent/approved quotations are locked; "Negotiation" re-opens them. `CONVERTED` is reserved for the booking phase.
+- **Versions** are snapshots without costs/profit, taken on send, approve, any price change and "Save version".
+- **Numbering** `Q-YYYY-NNNN` per organization via `next_org_number()` (row-locked counter).
+- Logo is stored as a validated PNG/JPEG data URI (<= 300 KB). The PDF never fetches remote URLs.

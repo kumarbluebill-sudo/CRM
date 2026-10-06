@@ -47,3 +47,11 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
   organization per 24 h until plan-based limits arrive.
 - Known limit: DOCX/XLSX are zip files; the 4 MB cap and parse timeout bound, but do not fully rule out,
   decompression-bomb style inputs. Moving extraction to a background worker is a hardening follow-up.
+
+## Quotations and PDF (Phase 6)
+
+- Costs/profit are protected in the database (separate RLS-gated table), not just hidden in the UI; the PDF route requests the
+  non-private document, so costs cannot reach it, and its input type has no cost fields.
+- `GET /api/quotations/[id]/pdf`: session + `quotes.view`, 20/min rate limit, `private, no-store`, UUID-validated id, RLS-scoped data.
+- Standard PDF fonts are used; amounts print with the currency code (no remote font fetching).
+- Not yet implemented: audit-log entries for PDF downloads and price changes (price changes are already versioned with the user id).
