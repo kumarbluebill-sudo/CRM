@@ -25,9 +25,9 @@ const groups = [
         "https URL of the Supabase project",
       ],
       [
-        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-        () => has("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
-        "Supabase anon (public) key",
+        "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+        () => has("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY") || has("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+        "Supabase publishable key (or legacy anon key)",
       ],
       [
         "SUPABASE_SERVICE_ROLE_KEY",
