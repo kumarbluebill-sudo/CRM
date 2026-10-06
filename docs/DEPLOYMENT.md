@@ -68,7 +68,7 @@ Set in Vercel → Project → Settings → Environment Variables, per environmen
 | Variable | Required | Notes |
 |----------|----------|-------|
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | public |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | public |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes | public. The legacy name `NEXT_PUBLIC_SUPABASE_ANON_KEY` also works |
 | `SUPABASE_SERVICE_ROLE_KEY` | yes | **secret**, server only |
 | `NEXT_PUBLIC_APP_URL` | yes | `https://your-domain` with no trailing slash |
 | `ENCRYPTION_KEY` | yes | **secret**. 32 random bytes, base64. Encrypts agencies' Razorpay keys. Generate once; back it up in your password manager; losing it means agencies must re-enter their keys |
