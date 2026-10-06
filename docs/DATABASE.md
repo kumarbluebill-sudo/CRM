@@ -121,3 +121,7 @@ Env: `RESEND_API_KEY` and `EMAIL_FROM` (a Resend-verified sender) for email; `CR
 ## Phase 10: customer portal (019)
 
 `portal_links` (hashed tokens), `portal_requests`, `documents.portal_visible`. Staff functions: `create_portal_link`, `revoke_portal_link`, `set_document_portal_visible` (permission `portal.manage`). Customer-side functions, all service_role only: `portal_view`, `portal_document`, `portal_prepare_payment`, `portal_attach_order`, `portal_discard_payment`, `portal_submit_request`.
+
+## Phase 11: AI assistant (020)
+
+Permission `ai.use`; `ai_requests.feature` gains SUMMARIZE, DRAFT_MESSAGE, ASK; `itinerary_imports.file_type` gains `AI`; function `ai_requests_last_day_user()`. Optional env `OPENAI_MODEL` (default gpt-4o-mini).

@@ -54,6 +54,11 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
           <>
             <StatusBadge value={lead.status} />
             <StatusBadge value={lead.priority} />
+            {session.permissions.has("ai.use") && (
+              <Link href={`/ai-assistant?lead=${id}`} className="text-primary text-sm underline">
+                Ask AI
+              </Link>
+            )}
             {lead.customers && (
               <Link
                 href={`/customers/${lead.customers.id}`}
