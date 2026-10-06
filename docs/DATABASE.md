@@ -135,3 +135,7 @@ Permission `ai.use`; `ai_requests.feature` gains SUMMARIZE, DRAFT_MESSAGE, ASK; 
 `plans` (FREE / STARTER / PRO; **placeholder prices and limits, set them before launch**), `subscriptions` (every organization starts on a 14-day Pro trial; existing organizations were backfilled), functions `effective_plan`, `org_limits`, `org_usage`, `prepare_subscription`, `attach_subscription`, `mark_cancel_requested`, `apply_subscription_event` (service role only), limit triggers on `organization_members`, `bookings` and `documents`. Permission `billing.manage` (owner).
 
 Setup: create the plans in the Razorpay dashboard (Subscriptions → Plans), then `update plans set razorpay_plan_id = 'plan_...' where key = 'STARTER'` (and PRO). Add `subscription.activated`, `.charged`, `.pending`, `.halted`, `.cancelled`, `.completed` and `.resumed` to the webhook already pointed at `/api/webhooks/razorpay`.
+
+## Phase 14: security hardening (023)
+
+`organization_payment_settings` (encrypted Razorpay credentials, no client access), `organization_invites`, functions `payment_settings_status`, `payments_online_enabled`, `create_invite`, `revoke_invite`, `my_invite`, `accept_invite`, `portal_org`, `portal_payments_ready`; `apply_razorpay_event` now takes the organization (7 arguments). New env: `ENCRYPTION_KEY` (32 random bytes, base64). Full findings: `docs/SECURITY_AUDIT.md`.

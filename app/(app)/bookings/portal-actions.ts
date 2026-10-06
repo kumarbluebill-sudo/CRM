@@ -38,7 +38,7 @@ export async function createPortalLinkAction(
   if (!uuid.safeParse(bookingId).success) return { message: "Booking not found." };
   try {
     const session = await requirePermission("portal.manage");
-    if (!rateLimit(`portal-link:${session.userId}`, 20, 60_000).allowed)
+    if (!(await rateLimit(`portal-link:${session.userId}`, 20, 60_000)).allowed)
       throw new AppError("Too many requests. Please wait a moment.", "RATE_LIMITED", 429);
     const token = generatePortalToken();
     const supabase = await createClient();

@@ -23,7 +23,7 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
   if (!session.organization || !session.permissions.has("quotes.view"))
     return json(403, "Forbidden.");
 
-  const limit = rateLimit(`quote-pdf:${session.userId}`, 20, 60_000);
+  const limit = (await rateLimit(`quote-pdf:${session.userId}`, 20, 60_000));
   if (!limit.allowed) return json(429, "Too many requests. Please wait a moment.");
 
   try {

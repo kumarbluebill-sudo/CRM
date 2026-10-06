@@ -479,8 +479,8 @@ describe("communications and customer portal (local Postgres)", () => {
       expect(
         (
           await svc(
-            "select public.apply_razorpay_event($1, 'payment.captured', $2, 'pay_1', 500000, 'INR') as r",
-            ["evt_portal_1", order],
+            "select public.apply_razorpay_event($3, $1, 'payment.captured', $2, 'pay_1', 500000, 'INR') as r",
+            ["evt_portal_1", order, a.orgId],
           )
         )[0].r,
       ).toBe("captured");

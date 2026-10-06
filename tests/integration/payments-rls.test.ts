@@ -29,18 +29,15 @@ describe("payments, invoices, webhook, reminders (local Postgres)", () => {
   const webhook = async (type: string, order: string | null, paise: number | null, cur = "INR") =>
     (
       await db.query<{ r: string }>(
-        "select public.apply_razorpay_event($1, $2, $3, $4, $5, $6) as r",
-        [`evt_${++seq}`, type, order, "pay_" + seq, paise, cur],
+        "select public.apply_razorpay_event($1, $2, $3, $4, $5, $6, $7) as r",
+        [a.orgId, `evt_${++seq}`, type, order, "pay_" + seq, paise, cur],
       )
     ).rows[0].r;
   const eventFor = (id: string, type: string, order: string, paise: number) =>
-    db.query<{ r: string }>("select public.apply_razorpay_event($1, $2, $3, $4, $5, 'INR') as r", [
-      id,
-      type,
-      order,
-      "pay_x",
-      paise,
-    ]);
+    db.query<{ r: string }>(
+      "select public.apply_razorpay_event($1, $2, $3, $4, $5, $6, 'INR') as r",
+      [a.orgId, id, type, order, "pay_x", paise],
+    );
 
   async function bookingFor(owner: string, customer: string) {
     const qid = (
@@ -247,8 +244,8 @@ describe("payments, invoices, webhook, reminders (local Postgres)", () => {
         await fails(() =>
           q1(
             a.userId,
-            "select public.apply_razorpay_event('e1','payment.captured', $1, 'p', 3000000, 'INR')",
-            [order],
+            "select public.apply_razorpay_event($2, 'e1','payment.captured', $1, 'p', 3000000, 'INR')",
+            [order, a.orgId],
           ),
         ),
       ).toBe(true);
@@ -256,8 +253,8 @@ describe("payments, invoices, webhook, reminders (local Postgres)", () => {
         await fails(() =>
           q1(
             null,
-            "select public.apply_razorpay_event('e1','payment.captured', $1, 'p', 3000000, 'INR')",
-            [order],
+            "select public.apply_razorpay_event($2, 'e1','payment.captured', $1, 'p', 3000000, 'INR')",
+            [order, a.orgId],
           ),
         ),
       ).toBe(true);

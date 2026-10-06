@@ -19,7 +19,7 @@ export async function submitPortalRequestAction(
   if (message.length > 1000)
     return { fieldErrors: { message: ["Please keep it under 1000 characters."] } };
   const ip = await clientIp();
-  if (!rateLimit(`portal-req:${ip}`, 10, 60_000).allowed)
+  if (!(await rateLimit(`portal-req:${ip}`, 10, 60_000)).allowed)
     return { message: "Too many requests. Please wait a moment." };
   const admin = createAdminClient();
   if (!admin) return { message: "This isn't available right now." };

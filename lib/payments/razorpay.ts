@@ -125,17 +125,21 @@ export async function cancelRazorpaySubscription(input: {
   keySecret: string;
   subscriptionId: string;
 }): Promise<void> {
-  if (!/^sub_[A-Za-z0-9]+$/.test(input.subscriptionId)) throw new RazorpayError("Invalid subscription id");
-  const res = await fetch(`https://api.razorpay.com/v1/subscriptions/${input.subscriptionId}/cancel`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: basicAuth(input.keyId, input.keySecret),
+  if (!/^sub_[A-Za-z0-9]+$/.test(input.subscriptionId))
+    throw new RazorpayError("Invalid subscription id");
+  const res = await fetch(
+    `https://api.razorpay.com/v1/subscriptions/${input.subscriptionId}/cancel`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: basicAuth(input.keyId, input.keySecret),
+      },
+      body: JSON.stringify({ cancel_at_cycle_end: 1 }),
+      signal: AbortSignal.timeout(15_000),
+      cache: "no-store",
     },
-    body: JSON.stringify({ cancel_at_cycle_end: 1 }),
-    signal: AbortSignal.timeout(15_000),
-    cache: "no-store",
-  });
+  );
   if (!res.ok) throw new RazorpayError(`Razorpay cancel failed (${res.status})`);
 }
 
@@ -171,9 +175,28 @@ export function parseSubscriptionEvent(raw: string): SubscriptionEvent | null {
       subscriptionId: str(e?.id),
       planId: str(e?.plan_id),
       periodEnd:
-        typeof e?.current_end === "number" && Number.isSafeInteger(e.current_end) ? e.current_end : null,
+        typeof e?.current_end === "number" && Number.isSafeInteger(e.current_end)
+          ? e.current_end
+          : null,
     };
   } catch {
     return null;
+  }
+}
+
+/** Confirms a key pair is valid by making one harmless read-only call. Never logs or returns the secret. */
+export async function verifyRazorpayCredentials(
+  keyId: string,
+  keySecret: string,
+): Promise<boolean> {
+  try {
+    const res = await fetch("https://api.razorpay.com/v1/orders?count=1", {
+      headers: { authorization: basicAuth(keyId, keySecret) },
+      signal: AbortSignal.timeout(10_000),
+      cache: "no-store",
+    });
+    return res.ok;
+  } catch {
+    return false;
   }
 }

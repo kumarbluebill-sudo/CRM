@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   if (!session) return json(401, "Please sign in.");
   if (!session.organization || !session.permissions.has("payments.view"))
     return json(403, "Forbidden.");
-  if (!rateLimit(`receipt-pdf:${session.userId}`, 30, 60_000).allowed)
+  if (!(await rateLimit(`receipt-pdf:${session.userId}`, 30, 60_000)).allowed)
     return json(429, "Too many requests.");
 
   try {

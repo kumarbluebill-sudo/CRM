@@ -57,7 +57,7 @@ export async function sendBookingMessageAction(
   const v = parsed.data;
   try {
     const session = await requirePermission("communications.send");
-    if (!rateLimit(`comms:${session.userId}`, 30, 60_000).allowed)
+    if (!(await rateLimit(`comms:${session.userId}`, 30, 60_000)).allowed)
       throw new AppError("Too many messages. Please wait a moment.", "RATE_LIMITED", 429);
     const supabase = await createClient();
     const { data: b } = await supabase
@@ -118,7 +118,7 @@ export async function sendQueuedAction(id: string): Promise<SendState> {
   if (!uuid.safeParse(id).success) return { message: "Message not found." };
   try {
     const session = await requirePermission("communications.send");
-    if (!rateLimit(`comms:${session.userId}`, 30, 60_000).allowed)
+    if (!(await rateLimit(`comms:${session.userId}`, 30, 60_000)).allowed)
       throw new AppError("Too many messages. Please wait a moment.", "RATE_LIMITED", 429);
     const supabase = await createClient();
     const branding = await getBranding();
@@ -170,17 +170,15 @@ export async function saveTemplateAction(
   return runAction(async () => {
     await requirePermission("communications.manage");
     const supabase = await createClient();
-    const { error } = await supabase
-      .from("message_templates")
-      .upsert(
-        {
-          template_key: k,
-          channel: c,
-          subject: c === "EMAIL" ? (parsed.data.subject ?? null) : null,
-          body: parsed.data.body,
-        },
-        { onConflict: "organization_id,template_key,channel" },
-      );
+    const { error } = await supabase.from("message_templates").upsert(
+      {
+        template_key: k,
+        channel: c,
+        subject: c === "EMAIL" ? (parsed.data.subject ?? null) : null,
+        body: parsed.data.body,
+      },
+      { onConflict: "organization_id,template_key,channel" },
+    );
     throwCommsError(error, "save template");
     revalidatePath("/communications/templates");
     return { ok: true, message: "Template saved." };

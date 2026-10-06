@@ -24,7 +24,7 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
   if (!session) return json(401, "Please sign in.");
   if (!session.organization || !session.permissions.has("documents.download"))
     return json(403, "Forbidden.");
-  if (!rateLimit(`doc-download:${session.userId}`, 60, 60_000).allowed)
+  if (!(await rateLimit(`doc-download:${session.userId}`, 60, 60_000)).allowed)
     return json(429, "Too many requests.");
 
   const supabase = await createClient();

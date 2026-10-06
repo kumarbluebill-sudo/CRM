@@ -100,7 +100,7 @@ export async function GET(req: NextRequest) {
   const spec = Object.hasOwn(SPECS, type) ? SPECS[type] : undefined;
   if (!spec) return json(400, "Unknown export.");
   if (!session.permissions.has(spec.permission)) return json(403, "Forbidden.");
-  if (!rateLimit(`report-export:${session.userId}`, 10, 60_000).allowed)
+  if (!(await rateLimit(`report-export:${session.userId}`, 10, 60_000)).allowed)
     return json(429, "Too many exports. Please wait a moment.");
 
   const range = parseRange(

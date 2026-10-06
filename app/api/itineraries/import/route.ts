@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 3. Rate limit.
-  const limit = rateLimit(`import:${session.userId}`, 10, 60_000);
+  const limit = (await rateLimit(`import:${session.userId}`, 10, 60_000));
   if (!limit.allowed) {
     return fail(429, "Too many uploads. Please wait a moment.", {
       "retry-after": String(limit.retryAfterSeconds),
@@ -86,7 +86,8 @@ export async function POST(request: NextRequest) {
   if (isAiConfigured()) {
     const { data: used } = await supabase.rpc("ai_requests_last_day");
     const { data: plan } = await supabase.rpc("org_limits");
-    const cap = (plan as { limits?: { aiOrgDaily?: number } } | null)?.limits?.aiOrgDaily ?? AI_DAILY_LIMIT;
+    const cap =
+      (plan as { limits?: { aiOrgDaily?: number } } | null)?.limits?.aiOrgDaily ?? AI_DAILY_LIMIT;
     if (typeof used === "number" && used >= cap) {
       parsed.warnings.push("The daily AI limit was reached, so the rule-based parser was used.");
       await supabase.from("ai_requests").insert({ feature: "ITINERARY_IMPORT", status: "SKIPPED" });

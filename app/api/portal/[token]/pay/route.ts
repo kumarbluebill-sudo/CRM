@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getServerEnv } from "@/lib/env.server";
+import { getOrgRazorpay } from "@/lib/payments/credentials";
 import { createRazorpayOrder, toMinorUnits } from "@/lib/payments/razorpay";
 import { clientIp } from "@/lib/portal/queries";
 import { hashPortalToken, isPortalToken } from "@/lib/portal/token";
@@ -21,21 +21,23 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
   if (!isPortalToken(token)) return json(404, "This link isn't valid.");
   const ip = await clientIp();
   if (
-    !rateLimit(`portal-pay:${ip}`, 10, 60_000).allowed ||
-    !rateLimit(`portal-pay-t:${token.slice(0, 12)}`, 10, 60_000).allowed
+    !(await rateLimit(`portal-pay:${ip}`, 10, 60_000)).allowed ||
+    !(await rateLimit(`portal-pay-t:${token.slice(0, 12)}`, 10, 60_000)).allowed
   )
     return json(429, "Too many attempts. Please wait a moment.");
   if (Number(req.headers.get("content-length") ?? 0) > 1024) return json(413, "Too large.");
 
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return json(400, "Enter a valid amount.");
-  const env = getServerEnv();
-  if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET || !env.RAZORPAY_WEBHOOK_SECRET)
-    return json(503, "Online payment isn't available yet. Please contact us.");
   const admin = createAdminClient();
   if (!admin) return json(503, "Online payment isn't available yet. Please contact us.");
 
   const hash = hashPortalToken(token);
+  // The agency's own Razorpay account receives the money.
+  const { data: orgId } = await admin.rpc("portal_org", { p_hash: hash });
+  const creds = typeof orgId === "string" ? await getOrgRazorpay(orgId) : null;
+  if (!creds) return json(503, "Online payment isn't available yet. Please contact us.");
+
   const { data, error } = await admin.rpc("portal_prepare_payment", {
     p_hash: hash,
     p_amount: parsed.data.amount,
@@ -54,8 +56,8 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
   const amountMinor = toMinorUnits(Number(row.amount));
   try {
     const order = await createRazorpayOrder({
-      keyId: env.RAZORPAY_KEY_ID,
-      keySecret: env.RAZORPAY_KEY_SECRET,
+      keyId: creds.keyId,
+      keySecret: creds.keySecret,
       amountMinor,
       currency: row.currency,
       receipt: row.payment_id.replace(/-/g, ""),
@@ -67,7 +69,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
     });
     if (attachError) throw new Error("attach failed");
     return NextResponse.json({
-      keyId: env.RAZORPAY_KEY_ID,
+      keyId: creds.keyId,
       orderId: order.id,
       amountMinor,
       currency: row.currency,
