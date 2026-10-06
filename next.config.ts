@@ -7,11 +7,12 @@ const supabaseWs = supabaseUrl?.replace(/^http/, "ws");
 // See docs/SECURITY.md for why 'unsafe-inline' is present and the plan to move to nonces.
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
+  `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com${isProd ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self'${supabaseUrl ? ` ${supabaseUrl} ${supabaseWs}` : ""}`,
+  `connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com${supabaseUrl ? ` ${supabaseUrl} ${supabaseWs}` : ""}`,
+  "frame-src https://api.razorpay.com https://checkout.razorpay.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

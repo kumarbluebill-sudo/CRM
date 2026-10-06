@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookingItemEditor } from "@/components/booking/item-editor";
 import { BookingStatusActions } from "@/components/booking/booking-status-actions";
+import { PaymentsPanel } from "@/components/payments/payments-panel";
+import { getServerEnv } from "@/lib/env.server";
 import { PassengerPanel } from "@/components/booking/passenger-panel";
 import { PageHeader } from "@/components/crm/page-header";
 import { StatusBadge } from "@/components/crm/status-badge";
@@ -273,6 +275,21 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
           )}
         </CardContent>
       </Card>
+
+      {session.permissions.has("payments.view") && (
+        <PaymentsPanel
+          bookingId={id}
+          currency={booking.currency}
+          balance={Number(booking.balance_amount)}
+          bookingStatus={booking.status}
+          canManage={session.permissions.has("payments.create")}
+          onlineEnabled={Boolean(
+            getServerEnv().RAZORPAY_KEY_ID &&
+              getServerEnv().RAZORPAY_KEY_SECRET &&
+              getServerEnv().RAZORPAY_WEBHOOK_SECRET,
+          )}
+        />
+      )}
 
       {session.permissions.has("documents.view") && (
         <Card>
