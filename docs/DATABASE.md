@@ -85,7 +85,7 @@ Tables: `quotations`, `quotation_options` (A/B/C…), `quotation_items`, `quotat
   `save_quotation` leaves costs untouched for everyone else, so a sales executive editing a quote never wipes or sees them.
   Profit needs `quotes.view_cost` + `quotes.view_profit`, and is withheld unless every line has a cost.
 - **Totals are computed by triggers** (`recalc_quotation_option`); clients cannot write totals, status, number or approval fields
-  (column privileges). `src/lib/quotation/pricing.ts` mirrors the maths and is tested for parity with SQL.
+  (column privileges). `lib/quotation/pricing.ts` mirrors the maths and is tested for parity with SQL.
 - **Status** changes only through `set_quotation_status()` (definer, checks `quotes.send` / `quotes.update`, valid transitions).
   Sent/approved quotations are locked; "Negotiation" re-opens them. `CONVERTED` is reserved for the booking phase.
 - **Versions** are snapshots without costs/profit, taken on send, approve, any price change and "Save version".
