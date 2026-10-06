@@ -39,6 +39,10 @@ export const PERMISSIONS = [
   "reports.view",
   "tasks.view",
   "tasks.manage",
+  "itineraries.view",
+  "itineraries.create",
+  "itineraries.update",
+  "itineraries.delete",
   "users.manage",
   "settings.manage",
 ] as const;

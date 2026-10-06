@@ -57,3 +57,16 @@ additionally checks the real project once credentials are exported.
 - `lead_activities` and `lead_notes` are append-only for API users.
 - `public.apply_tenant_policies()` is the shared policy generator used by later phases.
 - Removing a member who is still assigned leads/tasks is blocked by FK; reassign first.
+
+## Phase 4: itineraries (008)
+
+Tables: `itineraries`, `itinerary_days`, `itinerary_items`, `itinerary_versions` (append-only), plus
+`itineraries.view/create/update/delete` permissions.
+
+- The builder edits the whole itinerary in the browser and saves it with `save_itinerary()`: one
+  transaction, optimistic concurrency (`version`), server-side Zod validation first, DB constraints second.
+- `save_itinerary`, `duplicate_itinerary` and `itinerary_document` are SECURITY INVOKER, so every read/write
+  goes through RLS as the caller.
+- Publishing or "Save version" writes a snapshot to `itinerary_versions`; restoring loads a snapshot into the
+  editor, and saving creates a new version.
+- Images are `https://` URLs only for now (CSP `img-src` allows https). Uploads to private storage come later.
