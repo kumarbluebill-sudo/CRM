@@ -31,6 +31,7 @@ npm run dev                    # http://localhost:3000
 | `npm run dev` / `build` / `start` | Next.js |
 | `npm run lint` / `typecheck` / `format:check` | Static checks |
 | `npm test` | Unit + integration tests (embedded Postgres, no credentials needed) |
+| `npm run test:e2e` | Browser tests in real Chromium (desktop + mobile): public pages, accessibility, security headers, route protection |
 | `npm run verify` | lint + typecheck + test + build (what CI runs) |
 | `npm run db:status` / `db:migrate` | Show / apply database migrations (needs `DATABASE_URL`) |
 | `npm run check-env` | Validate production environment variables (prints names only) |

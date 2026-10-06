@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { logger } from "@/lib/utils/logger";
 
 /**
  * Server-only secrets. Importing this file from a client component fails the
@@ -24,15 +25,34 @@ const serverSchema = z.object({
 
 export type ServerEnv = z.infer<typeof serverSchema>;
 
+/**
+ * Validates each variable on its own. A malformed OPTIONAL value (a typo in a URL, a too-short secret) is treated as
+ * "not set" and reported by name only, instead of throwing: otherwise one bad variable would turn the health check,
+ * webhooks and cron into 500s. Features that need the value then behave as unconfigured and fail closed.
+ */
+export function parseServerEnv(source: Record<string, string | undefined>): {
+  env: ServerEnv;
+  invalid: string[];
+} {
+  const env: Record<string, unknown> = {};
+  const invalid: string[] = [];
+  for (const [key, schema] of Object.entries(serverSchema.shape)) {
+    const raw = source[key];
+    if (!raw || raw.trim() === "") continue;
+    const r = schema.safeParse(raw);
+    if (r.success) env[key] = r.data;
+    else invalid.push(key);
+  }
+  return { env: env as ServerEnv, invalid };
+}
+
 let cached: ServerEnv | undefined;
 
 export function getServerEnv(): ServerEnv {
   if (!cached) {
-    const entries = Object.keys(serverSchema.shape).map((key) => {
-      const value = process.env[key];
-      return [key, value && value.trim() !== "" ? value : undefined] as const;
-    });
-    cached = serverSchema.parse(Object.fromEntries(entries));
+    const { env, invalid } = parseServerEnv(process.env);
+    if (invalid.length) logger.warn("ignoring malformed environment variables", { names: invalid });
+    cached = env;
   }
   return cached;
 }

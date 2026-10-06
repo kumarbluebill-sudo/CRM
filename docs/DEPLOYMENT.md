@@ -156,7 +156,7 @@ Operations
 
 ## 10. Known limitations at the time of writing
 
-- The interface has not been exercised in a real browser; do an accessibility and cross-browser pass.
+- Browser tests (`npm run test:e2e`) cover the signed-out surface only: public pages, accessibility (axe, WCAG 2.1 AA), security headers, route protection and mobile layout. Signed-in screens have only been exercised through server-side tests, so do the smoke tests in section 7 by hand and a cross-browser pass (Safari, Firefox) before launch.
 - No malware scanning on uploads (only staff upload today).
 - No data-erasure/retention workflow, no MFA, no per-organization data export.
 - Refunds, GST/tax invoicing and supplier payables are not implemented.
