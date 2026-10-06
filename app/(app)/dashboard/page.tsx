@@ -11,7 +11,7 @@ import { getDashboardStats } from "@/lib/crm/queries";
 export const metadata: Metadata = { title: "Dashboard" };
 
 // Metrics for modules that are not built yet render as "—" rather than fake numbers.
-const PENDING_METRICS = ["Quotes", "Bookings", "Revenue", "Outstanding"] as const;
+const PENDING_METRICS = ["Quotes", "Revenue", "Outstanding"] as const;
 
 export default async function DashboardPage() {
   const session = await requireOrgSession();
@@ -73,6 +73,7 @@ export default async function DashboardPage() {
       >
         <Metric label="New Leads" value={stats ? String(stats.newLeads) : "—"} />
         <Metric label="Hot Leads" value={stats ? String(stats.hotLeads) : "—"} />
+        <Metric label="Bookings" value={stats ? String(stats.openBookings) : "—"} />
         {PENDING_METRICS.map((m) => (
           <Metric key={m} label={m} value="—" />
         ))}
@@ -124,7 +125,20 @@ export default async function DashboardPage() {
             <CardTitle className="text-base">Upcoming Trips</CardTitle>
           </CardHeader>
           <CardContent>
-            <EmptyState icon={Inbox} title="Coming with bookings" />
+            {stats && stats.upcomingTrips.length > 0 ? (
+              <ul className="flex flex-col gap-2 text-sm">
+                {stats.upcomingTrips.map((t) => (
+                  <li key={t.id} className="flex items-center justify-between gap-2">
+                    <Link href={`/bookings/${t.id}`} className="hover:underline">
+                      {t.title}
+                    </Link>
+                    <span className="text-muted-foreground">{t.travel_start ?? "TBD"}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState icon={Inbox} title="No upcoming trips" />
+            )}
           </CardContent>
         </Card>
         <Card>

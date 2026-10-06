@@ -191,9 +191,30 @@ export async function getDashboardStats() {
     .select("id, title, destination, status")
     .order("created_at", { ascending: false })
     .limit(5);
+  const [{ count: openBookings }, trips] = await Promise.all([
+    supabase
+      .from("bookings")
+      .select("id", { count: "exact", head: true })
+      .in("status", ["PAYMENT_PENDING", "CONFIRMED", "IN_PROGRESS"]),
+    supabase
+      .from("bookings")
+      .select("id, title, destination, travel_start, status")
+      .in("status", ["PAYMENT_PENDING", "CONFIRMED", "IN_PROGRESS"])
+      .gte("travel_end", today)
+      .order("travel_start", { ascending: true, nullsFirst: false })
+      .limit(5),
+  ]);
   return {
     newLeads,
     hotLeads,
+    openBookings: openBookings ?? 0,
+    upcomingTrips: (trips.data ?? []) as {
+      id: string;
+      title: string;
+      destination: string | null;
+      travel_start: string | null;
+      status: string;
+    }[],
     followups: (followups.data ?? []) as { id: string; title: string; due_date: string | null }[],
     recentLeads: (recent.data ?? []) as Pick<LeadRow, "id" | "title" | "destination" | "status">[],
   };

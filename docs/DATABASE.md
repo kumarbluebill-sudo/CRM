@@ -91,3 +91,17 @@ Tables: `quotations`, `quotation_options` (A/B/C…), `quotation_items`, `quotat
 - **Versions** are snapshots without costs/profit, taken on send, approve, any price change and "Save version".
 - **Numbering** `Q-YYYY-NNNN` per organization via `next_org_number()` (row-locked counter).
 - Logo is stored as a validated PNG/JPEG data URI (<= 300 KB). The PDF never fetches remote URLs.
+
+## Phase 7: bookings and operations (009a, 011, 012, 014)
+
+- `009a_audit_logs`: append-only trail written only by `write_audit()` (secret-looking keys stripped); readable by `settings.manage`.
+  (Numbered 009a so later migrations can call it; the spec's 017 slot is intentionally unused.)
+- `011_suppliers`: suppliers, contacts, services with rates (purchase costs, so `suppliers.view` / `suppliers.manage`).
+- `012_bookings`: bookings, status history, passengers, `passenger_identity` (passport data, `passengers.view_sensitive` only),
+  booking items. Bookings are created only by `convert_quotation_to_booking()` (approved quotation, one booking per quotation,
+  copies the selected option, adds the customer as lead passenger, creates 3 operations tasks, marks the quotation CONVERTED).
+  Status changes only via `set_booking_status()` (valid transitions, cancellation reason required, history + audit).
+  `paid_amount` is not client-writable; the payments phase will maintain it.
+- `014_documents`: metadata only. Files live in the private `documents` bucket, which has no client policies: the server
+  uses the service role after RLS has authorised the caller. Passport/visa documents need `passengers.view_sensitive`.
+- Supabase setup: the bucket is created by the migration. Set `SUPABASE_SERVICE_ROLE_KEY` on the server (never in the browser).

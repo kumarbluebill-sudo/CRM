@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
 import { PageHeader } from "@/components/crm/page-header";
 import { StatusBadge } from "@/components/crm/status-badge";
+import { ConvertToBookingButton } from "@/components/booking/convert-button";
 import { QuotationBuilder } from "@/components/quotation/builder";
 import { QuotationStatusActions } from "@/components/quotation/status-actions";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,9 @@ export default async function QuotationPage({ params }: { params: Promise<{ id: 
             >
               <Download className="size-4" aria-hidden /> PDF
             </Button>
+            {status === "APPROVED" && session.permissions.has("bookings.create") && (
+              <ConvertToBookingButton quotationId={id} />
+            )}
             <QuotationStatusActions
               id={id}
               status={status}

@@ -43,6 +43,8 @@ export const PERMISSIONS = [
   "itineraries.create",
   "itineraries.update",
   "itineraries.delete",
+  "passengers.view_sensitive",
+  "documents.delete",
   "users.manage",
   "settings.manage",
 ] as const;
