@@ -1,41 +1,57 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { CalendarClock, CreditCard, Inbox, Plus, UserPlus } from "lucide-react";
+import { StatusBadge } from "@/components/crm/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { requireOrgSession } from "@/lib/auth/session";
+import { getDashboardStats } from "@/lib/crm/queries";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-const METRICS = ["New Leads", "Hot Leads", "Quotes", "Bookings", "Revenue", "Outstanding"] as const;
+// Metrics for modules that are not built yet render as "—" rather than fake numbers.
+const PENDING_METRICS = ["Quotes", "Bookings", "Revenue", "Outstanding"] as const;
 
-const LISTS = [
-  { title: "Today's Follow-ups", icon: CalendarClock },
-  { title: "Upcoming Trips", icon: Inbox },
-  { title: "Pending Payments", icon: CreditCard },
-  { title: "Recent Leads", icon: UserPlus },
-] as const;
-
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const session = await requireOrgSession();
+  const canLeads = session.permissions.has("leads.view");
+  const stats = canLeads ? await getDashboardStats() : null;
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const firstName = session.fullName.split(" ")[0] || "there";
   const today = new Intl.DateTimeFormat("en-IN", { dateStyle: "full" }).format(new Date());
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-          <p className="text-muted-foreground text-sm">{today}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {greeting}, {firstName}
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            {session.organization.name} · {today}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {["New Lead", "New Customer", "New Quotation", "Create Itinerary"].map((label) => (
+          {session.permissions.has("leads.create") && (
+            <Button size="sm" nativeButton={false} render={<Link href="/leads/new" />}>
+              <Plus className="size-4" aria-hidden /> New Lead
+            </Button>
+          )}
+          {session.permissions.has("customers.create") && (
             <Button
-              key={label}
               size="sm"
               variant="outline"
-              disabled
-              title="Available in a later phase"
+              nativeButton={false}
+              render={<Link href="/customers/new" />}
             >
-              <Plus className="size-4" aria-hidden />
-              {label}
+              <Plus className="size-4" aria-hidden /> New Customer
+            </Button>
+          )}
+          {["New Quotation", "Create Itinerary"].map((l) => (
+            <Button key={l} size="sm" variant="outline" disabled title="Available in a later phase">
+              <Plus className="size-4" aria-hidden /> {l}
             </Button>
           ))}
         </div>
@@ -45,34 +61,84 @@ export default function DashboardPage() {
         aria-label="Key metrics"
         className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6"
       >
-        {METRICS.map((label) => (
-          <Card key={label} size="sm">
-            <CardHeader>
-              <CardTitle className="text-muted-foreground text-xs font-medium">{label}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground/60 text-2xl font-semibold">—</p>
-            </CardContent>
-          </Card>
+        <Metric label="New Leads" value={stats ? String(stats.newLeads) : "—"} />
+        <Metric label="Hot Leads" value={stats ? String(stats.hotLeads) : "—"} />
+        {PENDING_METRICS.map((m) => (
+          <Metric key={m} label={m} value="—" />
         ))}
       </section>
 
       <section aria-label="Activity" className="grid gap-4 md:grid-cols-2">
-        {LISTS.map(({ title, icon }) => (
-          <Card key={title}>
-            <CardHeader>
-              <CardTitle className="text-base">{title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <EmptyState
-                icon={icon}
-                title="Nothing to show yet"
-                description="Data appears here once the CRM modules are live."
-              />
-            </CardContent>
-          </Card>
-        ))}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Today&apos;s Follow-ups</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {stats && stats.followups.length > 0 ? (
+              <ul className="flex flex-col gap-2 text-sm">
+                {stats.followups.map((f) => (
+                  <li key={f.id} className="flex justify-between gap-2">
+                    <span>{f.title}</span>
+                    <span className="text-muted-foreground">{f.due_date}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState icon={CalendarClock} title="No follow-ups due" />
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Recent Leads</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {stats && stats.recentLeads.length > 0 ? (
+              <ul className="flex flex-col gap-2 text-sm">
+                {stats.recentLeads.map((l) => (
+                  <li key={l.id} className="flex items-center justify-between gap-2">
+                    <Link href={`/leads/${l.id}`} className="hover:underline">
+                      {l.title}
+                    </Link>
+                    <StatusBadge value={l.status} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState icon={UserPlus} title="No leads yet" />
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Upcoming Trips</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EmptyState icon={Inbox} title="Coming with bookings" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Pending Payments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EmptyState icon={CreditCard} title="Coming with payments" />
+          </CardContent>
+        </Card>
       </section>
     </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <Card size="sm">
+      <CardHeader>
+        <CardTitle className="text-muted-foreground text-xs font-medium">{label}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-2xl font-semibold">{value}</p>
+      </CardContent>
+    </Card>
   );
 }

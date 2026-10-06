@@ -37,6 +37,8 @@ export const PERMISSIONS = [
   "documents.upload",
   "documents.download",
   "reports.view",
+  "tasks.view",
+  "tasks.manage",
   "users.manage",
   "settings.manage",
 ] as const;
