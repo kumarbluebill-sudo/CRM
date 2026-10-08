@@ -14,3 +14,4 @@ Thumbs.db
 .test-tmp-*
 test-results/
 playwright-report/
+database/bundle.sql

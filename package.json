@@ -15,7 +15,8 @@
     "db:status": "node scripts/migrate.mjs --status",
     "check-env": "node scripts/check-env.mjs",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "db:bundle": "node scripts/bundle-sql.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

@@ -20,7 +20,10 @@ function blankToUndefined(value: string | undefined): string | undefined {
 export function parsePublicEnv(source: Record<string, string | undefined>): PublicEnv {
   return publicSchema.parse({
     NEXT_PUBLIC_SUPABASE_URL: blankToUndefined(source.NEXT_PUBLIC_SUPABASE_URL),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: blankToUndefined(source.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+    // Supabase now calls this the "publishable" key; older projects call it the "anon" key. Either name works.
+    NEXT_PUBLIC_SUPABASE_ANON_KEY:
+      blankToUndefined(source.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) ??
+      blankToUndefined(source.NEXT_PUBLIC_SUPABASE_ANON_KEY),
     NEXT_PUBLIC_APP_URL: blankToUndefined(source.NEXT_PUBLIC_APP_URL),
   });
 }
@@ -28,6 +31,7 @@ export function parsePublicEnv(source: Record<string, string | undefined>): Publ
 export function getPublicEnv(): PublicEnv {
   return parsePublicEnv({
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   });
