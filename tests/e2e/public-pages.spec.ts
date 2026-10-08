@@ -93,3 +93,16 @@ test("the interface font is a sans-serif (the font variable resolves)", async ({
     .evaluate((el) => getComputedStyle(el).fontFamily);
   expect(heading).not.toMatch(/^"?times/i);
 });
+
+test("a form keeps what you typed when the server reports an error", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel(/email/i).fill("someone@example.com");
+  await page.getByRole("button", { name: /sign in/i }).click(); // password left empty -> field error
+  await expect(
+    page
+      .getByText(/password/i)
+      .filter({ hasText: /enter|required|least/i })
+      .first(),
+  ).toBeVisible();
+  await expect(page.getByLabel(/email/i)).toHaveValue("someone@example.com");
+});

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useFormAction } from "@/lib/hooks/use-form-action";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,7 @@ export function AssistantForm({
   initialType: "BOOKING" | "LEAD";
   initialId?: string;
 }) {
-  const [state, action, pending] = useActionState<AssistantState, FormData>(runAssistantAction, {});
+  const { state, pending, formProps } = useFormAction<AssistantState>(runAssistantAction, {});
   const [type, setType] = useState(initialType);
   const [task, setTask] = useState("SUMMARIZE");
   const [copied, setCopied] = useState(false);
@@ -31,7 +32,7 @@ export function AssistantForm({
 
   return (
     <div className="flex flex-col gap-4">
-      <form action={action} className="flex flex-col gap-4" noValidate>
+      <form {...formProps} className="flex flex-col gap-4" noValidate>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-1.5">
             <label htmlFor="ai-type" className="text-sm font-medium">

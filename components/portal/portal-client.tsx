@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useRef, useState, useTransition } from "react";
+import { useFormAction } from "@/lib/hooks/use-form-action";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -100,12 +101,12 @@ export function PayNow({
 }
 
 export function RequestForm({ token }: { token: string }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(
+  const { state, pending, formProps } = useFormAction<FormState>(
     submitPortalRequestAction.bind(null, token),
     {},
   );
   return (
-    <form action={action} className="flex flex-col gap-2" noValidate>
+    <form {...formProps} className="flex flex-col gap-2" noValidate>
       <label htmlFor="portal-message" className="text-sm font-medium">
         Questions or changes
       </label>

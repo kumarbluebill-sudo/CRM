@@ -147,7 +147,11 @@ export async function resetPasswordAction(
 export async function logoutAction() {
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
-    await audit(supabase, "LOGOUT", "user", null);
+    // Load the session first: without it the database call runs as the anonymous role and is refused.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) await audit(supabase, "LOGOUT", "user", user.id);
     await supabase.auth.signOut();
   }
   redirect("/login");

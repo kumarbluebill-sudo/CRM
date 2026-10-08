@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useFormAction } from "@/lib/hooks/use-form-action";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,12 +11,12 @@ const selectClass =
   "border-input bg-background focus-visible:ring-ring/50 focus-visible:border-ring h-8 w-full rounded-lg border px-2.5 text-sm outline-none focus-visible:ring-3";
 
 export function SendMessageForm({ bookingId }: { bookingId: string }) {
-  const [state, action, pending] = useActionState<SendState, FormData>(
+  const { state, pending, formProps } = useFormAction<SendState>(
     sendBookingMessageAction.bind(null, bookingId),
     {},
   );
   return (
-    <form action={action} className="flex flex-col gap-3" noValidate>
+    <form {...formProps} className="flex flex-col gap-3" noValidate>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="msg-channel" className="text-sm font-medium">

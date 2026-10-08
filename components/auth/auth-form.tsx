@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useFormAction } from "@/lib/hooks/use-form-action";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,10 +24,10 @@ type Props = {
 
 /** Generic form: field-level errors, pending state (blocks double submit), success/failure message. */
 export function AuthForm({ action, fields, submitLabel }: Props) {
-  const [state, formAction, pending] = useActionState<FormState, FormData>(action, {});
+  const { state, pending, formProps } = useFormAction<FormState>(action, {});
 
   return (
-    <form action={formAction} className="flex flex-col gap-4" noValidate>
+    <form {...formProps} className="flex flex-col gap-4" noValidate>
       {fields.map((f) => {
         const errors = state.fieldErrors?.[f.name];
         const errId = `${f.name}-error`;
