@@ -22,28 +22,36 @@ export async function GET(_request: NextRequest, ctx: { params: Promise<{ id: st
 
   const session = await getSessionContext();
   if (!session) return json(401, "Please sign in.");
-  if (!session.organization || !session.permissions.has("documents.download"))
-    return json(403, "Forbidden.");
+  if (!session.organization) return json(403, "Forbidden.");
   if (!(await rateLimit(`doc-download:${session.userId}`, 60, 60_000)).allowed)
     return json(429, "Too many requests.");
 
   const supabase = await createClient();
   const { data: doc } = await supabase
     .from("documents")
-    .select("id, name, storage_path, category, is_sensitive")
+    .select("id, name, storage_path, category, is_sensitive, visa_application_id")
     .eq("id", id)
     .maybeSingle();
   if (!doc) return json(404, "Not found."); // missing, other organization, or no access to sensitive category
+  // General documents need documents.download; files linked to a visa application can also be opened by visa staff.
+  const visaLinked = Boolean(doc.visa_application_id);
+  if (
+    !session.permissions.has("documents.download") &&
+    !(visaLinked && session.permissions.has("visa.document.view"))
+  )
+    return json(403, "Forbidden.");
+  const inline = new URL(_request.url).searchParams.get("inline") === "1";
 
   try {
     const url = await getStorage().signedUrl(
       doc.storage_path as string,
       SIGNED_URL_SECONDS,
-      doc.name as string,
+      inline ? undefined : (doc.name as string),
     );
     await audit(supabase, "DOWNLOAD", "document", id, {
       category: doc.category,
       sensitive: doc.is_sensitive,
+      ...(visaLinked ? { visaApplication: doc.visa_application_id, inline } : {}),
     });
     return NextResponse.redirect(url, {
       status: 302,

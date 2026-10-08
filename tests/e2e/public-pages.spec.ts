@@ -77,7 +77,17 @@ test("unknown pages show the friendly 404", async ({ page }) => {
 });
 
 test("protected pages send signed-out visitors to sign in", async ({ page }) => {
-  for (const p of ["/dashboard", "/bookings", "/settings/billing", "/reports", "/settings/audit"]) {
+  for (const p of [
+    "/dashboard",
+    "/bookings",
+    "/settings/billing",
+    "/reports",
+    "/settings/audit",
+    "/visa",
+    "/visa/applications",
+    "/visa/enquiries/new",
+    "/visa/products",
+  ]) {
     await page.goto(p);
     await expect(page, p).toHaveURL(/\/login/);
   }

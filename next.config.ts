@@ -12,7 +12,7 @@ const csp = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   `connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com${supabaseUrl ? ` ${supabaseUrl} ${supabaseWs}` : ""}`,
-  "frame-src https://api.razorpay.com https://checkout.razorpay.com",
+  `frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com${supabaseUrl ? ` ${supabaseUrl}` : ""}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

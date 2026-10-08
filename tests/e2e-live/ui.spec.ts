@@ -33,13 +33,23 @@ test.afterAll(async () => {
   });
   await db.connect();
   try {
-    await db.query("delete from public.organizations where name like 'LIVE-TEST %'");
+    await db.query(
+      `delete from public.organizations where id in (select distinct o.id from public.organizations o
+         left join public.organization_members m on m.organization_id = o.id
+        where o.name like 'LIVE-TEST %' and (m.user_id = any($1::uuid[]) or not exists (select 1 from public.organization_members x where x.organization_id = o.id)
+          or o.created_at < now() - interval '30 minutes'))`,
+      [[userId]],
+    );
   } finally {
     await db.end();
   }
   const { data } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
   for (const u of data?.users ?? [])
-    if (u.id === userId || /^live-[a-z]+-[0-9a-f]{8}@example\.invalid$/.test(u.email ?? ""))
+    if (
+      u.id === userId ||
+      (/^live-[a-z]+-[0-9a-f]{8}@example\.invalid$/.test(u.email ?? "") &&
+        Date.now() - Date.parse(u.created_at) > 30 * 60 * 1000)
+    )
       await admin.auth.admin.deleteUser(u.id).catch(() => {});
 });
 
