@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getPublicEnv, isSupabaseConfigured } from "@/lib/env";
+import { getPublicEnv, isSupabaseConfigured, missingSupabaseVars } from "@/lib/env";
 import { logger } from "@/lib/utils/logger";
 import { audit } from "@/lib/audit";
 import { rateLimit } from "@/lib/rate-limit";
@@ -33,7 +33,10 @@ function formObject(formData: FormData) {
 export async function loginAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = loginSchema.safeParse(formObject(formData));
   if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
-  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
+  if (!isSupabaseConfigured()) {
+    logger.error("supabase not configured", { missing: missingSupabaseVars() });
+    return NOT_CONFIGURED;
+  }
 
   // Throttle by address AND by target account, so neither one attacker nor a spread-out attack can guess passwords freely.
   const ip = await clientIp();
@@ -66,7 +69,10 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
 export async function registerAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = registerSchema.safeParse(formObject(formData));
   if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
-  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
+  if (!isSupabaseConfigured()) {
+    logger.error("supabase not configured", { missing: missingSupabaseVars() });
+    return NOT_CONFIGURED;
+  }
 
   const ip = await clientIp();
   if (!(await rateLimit(`register-ip:${ip}`, 10, 60 * 60_000)).allowed) return TOO_MANY;
@@ -98,7 +104,10 @@ export async function forgotPasswordAction(
 ): Promise<FormState> {
   const parsed = forgotPasswordSchema.safeParse(formObject(formData));
   if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
-  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
+  if (!isSupabaseConfigured()) {
+    logger.error("supabase not configured", { missing: missingSupabaseVars() });
+    return NOT_CONFIGURED;
+  }
 
   const ip = await clientIp();
   const [byIp, byEmail] = await Promise.all([
@@ -126,7 +135,10 @@ export async function resetPasswordAction(
 ): Promise<FormState> {
   const parsed = resetPasswordSchema.safeParse(formObject(formData));
   if (!parsed.success) return { fieldErrors: parsed.error.flatten().fieldErrors };
-  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
+  if (!isSupabaseConfigured()) {
+    logger.error("supabase not configured", { missing: missingSupabaseVars() });
+    return NOT_CONFIGURED;
+  }
 
   const supabase = await createClient();
   const {

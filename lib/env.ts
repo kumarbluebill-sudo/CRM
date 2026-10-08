@@ -12,9 +12,26 @@ const publicSchema = z.object({
 
 export type PublicEnv = z.infer<typeof publicSchema>;
 
-/** Treat empty strings (as in a copied .env.example) as unset. */
+/**
+ * Treat empty strings (as in a copied .env.example) as unset, and tolerate the usual copy-paste accidents: surrounding
+ * whitespace and one pair of wrapping quotes (hosting dashboards that import ".env" text sometimes keep them).
+ */
 function blankToUndefined(value: string | undefined): string | undefined {
-  return value && value.trim() !== "" ? value : undefined;
+  if (!value) return undefined;
+  let cleaned = value.trim();
+  const first = cleaned[0];
+  if (cleaned.length >= 2 && (first === '"' || first === "'") && cleaned.endsWith(first)) {
+    cleaned = cleaned.slice(1, -1).trim();
+  }
+  return cleaned !== "" ? cleaned : undefined;
+}
+
+/** Names (never values) of the public Supabase variables that are missing, for logs and diagnostics. */
+export function missingSupabaseVars(env: PublicEnv = getPublicEnv()): string[] {
+  const missing: string[] = [];
+  if (!env.NEXT_PUBLIC_SUPABASE_URL) missing.push("NEXT_PUBLIC_SUPABASE_URL");
+  if (!env.NEXT_PUBLIC_SUPABASE_ANON_KEY) missing.push("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+  return missing;
 }
 
 export function parsePublicEnv(source: Record<string, string | undefined>): PublicEnv {
