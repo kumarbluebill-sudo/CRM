@@ -2,6 +2,11 @@ import {
   BarChart3,
   Bot,
   Briefcase,
+  ClipboardCheck,
+  MessageSquareText,
+  SlidersHorizontal,
+  Stamp,
+  Tags,
   CalendarCheck,
   CheckSquare,
   CreditCard,
@@ -55,6 +60,16 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Itineraries", href: "/itineraries", icon: MapPinned },
       { label: "Bookings", href: "/bookings", icon: Briefcase },
       { label: "Suppliers", href: "/suppliers", icon: Truck },
+    ],
+  },
+  {
+    title: "Visa",
+    items: [
+      { label: "Visa dashboard", href: "/visa", icon: Stamp },
+      { label: "Enquiries", href: "/visa/enquiries", icon: MessageSquareText },
+      { label: "Applications", href: "/visa/applications", icon: ClipboardCheck },
+      { label: "Products", href: "/visa/products", icon: Tags },
+      { label: "Visa settings", href: "/visa/settings", icon: SlidersHorizontal },
     ],
   },
   {
