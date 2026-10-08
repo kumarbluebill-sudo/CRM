@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { useFormAction } from "@/lib/hooks/use-form-action";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,8 @@ type Props = {
 /** Validated-on-server form with field errors, pending state and success/failure messages. */
 export function EntityForm({ action, fields, submitLabel, hidden }: Props) {
   const { state, pending, formProps } = useFormAction<FormState>(action, {});
+  // Unique per form instance: two forms on one page may share field names, and ids must not collide.
+  const uid = useId();
 
   return (
     <form {...formProps} className="flex flex-col gap-4" noValidate>
@@ -45,9 +48,9 @@ export function EntityForm({ action, fields, submitLabel, hidden }: Props) {
       <div className="grid gap-4 sm:grid-cols-2">
         {fields.map((f) => {
           const errors = state.fieldErrors?.[f.name];
-          const errId = `${f.name}-error`;
+          const errId = `${uid}-${f.name}-error`;
           const common = {
-            id: f.name,
+            id: `${uid}-${f.name}`,
             name: f.name,
             "aria-invalid": errors ? true : undefined,
             "aria-describedby": errors ? errId : undefined,
@@ -75,7 +78,7 @@ export function EntityForm({ action, fields, submitLabel, hidden }: Props) {
                 </label>
               ) : (
                 <>
-                  <label htmlFor={f.name} className="text-sm font-medium">
+                  <label htmlFor={`${uid}-${f.name}`} className="text-sm font-medium">
                     {f.label}
                     {f.required && <span className="text-destructive"> *</span>}
                   </label>

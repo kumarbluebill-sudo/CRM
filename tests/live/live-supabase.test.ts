@@ -86,7 +86,13 @@ describe.skipIf(!LIVE)(
       try {
         await db.connect();
         const orgs = (
-          await db.query("select id from public.organizations where name like 'LIVE-TEST %'")
+          await db.query(
+            `select distinct o.id from public.organizations o
+         left join public.organization_members m on m.organization_id = o.id
+        where o.name like 'LIVE-TEST %' and (m.user_id = any($1::uuid[]) or not exists (select 1 from public.organization_members x where x.organization_id = o.id)
+          or o.created_at < now() - interval '30 minutes')`,
+            [userIds],
+          )
         ).rows.map((r) => r.id);
         for (const id of [...new Set([...orgs, ...orgIds])]) {
           const paths = (
@@ -104,7 +110,8 @@ describe.skipIf(!LIVE)(
       for (const u of data?.users ?? [])
         if (
           userIds.includes(u.id) ||
-          /^live-[a-z]+-[0-9a-f]{8}@example.invalid$/.test(u.email ?? "")
+          (/^live-[a-z]+-[0-9a-f]{8}@example.invalid$/.test(u.email ?? "") &&
+            Date.now() - Date.parse(u.created_at) > 30 * 60 * 1000)
         )
           await admin.auth.admin.deleteUser(u.id).catch(() => {});
     }, 90_000);
