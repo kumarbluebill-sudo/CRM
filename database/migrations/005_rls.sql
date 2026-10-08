@@ -122,7 +122,7 @@ begin
 
   base_slug := trim(both '-' from regexp_replace(lower(trim(org_name)), '[^a-z0-9]+', '-', 'g'));
   if base_slug = '' then base_slug := 'agency'; end if;
-  final_slug := base_slug || '-' || substr(encode(gen_random_bytes(4), 'hex'), 1, 6);
+  final_slug := base_slug || '-' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 6);
 
   insert into public.organizations (name, slug) values (trim(org_name), final_slug)
     returning id into new_org;
