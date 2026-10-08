@@ -129,6 +129,10 @@ webhook secret, and adds the webhook URL the page shows (`/api/webhooks/razorpay
 10. Check the audit log shows your sign-in, and that a second agency cannot see the first agency's data.
 11. Trigger a deliberate error and confirm it reaches Sentry.
 
+### Automated live check
+
+`npm run test:live` runs the same kind of checks against whichever Supabase project is in `.env.local`: RLS and RPC behaviour on the real platform, private storage, the customer portal, webhooks, invitations, then the real app in a browser (sign in, create an agency, open every main page, create a customer and a lead, sign out). It creates users named `live-…@example.invalid` (no email is sent) and agencies named "LIVE-TEST …", and deletes them afterwards. Run it against staging, never production.
+
 ## 8. Releasing and rolling back
 
 - Work on `feature/*`, merge to `develop` (staging), then merge `develop` into `main` to release; tag releases (`v1.0.0`).

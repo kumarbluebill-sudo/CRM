@@ -43,7 +43,13 @@ export async function audit(
       p_ip: ip,
       p_user_agent: h.get("user-agent"),
     });
-    if (error) logger.warn("audit write failed", { code: error.code });
+    if (error)
+      logger.warn("audit write failed", {
+        code: error.code,
+        reason: error.message,
+        action,
+        entityType,
+      });
   } catch (error) {
     logger.warn("audit write failed", { error: error instanceof Error ? error.name : "unknown" });
   }

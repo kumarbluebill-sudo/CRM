@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useFormAction } from "@/lib/hooks/use-form-action";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,9 +14,9 @@ const selectClass =
 export function ItineraryDraftForm({ leads }: { leads: { value: string; label: string }[] }) {
   const [leadId, setLeadId] = useState("");
   const bound = generateItineraryAction.bind(null, leadId);
-  const [state, action, pending] = useActionState<FormState, FormData>(bound, {});
+  const { state, pending, formProps } = useFormAction<FormState>(bound, {});
   return (
-    <form action={action} className="flex flex-col gap-3" noValidate>
+    <form {...formProps} className="flex flex-col gap-3" noValidate>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="it-lead" className="text-sm font-medium">
           Lead

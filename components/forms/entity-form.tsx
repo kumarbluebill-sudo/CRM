@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useFormAction } from "@/lib/hooks/use-form-action";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,10 +36,10 @@ type Props = {
 
 /** Validated-on-server form with field errors, pending state and success/failure messages. */
 export function EntityForm({ action, fields, submitLabel, hidden }: Props) {
-  const [state, formAction, pending] = useActionState<FormState, FormData>(action, {});
+  const { state, pending, formProps } = useFormAction<FormState>(action, {});
 
   return (
-    <form action={formAction} className="flex flex-col gap-4" noValidate>
+    <form {...formProps} className="flex flex-col gap-4" noValidate>
       {hidden &&
         Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
       <div className="grid gap-4 sm:grid-cols-2">
