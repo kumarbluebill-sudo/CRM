@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getServerEnv } from "@/lib/env.server";
+import { missingSupabaseVars } from "@/lib/env";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,6 +41,7 @@ export async function GET(req: NextRequest) {
     if (error) problems.push("database");
     if (Date.now() - started > 3000) problems.push("database_slow");
   }
+  for (const name of missingSupabaseVars()) problems.push("missing_" + name.toLowerCase());
   if (!env.ENCRYPTION_KEY) problems.push("encryption_key");
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN)
     problems.push("rate_limit_redis");
