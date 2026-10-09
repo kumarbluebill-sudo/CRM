@@ -16,7 +16,10 @@ export default async function BrandingPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-5">
-      <PageHeader title="Agency branding" description="Applied automatically to quotation PDFs." />
+      <PageHeader
+        title="Agency branding"
+        description="Shown in the sidebar and on quotation and invoice PDFs."
+      />
       <div className="bg-card rounded-xl border p-5">
         <LogoUploader logo={b?.logo_data ?? null} />
       </div>
@@ -25,6 +28,18 @@ export default async function BrandingPage() {
           action={saveBrandingAction}
           submitLabel="Save branding"
           fields={[
+            {
+              name: "legalName",
+              label: "Legal business name",
+              defaultValue: b?.legal_name,
+              wide: true,
+            },
+            {
+              name: "tradeName",
+              label: "Trade name (shown in the app)",
+              defaultValue: b?.trade_name,
+              wide: true,
+            },
             {
               name: "primaryColor",
               label: "Primary colour (#RRGGBB)",
