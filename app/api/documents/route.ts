@@ -29,6 +29,21 @@ const meta = z.object({
   customerId: optionalId,
   supplierId: optionalId,
   visaItemId: optionalId,
+  // the final visa for one traveller (the application is looked up server-side from the traveller)
+  visaTravellerId: optionalId,
+  visaNumber: z.preprocess(
+    (v) => (v === "" || v === null ? undefined : v),
+    z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z0-9 /-]{3,40}$/)
+      .optional(),
+  ),
+  validFrom: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.iso.date().optional()),
+  validUntil: z.preprocess(
+    (v) => (v === "" || v === null ? undefined : v),
+    z.iso.date().optional(),
+  ),
   notes: z.preprocess(
     (v) => (v === "" || v === null ? undefined : v),
     z.string().trim().max(1000).optional(),
@@ -90,6 +105,22 @@ export async function POST(request: NextRequest) {
     visaApplicationId = item.application_id as string;
     const t = item.visa_document_types as unknown as { storage_category?: string } | null;
     category = t?.storage_category === "PASSPORT" ? "PASSPORT" : "VISA";
+  } else if (m.visaTravellerId) {
+    if (
+      !session.permissions.has("visa.process") ||
+      !session.permissions.has("visa.document.upload")
+    )
+      return fail(403, "You don't have permission to record the final visa.");
+    const supabaseForTraveller = await createClient();
+    const { data: trav } = await supabaseForTraveller
+      .from("visa_travellers")
+      .select("application_id")
+      .eq("id", m.visaTravellerId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!trav) return fail(404, "That traveller wasn't found.");
+    visaApplicationId = trav.application_id as string;
+    category = "VISA";
   } else if (isVisaUpload) {
     return fail(400, "Choose the checklist item this file is for.");
   }
@@ -162,6 +193,27 @@ export async function POST(request: NextRequest) {
       logger.warn("visa document attach failed", { code: attachError.code });
       await storage.remove(path).catch(() => undefined);
       return fail(400, "The file couldn't be added to the checklist.");
+    }
+  }
+  if (m.visaTravellerId && visaApplicationId) {
+    const { error: resultError } = await supabase.rpc("record_visa_result", {
+      p_app: visaApplicationId,
+      p_traveller: m.visaTravellerId,
+      p_document: data.id,
+      p_visa_number: m.visaNumber ?? null,
+      p_valid_from: m.validFrom ?? null,
+      p_valid_until: m.validUntil ?? null,
+      p_notes: null,
+    });
+    if (resultError) {
+      logger.warn("visa result record failed", { code: resultError.code });
+      await storage.remove(path).catch(() => undefined);
+      return fail(
+        resultError.code === "P0005" ? 409 : 400,
+        resultError.code === "P0005"
+          ? "The visa must be approved before the final file can be added."
+          : "The final visa couldn't be recorded.",
+      );
     }
   }
   await audit(supabase, "UPLOAD", "document", data.id as string, {

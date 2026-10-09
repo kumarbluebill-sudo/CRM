@@ -22,6 +22,7 @@ import { label, options } from "@/lib/crm/constants";
 import { listTeamMembers } from "@/lib/crm/queries";
 import { uuid } from "@/lib/crm/schemas";
 import { createTaskAction } from "@/app/(app)/tasks/actions";
+import { DeliveryTab, MessagesTab, PaymentsTab, PricingTab, SupplierTab } from "./commerce-tabs";
 import {
   APPLICANT_TYPES,
   PRIORITIES,
@@ -56,7 +57,12 @@ const TABS = [
   "overview",
   "travellers",
   "documents",
+  "pricing",
+  "payments",
   "processing",
+  "supplier",
+  "delivery",
+  "messages",
   "tasks",
   "notes",
   "timeline",
@@ -66,7 +72,12 @@ const TAB_LABEL: Record<Tab, string> = {
   overview: "Overview",
   travellers: "Travellers",
   documents: "Documents",
+  pricing: "Pricing",
+  payments: "Payments",
   processing: "Processing",
+  supplier: "Supplier",
+  delivery: "Delivery",
+  messages: "Messages",
   tasks: "Tasks",
   notes: "Notes",
   timeline: "Timeline",
@@ -267,6 +278,7 @@ export default async function ApplicationPage({
               ],
               ["Manager", app.manager_user_id ? names.get(app.manager_user_id) : "Unassigned"],
               ["Documents approved", `${approved} / ${required.length} required`],
+              ["Expected completion", app.expected_completion],
               [
                 "Processing time",
                 app.visa_products?.processing_days_normal != null
@@ -529,6 +541,7 @@ export default async function ApplicationPage({
                     canProcess
                     next={VISA_TRANSITIONS[status].filter(
                       (s) =>
+                        s !== "DELIVERED" && // recorded on the Delivery tab, which also keeps the proof
                         (s !== "SUBMITTED" || p.has("visa.application.submit")) &&
                         (s !== "CLOSED" || p.has("visa.application.close")),
                     )}
@@ -580,6 +593,12 @@ export default async function ApplicationPage({
           )}
         </section>
       )}
+
+      {tab === "pricing" && <PricingTab app={app} p={p} travellerCount={travellers.length} />}
+      {tab === "payments" && <PaymentsTab app={app} p={p} />}
+      {tab === "supplier" && <SupplierTab app={app} p={p} />}
+      {tab === "delivery" && <DeliveryTab app={app} p={p} travellers={travellers} names={names} />}
+      {tab === "messages" && <MessagesTab app={app} p={p} />}
 
       {tab === "tasks" && (
         <section aria-label="Tasks" className="flex flex-col gap-4">

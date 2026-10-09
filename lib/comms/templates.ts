@@ -6,6 +6,11 @@ export const TEMPLATE_KEYS = [
   "PAYMENT_REMINDER",
   "PAYMENT_OVERDUE",
   "TRIP_REMINDER",
+  "VISA_DOCUMENT_REQUEST",
+  "VISA_CORRECTION",
+  "VISA_STATUS_UPDATE",
+  "VISA_APPROVED",
+  "VISA_READY",
 ] as const;
 export type TemplateKey = (typeof TEMPLATE_KEYS)[number];
 export const CHANNELS = ["EMAIL", "WHATSAPP"] as const;
@@ -24,6 +29,11 @@ export const TEMPLATE_VARS = [
   "due_date",
   "installment",
   "message",
+  "application_number",
+  "country",
+  "visa_type",
+  "documents_pending",
+  "expected_completion",
 ] as const;
 
 export const TEMPLATE_LABELS: Record<TemplateKey, string> = {
@@ -34,6 +44,11 @@ export const TEMPLATE_LABELS: Record<TemplateKey, string> = {
   PAYMENT_REMINDER: "Payment reminder (due soon)",
   PAYMENT_OVERDUE: "Payment overdue",
   TRIP_REMINDER: "Trip reminder",
+  VISA_DOCUMENT_REQUEST: "Visa: documents needed",
+  VISA_CORRECTION: "Visa: document needs correcting",
+  VISA_STATUS_UPDATE: "Visa: status update",
+  VISA_APPROVED: "Visa: approved",
+  VISA_READY: "Visa: ready for collection",
 };
 
 type Tpl = { subject: string; body: string };
@@ -86,6 +101,40 @@ export const DEFAULT_TEMPLATES: Record<TemplateKey, Tpl> = {
     body:
       "Hello {{customer_name}},\n\nYour trip {{trip_title}} starts on {{travel_start}}. Please keep your travel " +
       "documents ready.\n\n{{message}}" +
+      SIGN,
+  },
+  VISA_DOCUMENT_REQUEST: {
+    subject: "Documents needed for your {{country}} visa ({{application_number}})",
+    body:
+      "Hello {{customer_name}},\n\nTo continue your {{country}} {{visa_type}} visa application {{application_number}}, " +
+      "we still need: {{documents_pending}}.\n\n{{message}}" +
+      SIGN,
+  },
+  VISA_CORRECTION: {
+    subject: "A document needs correcting ({{application_number}})",
+    body:
+      "Hello {{customer_name}},\n\nWe reviewed your documents for visa application {{application_number}} and " +
+      "something needs to be corrected or re-sent: {{documents_pending}}.\n\n{{message}}" +
+      SIGN,
+  },
+  VISA_STATUS_UPDATE: {
+    subject: "Update on your {{country}} visa ({{application_number}})",
+    body:
+      "Hello {{customer_name}},\n\nHere is an update on your {{country}} visa application {{application_number}}. " +
+      "Expected completion: {{expected_completion}}.\n\n{{message}}" +
+      SIGN,
+  },
+  VISA_APPROVED: {
+    subject: "Good news: your {{country}} visa is approved",
+    body:
+      "Hello {{customer_name}},\n\nYour {{country}} {{visa_type}} visa ({{application_number}}) has been approved. " +
+      "We will share it with you shortly.\n\n{{message}}" +
+      SIGN,
+  },
+  VISA_READY: {
+    subject: "Your {{country}} visa is ready",
+    body:
+      "Hello {{customer_name}},\n\nYour {{country}} visa ({{application_number}}) is ready. {{message}}" +
       SIGN,
   },
 };
