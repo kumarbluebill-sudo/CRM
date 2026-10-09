@@ -70,6 +70,10 @@ export const PERMISSIONS = [
   "visa.discount",
   "billing.manage",
   "invoicing.manage",
+  "jobs.view",
+  "jobs.create",
+  "jobs.assign",
+  "jobs.manage",
   "users.manage",
   "settings.manage",
 ] as const;

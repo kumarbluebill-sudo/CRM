@@ -3,6 +3,8 @@ import { AppShell } from "@/components/layout/app-shell";
 import type { QuickAction } from "@/components/layout/header-actions";
 import { requireOrgSession } from "@/lib/auth/session";
 import { getOrgBrand } from "@/lib/branding";
+import { NotificationBell } from "@/components/notifications/bell";
+import { latestNotifications, unreadCount } from "@/lib/notifications/queries";
 
 // Every page in this group requires a signed-in user who belongs to an organization.
 // RLS remains the real enforcement; this is the server-side route gate.
@@ -10,6 +12,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const session = await requireOrgSession();
   const brand = await getOrgBrand(session.organization.name);
   const can = (p: string) => session.permissions.has(p);
+  const [unread, latest] = await Promise.all([
+    unreadCount().catch(() => 0),
+    latestNotifications(8).catch(() => []),
+  ]);
   const quickActions: QuickAction[] = [
     can("leads.create") && { label: "New enquiry", href: "/leads/new" },
     can("quotes.create") && { label: "New quotation / booking", href: "/quotations/new" },
@@ -27,6 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       quickActions={quickActions}
       canSettings={can("settings.manage")}
       banner={<BillingBanner />}
+      headerSlot={<NotificationBell initialUnread={unread} initialItems={latest} />}
     >
       {children}
     </AppShell>

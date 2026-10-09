@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { requireOrgSession } from "@/lib/auth/session";
 import { label } from "@/lib/crm/constants";
 import { listTeamMembers } from "@/lib/crm/queries";
+import { getJobsDashboard } from "@/lib/jobs/queries";
 import { getDashboard, RANGE_LABELS, resolveRange, type Dashboard } from "@/lib/dashboard/queries";
 import { formatMoney } from "@/lib/quotation/pricing";
 
@@ -97,9 +98,16 @@ export default async function DashboardPage({
   const session = await requireOrgSession();
   const sp = await searchParams;
   const range = resolveRange(sp.range, sp.from, sp.to);
-  const [d, team]: [Dashboard | null, { userId: string; name: string }[]] = await Promise.all([
+  const [d, team, jobs]: [
+    Dashboard | null,
+    { userId: string; name: string }[],
+    Awaited<ReturnType<typeof getJobsDashboard>> | null,
+  ] = await Promise.all([
     getDashboard(range).catch(() => null),
     listTeamMembers().catch(() => []),
+    session.permissions.has("jobs.view")
+      ? getJobsDashboard().catch(() => null)
+      : Promise.resolve(null),
   ]);
   const names = new Map(team.map((m) => [m.userId, m.name]));
   const hour = new Date().getHours();
@@ -169,6 +177,13 @@ export default async function DashboardPage({
       href: "/payments",
     },
     {
+      show: jobs !== null,
+      title: "Pending Job Orders",
+      value: jobs ? String(jobs.pending + jobs.active) : "—",
+      href: "/jobs?status=OPEN",
+      note: jobs ? `${jobs.pending} not started · ${jobs.overdue} overdue` : undefined,
+    },
+    {
       show: k.pendingVisa !== undefined,
       title: "Pending Visa Applications",
       value: count(k.pendingVisa),
@@ -185,7 +200,7 @@ export default async function DashboardPage({
     },
   ];
 
-  const opsAll: (OpsTab | undefined)[] = [
+  const opsAll: (OpsTab | undefined | null)[] = [
     d.departures && {
       id: "dep",
       label: "Departures",
@@ -228,6 +243,17 @@ export default async function DashboardPage({
         href: `/visa/applications/${x.applicationId}?tab=documents`,
         primary: x.number,
         secondary: `${x.missing} missing`,
+      })),
+    },
+    jobs && {
+      id: "jobs",
+      label: "Overdue jobs",
+      empty: "No overdue job orders.",
+      items: jobs.overdueList.map((x) => ({
+        key: x.id,
+        href: `/jobs/${x.id}`,
+        primary: `${x.number} · ${x.title}`,
+        secondary: `due ${x.deadline}`,
       })),
     },
     d.overdueTasks && {
@@ -313,7 +339,7 @@ export default async function DashboardPage({
 
       <section
         aria-label="Key metrics"
-        className="grid grid-cols-2 gap-2 md:grid-cols-4 2xl:grid-cols-8"
+        className="grid grid-cols-2 gap-2 md:grid-cols-5 2xl:grid-cols-9"
       >
         {kpis
           .filter((x) => x.show)
