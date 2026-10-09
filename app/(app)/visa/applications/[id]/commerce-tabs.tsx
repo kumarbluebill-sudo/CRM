@@ -309,7 +309,9 @@ export async function SupplierTab({ app, p }: { app: ApplicationRow; p: Perms })
               <ul className="divide-y text-sm">
                 {rows.map((r) => (
                   <li key={r.id} className="flex flex-wrap items-center gap-3 py-2">
-                    <span className="font-medium">{r.suppliers?.company_name ?? "No supplier"}</span>
+                    <span className="font-medium">
+                      {r.suppliers?.company_name ?? "No supplier"}
+                    </span>
                     <span className="text-muted-foreground">
                       {r.reference ? `Ref ${r.reference} · ` : ""}submitted {r.submitted_on}
                       {r.actual_completion ? ` · completed ${r.actual_completion}` : ""}

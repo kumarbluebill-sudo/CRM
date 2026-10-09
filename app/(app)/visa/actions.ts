@@ -8,6 +8,7 @@ import { AppError } from "@/lib/utils/errors";
 import { rateLimit } from "@/lib/rate-limit";
 import { deliverCommunication } from "@/lib/comms/deliver";
 import { getBranding } from "@/lib/quotation/queries";
+import { IMPORT_COLUMNS, parseCsv } from "@/lib/visa/csv-parse";
 import { formObject, redirect, runAction, throwIfDbError } from "@/lib/crm/action-utils";
 import { uuid } from "@/lib/crm/schemas";
 import {
@@ -909,4 +910,46 @@ export async function sendVisaMessageAction(
     if (error instanceof AppError) return { message: error.message };
     return { message: "Something went wrong. Please try again." };
   }
+}
+
+/* ---------------- master-data import ---------------- */
+
+export type ImportPreview = FormState & {
+  rows?: { row: number; status: string; message: string | null }[];
+  summary?: Record<string, number>;
+};
+
+async function runImport(kind: string, csv: string, commit: boolean): Promise<ImportPreview> {
+  if (kind !== "countries" && kind !== "products") return { message: "Choose what to import." };
+  const parsed = parseCsv(csv, IMPORT_COLUMNS[kind]);
+  if (parsed.error) return { message: parsed.error };
+  return runAction(async () => {
+    await guard("visa.price.edit", "visa-import", commit ? 10 : 30);
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("import_visa_master", {
+      p_kind: kind,
+      p_rows: parsed.rows,
+      p_commit: commit,
+    });
+    throwVisaError(error, "import visa master data");
+    const rows = (data ?? []) as { row: number; status: string; message: string | null }[];
+    const summary: Record<string, number> = {};
+    for (const r of rows) summary[r.status] = (summary[r.status] ?? 0) + 1;
+    if (commit) {
+      revalidatePath("/visa/products");
+      revalidatePath("/visa/settings");
+    }
+    return { ok: true, rows, summary } as ImportPreview;
+  });
+}
+
+export async function previewImportAction(kind: string, csv: string): Promise<ImportPreview> {
+  return runImport(kind, csv, false);
+}
+
+export async function commitImportAction(kind: string, csv: string): Promise<ImportPreview> {
+  const result = await runImport(kind, csv, true);
+  if (result.ok)
+    result.message = `Imported ${result.summary?.IMPORTED ?? 0} row(s). Nothing existing was changed.`;
+  return result;
 }

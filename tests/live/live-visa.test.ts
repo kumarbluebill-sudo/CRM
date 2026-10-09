@@ -655,4 +655,41 @@ describe.skipIf(!LIVE)("live Supabase: visa module (throwaway data, cleaned up)"
       ),
     ).toBe(true);
   });
+
+  it("reports, alerts and previewable imports respect permissions and agency boundaries", async () => {
+    const from = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+    const to = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    const rep = await rpc(a, "visa_report_summary", { p_from: from, p_to: to });
+    expect(rep.applications.created).toBeGreaterThan(0);
+    expect(rep.profit).toBeDefined(); // owner may see cost sections
+    expect(await denied(exec.rpc("visa_report_summary", { p_from: from, p_to: to }))).toBe(true);
+    expect(
+      (await rpc(b, "visa_report_summary", { p_from: from, p_to: to })).applications.created,
+    ).toBe(0);
+    expect(Array.isArray(await rpc(ops, "visa_alerts"))).toBe(true);
+    expect(await rpc(b, "visa_alerts")).toEqual([]);
+
+    const rows = [
+      { name: "LIVE-TEST Japan", iso_code: "JP" },
+      { name: "Thailand again", iso_code: "TH" },
+    ];
+    const prev = await rpc<{ status: string }[]>(a, "import_visa_master", {
+      p_kind: "countries",
+      p_rows: rows,
+      p_commit: false,
+    });
+    expect(prev.map((r) => r.status)).toEqual(["VALID", "DUPLICATE"]);
+    expect((await a.from("visa_countries").select("id").eq("iso_code", "JP")).data).toEqual([]);
+    const done = await rpc<{ status: string }[]>(a, "import_visa_master", {
+      p_kind: "countries",
+      p_rows: rows,
+      p_commit: true,
+    });
+    expect(done.map((r) => r.status)).toEqual(["IMPORTED", "DUPLICATE"]);
+    expect(
+      await denied(
+        exec.rpc("import_visa_master", { p_kind: "countries", p_rows: rows, p_commit: true }),
+      ),
+    ).toBe(true);
+  });
 });
