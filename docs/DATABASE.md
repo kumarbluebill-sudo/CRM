@@ -151,3 +151,7 @@ New tables: `visa_supplier_submissions` (carries cost; readable with `visa.suppl
 Functions: `visa_calc_price`, `price_visa_application`, `create_visa_quotation`, `record_supplier_submission`, `set_visa_expected_completion`, `record_visa_result`, `record_visa_delivery`, `queue_visa_communication`, `visa_work_queue`, `visa_add_working_days`. Triggers: `bookings_visa_link` (links the booking when the visa quotation is converted), `visa_applications_before_status` (sets the expected completion on submission; refuses `DELIVERED` without a delivery record), `visa_applications_after_status` (opens follow-up tasks, stamps supplier completion, closes follow-ups on cancel/close).
 
 Money: a visa application never holds payments itself. Its quotation is a normal quotation with one `VISA` line; converting it creates a normal booking, and payments, receipts, invoices and the portal work on that booking.
+
+## Visa module, slice 3 (026)
+
+No new tables. Functions: `visa_report_summary(from, to)` and `visa_alerts()` (both security invoker, so RLS applies; cost and profit sections appear only with `visa.supplier.view`, revenue only with `visa.price.view`), and `import_visa_master(kind, rows, commit)` (security definer, needs `visa.price.edit`; `countries` and `products`; validates every row, previews when `commit` is false, skips duplicates, never overwrites). Outcomes (approved/rejected) are read from the application timeline (`visa_events.metadata.to`), so they stay correct after an application is closed.

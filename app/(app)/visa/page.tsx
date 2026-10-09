@@ -10,6 +10,7 @@ import { requireOrgSession } from "@/lib/auth/session";
 import { label } from "@/lib/crm/constants";
 import { APPLICATION_STATUSES, isTravelUrgent } from "@/lib/visa/constants";
 import {
+  getVisaAlerts,
   getVisaDashboard,
   getWorkQueue,
   listApplications,
@@ -55,8 +56,9 @@ export default async function VisaDashboardPage() {
       />
     );
   }
-  const [d, q, recent, due] = await Promise.all([
+  const [d, alerts, q, recent, due] = await Promise.all([
     getVisaDashboard(),
+    getVisaAlerts(),
     getWorkQueue(false),
     listApplications({ canSeePassports: false, page: 1 }),
     listEnquiries({ status: "FOLLOW_UP", page: 1 }),
@@ -142,6 +144,45 @@ export default async function VisaDashboardPage() {
         />
         <Stat title="Waiting to be priced" value={q.counts.unpriced} href="/visa/queue?scope=all" />
       </section>
+
+      {alerts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="size-4 text-red-600" aria-hidden /> Alerts
+              <span className="bg-muted rounded-full px-2 py-0.5 text-xs">{alerts.length}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-y text-sm" aria-label="Visa alerts">
+              {alerts.slice(0, 12).map((al, i) => (
+                <li
+                  key={`${al.applicationId}-${al.kind}-${i}`}
+                  className="flex flex-wrap items-center gap-3 py-2"
+                >
+                  <span
+                    className={`rounded px-1.5 py-0.5 text-xs font-medium ${al.severity === "URGENT" ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200" : "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200"}`}
+                  >
+                    {al.severity === "URGENT" ? "Urgent" : "Warning"}
+                  </span>
+                  <Link
+                    href={`/visa/applications/${al.applicationId}`}
+                    className="font-medium hover:underline"
+                  >
+                    {al.number}
+                  </Link>
+                  <span className="text-muted-foreground">{al.message}</span>
+                </li>
+              ))}
+            </ul>
+            {alerts.length > 12 && (
+              <p className="text-muted-foreground pt-2 text-xs">
+                Showing the first 12 of {alerts.length}.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
