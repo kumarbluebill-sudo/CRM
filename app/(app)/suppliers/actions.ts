@@ -107,15 +107,13 @@ export async function addSupplierContactAction(
   return runAction(async () => {
     await requirePermission("suppliers.manage");
     const supabase = await createClient();
-    const { error } = await supabase
-      .from("supplier_contacts")
-      .insert({
-        supplier_id: supplierId,
-        name: v.name,
-        role: v.role ?? null,
-        phone: v.phone ?? null,
-        email: v.email ?? null,
-      });
+    const { error } = await supabase.from("supplier_contacts").insert({
+      supplier_id: supplierId,
+      name: v.name,
+      role: v.role ?? null,
+      phone: v.phone ?? null,
+      email: v.email ?? null,
+    });
     dbError(error, "add contact");
     revalidatePath(`/suppliers/${supplierId}`);
     return { ok: true, message: "Contact added." };

@@ -9,11 +9,14 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Main" className="flex flex-col gap-5 px-3 py-4">
+    <nav
+      aria-label="Main"
+      className="flex flex-col gap-4 px-2.5 py-3 group-data-[collapsed=true]:gap-2"
+    >
       {NAV_GROUPS.map((group, index) => (
         <div key={group.title ?? index} className="flex flex-col gap-1">
           {group.title && (
-            <p className="text-muted-foreground px-3 pb-1 text-[11px] font-semibold tracking-wider uppercase">
+            <p className="text-muted-foreground px-3 pb-1 text-[11px] font-semibold tracking-wider uppercase group-data-[collapsed=true]:hidden">
               {group.title}
             </p>
           )}
@@ -21,7 +24,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             const Icon = item.icon;
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             const base =
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors";
+              "flex items-center gap-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors group-data-[collapsed=true]:justify-center group-data-[collapsed=true]:px-0";
 
             if (item.soon) {
               return (
@@ -31,8 +34,8 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                   title="Coming in a later phase"
                   className={cn(base, "text-muted-foreground/60 cursor-not-allowed")}
                 >
-                  <Icon className="size-4" aria-hidden />
-                  {item.label}
+                  <Icon className="size-4 shrink-0" aria-hidden />
+                  <span className="group-data-[collapsed=true]:sr-only">{item.label}</span>
                 </span>
               );
             }
@@ -42,6 +45,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                 href={item.href}
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
+                title={item.label}
                 className={cn(
                   base,
                   "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none",
@@ -50,8 +54,8 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
                     : "text-foreground/80 hover:bg-muted hover:text-foreground",
                 )}
               >
-                <Icon className="size-4" aria-hidden />
-                {item.label}
+                <Icon className="size-4 shrink-0" aria-hidden />
+                <span className="group-data-[collapsed=true]:sr-only">{item.label}</span>
               </Link>
             );
           })}

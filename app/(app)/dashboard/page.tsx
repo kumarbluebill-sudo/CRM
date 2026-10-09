@@ -1,189 +1,398 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarClock, CreditCard, Inbox, Plus, UserPlus } from "lucide-react";
-import { StatusBadge } from "@/components/crm/status-badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import {
+  CollectionBars,
+  FunnelBars,
+  HorizontalBars,
+  RevenueArea,
+  StatusDonut,
+} from "@/components/dashboard/charts";
+import { OpsTabs, type OpsTab } from "@/components/dashboard/ops-tabs";
+import { Card } from "@/components/ui/card";
 import { requireOrgSession } from "@/lib/auth/session";
-import { getDashboardStats } from "@/lib/crm/queries";
-import { getWorkQueue } from "@/lib/visa/queries";
+import { label } from "@/lib/crm/constants";
+import { listTeamMembers } from "@/lib/crm/queries";
+import { getDashboard, RANGE_LABELS, resolveRange, type Dashboard } from "@/lib/dashboard/queries";
+import { formatMoney } from "@/lib/quotation/pricing";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-// Metrics for modules that are not built yet render as "—" rather than fake numbers.
-const PENDING_METRICS = ["Quotes", "Revenue", "Outstanding"] as const;
+const RELATED: Record<string, (id: string) => string> = {
+  LEAD: (id) => `/leads/${id}`,
+  CUSTOMER: (id) => `/customers/${id}`,
+  QUOTATION: (id) => `/quotations/${id}`,
+  BOOKING: (id) => `/bookings/${id}`,
+  VISA_APPLICATION: (id) => `/visa/applications/${id}`,
+};
+const related = (type: string | null, id: string | null) =>
+  type && id && RELATED[type] ? RELATED[type](id) : "/tasks";
 
-export default async function DashboardPage() {
+function Delta({ now, before }: { now: number; before?: number }) {
+  if (!before) return null; // no reliable comparison: show nothing rather than a made-up change
+  const pct = Math.round(((now - before) / before) * 100);
+  const up = pct >= 0;
+  const Icon = up ? ArrowUpRight : ArrowDownRight;
+  return (
+    <span
+      className={`inline-flex items-center text-[11px] font-medium ${up ? "text-green-700 dark:text-green-400" : "text-red-600"}`}
+      title="Compared with the previous period of the same length"
+    >
+      <Icon className="size-3" aria-hidden />
+      {Math.abs(pct)}%<span className="sr-only"> {up ? "up" : "down"} on the previous period</span>
+    </span>
+  );
+}
+
+function Kpi({
+  title,
+  value,
+  href,
+  delta,
+  note,
+}: {
+  title: string;
+  value: string;
+  href: string;
+  delta?: React.ReactNode;
+  note?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="bg-card hover:bg-muted/50 focus-visible:ring-ring ring-foreground/10 flex min-w-0 flex-col rounded-xl px-3 py-2 ring-1 focus-visible:ring-2 focus-visible:outline-none"
+    >
+      <span className="text-muted-foreground truncate text-[11px]">{title}</span>
+      <span className="flex items-baseline gap-2">
+        <span className="truncate text-lg leading-tight font-semibold">{value}</span>
+        {delta}
+      </span>
+      {note && <span className="text-muted-foreground truncate text-[10px]">{note}</span>}
+    </Link>
+  );
+}
+
+function Panel({
+  title,
+  children,
+  className,
+}: {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <Card size="sm" className={`min-h-0 gap-1 ${className ?? ""}`}>
+      <h2 className="px-3 text-xs font-semibold">{title}</h2>
+      <div className="min-h-0 flex-1 px-1">{children}</div>
+    </Card>
+  );
+}
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string; from?: string; to?: string }>;
+}) {
   const session = await requireOrgSession();
-  const canLeads = session.permissions.has("leads.view");
-  const stats = canLeads ? await getDashboardStats() : null;
-  const visa = session.permissions.has("visa.view")
-    ? await getWorkQueue(true).catch(() => null)
-    : null;
+  const sp = await searchParams;
+  const range = resolveRange(sp.range, sp.from, sp.to);
+  const [d, team]: [Dashboard | null, { userId: string; name: string }[]] = await Promise.all([
+    getDashboard(range).catch(() => null),
+    listTeamMembers().catch(() => []),
+  ]);
+  const names = new Map(team.map((m) => [m.userId, m.name]));
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const firstName = session.fullName.split(" ")[0] || "there";
   const today = new Intl.DateTimeFormat("en-IN", { dateStyle: "full" }).format(new Date());
 
+  if (!d) {
+    return (
+      <div role="alert" className="mx-auto max-w-xl rounded-xl border p-6 text-sm">
+        The dashboard could not be loaded. Please refresh; if it keeps happening, contact your
+        administrator.
+      </div>
+    );
+  }
+  const k = d.kpi;
+  const money = (n: number | undefined) => (n === undefined ? "—" : formatMoney(n, d.currency));
+  const count = (n: number | undefined) => (n === undefined ? "—" : String(n));
+
+  const kpis: {
+    title: string;
+    value: string;
+    href: string;
+    delta?: React.ReactNode;
+    note?: string;
+    show: boolean;
+  }[] = [
+    {
+      show: k.enquiries !== undefined,
+      title: "Total Enquiries",
+      value: count(k.enquiries),
+      href: "/leads",
+      delta: <Delta now={k.enquiries ?? 0} before={d.previous.enquiries} />,
+    },
+    {
+      show: k.confirmedBookings !== undefined,
+      title: "Confirmed Bookings",
+      value: count(k.confirmedBookings),
+      href: "/bookings",
+      delta: <Delta now={k.confirmedBookings ?? 0} before={d.previous.confirmedBookings} />,
+    },
+    {
+      show: k.upcomingDepartures !== undefined,
+      title: "Upcoming Departures (30d)",
+      value: count(k.upcomingDepartures),
+      href: "/bookings",
+    },
+    {
+      show: k.revenue !== undefined,
+      title: "Revenue (bookings)",
+      value: money(k.revenue),
+      href: "/bookings",
+      delta: <Delta now={k.revenue ?? 0} before={d.previous.revenue} />,
+      note: k.otherCurrencyBookings ? `+${k.otherCurrencyBookings} in other currencies` : undefined,
+    },
+    {
+      show: k.collected !== undefined,
+      title: "Collected",
+      value: money(k.collected),
+      href: "/payments",
+      delta: <Delta now={k.collected ?? 0} before={d.previous.collected} />,
+    },
+    {
+      show: k.outstanding !== undefined,
+      title: "Outstanding Payments",
+      value: money(k.outstanding),
+      href: "/payments",
+    },
+    {
+      show: k.pendingVisa !== undefined,
+      title: "Pending Visa Applications",
+      value: count(k.pendingVisa),
+      href: "/visa/applications",
+    },
+    {
+      show: k.profit !== undefined,
+      title: "Profit (costed bookings)",
+      value: k.profitBookings ? money(k.profit) : "—",
+      href: "/reports",
+      note: k.profitBookings
+        ? `${k.profitBookings} of ${k.bookingsInRange} bookings have full cost data`
+        : "No bookings with full cost data",
+    },
+  ];
+
+  const opsAll: (OpsTab | undefined)[] = [
+    d.departures && {
+      id: "dep",
+      label: "Departures",
+      empty: "No upcoming departures.",
+      items: d.departures.map((x) => ({
+        key: x.id,
+        href: `/bookings/${x.id}`,
+        primary: `${x.title}${x.destination ? ` · ${x.destination}` : ""}`,
+        secondary: x.date,
+      })),
+    },
+    d.followups && {
+      id: "fu",
+      label: "Follow-ups",
+      empty: "No follow-ups due today.",
+      items: d.followups.map((x) => ({
+        key: x.id,
+        href: related(x.relatedType, x.relatedId),
+        primary: x.title,
+        secondary: x.due,
+      })),
+    },
+    d.pendingPayments && {
+      id: "pay",
+      label: "Payments",
+      empty: "No payments due in the next 7 days.",
+      items: d.pendingPayments.map((x) => ({
+        key: `${x.bookingId}-${x.label}`,
+        href: `/bookings/${x.bookingId}`,
+        primary: `${x.number} · ${x.label}`,
+        secondary: `${formatMoney(Number(x.amount), x.currency)} · ${x.status === "OVERDUE" ? "overdue " : "due "}${x.due}`,
+      })),
+    },
+    d.visaDocs && {
+      id: "visa",
+      label: "Visa documents",
+      empty: "No visa documents are missing.",
+      items: d.visaDocs.map((x) => ({
+        key: x.applicationId,
+        href: `/visa/applications/${x.applicationId}?tab=documents`,
+        primary: x.number,
+        secondary: `${x.missing} missing`,
+      })),
+    },
+    d.overdueTasks && {
+      id: "od",
+      label: "Overdue",
+      empty: "Nothing is overdue.",
+      items: d.overdueTasks.map((x) => ({
+        key: x.id,
+        href: related(x.relatedType, x.relatedId),
+        primary: x.title,
+        secondary: `due ${x.due}`,
+      })),
+    },
+    d.recent && {
+      id: "act",
+      label: "Activity",
+      empty: "No recent activity.",
+      items: d.recent.map((x) => ({
+        key: x.id,
+        href: "/settings/audit",
+        primary: `${label(x.action)} · ${label(x.entity)}`,
+        secondary: `${x.userId ? (names.get(x.userId) ?? "Staff") : "System"} · ${x.at.slice(5, 16).replace("T", " ")}`,
+      })),
+    },
+  ];
+  const ops = opsAll.filter((t): t is OpsTab => Boolean(t));
+
+  const f = d.funnel;
+  const presets = Object.entries(RANGE_LABELS) as [keyof typeof RANGE_LABELS, string][];
+  const panel = "h-48 lg:h-auto";
+
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto flex max-w-[1600px] flex-col gap-2.5 lg:h-full">
+      <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-xl leading-tight font-semibold tracking-tight">
             {greeting}, {firstName}
           </h1>
-          <p className="text-muted-foreground text-sm">
-            {session.organization.name} · {today}
+          <p className="text-muted-foreground text-xs">
+            {today} · showing {range.from} to {range.to} in {d.currency}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {session.permissions.has("leads.create") && (
-            <Button size="sm" nativeButton={false} render={<Link href="/leads/new" />}>
-              <Plus className="size-4" aria-hidden /> New Lead
-            </Button>
-          )}
-          {session.permissions.has("customers.create") && (
-            <Button
-              size="sm"
-              variant="outline"
-              nativeButton={false}
-              render={<Link href="/customers/new" />}
-            >
-              <Plus className="size-4" aria-hidden /> New Customer
-            </Button>
-          )}
-          {session.permissions.has("itineraries.create") && (
-            <Button
-              size="sm"
-              variant="outline"
-              nativeButton={false}
-              render={<Link href="/itineraries/new" />}
-            >
-              <Plus className="size-4" aria-hidden /> Create Itinerary
-            </Button>
-          )}
-          {["New Quotation"].map((l) => (
-            <Button key={l} size="sm" variant="outline" disabled title="Available in a later phase">
-              <Plus className="size-4" aria-hidden /> {l}
-            </Button>
-          ))}
-        </div>
+        <form
+          className="flex flex-wrap items-center gap-1.5 text-xs"
+          role="search"
+          aria-label="Date range"
+        >
+          <nav aria-label="Range presets" className="flex gap-1">
+            {presets.map(([key, text]) => (
+              <Link
+                key={key}
+                href={`/dashboard?range=${key}`}
+                aria-current={range.key === key ? "true" : undefined}
+                className={`rounded-md border px-2 py-1 ${range.key === key ? "bg-primary text-primary-foreground border-transparent" : "hover:bg-muted"}`}
+              >
+                {text}
+              </Link>
+            ))}
+          </nav>
+          <input type="hidden" name="range" value="custom" />
+          <input
+            type="date"
+            name="from"
+            defaultValue={range.from}
+            aria-label="From"
+            className="border-input bg-background h-7 rounded-md border px-1.5"
+          />
+          <input
+            type="date"
+            name="to"
+            defaultValue={range.to}
+            aria-label="To"
+            className="border-input bg-background h-7 rounded-md border px-1.5"
+          />
+          <button
+            type="submit"
+            className={`h-7 rounded-md border px-2 ${range.key === "custom" ? "bg-primary text-primary-foreground border-transparent" : "hover:bg-muted"}`}
+          >
+            Custom
+          </button>
+        </form>
       </div>
 
       <section
         aria-label="Key metrics"
-        className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6"
+        className="grid grid-cols-2 gap-2 md:grid-cols-4 2xl:grid-cols-8"
       >
-        <Metric label="New Leads" value={stats ? String(stats.newLeads) : "—"} />
-        <Metric label="Hot Leads" value={stats ? String(stats.hotLeads) : "—"} />
-        <Metric label="Bookings" value={stats ? String(stats.openBookings) : "—"} />
-        {PENDING_METRICS.map((m) => (
-          <Metric key={m} label={m} value="—" />
-        ))}
-      </section>
-
-      {visa && (
-        <section aria-label="Visa work" className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {(
-            [
-              ["Visa documents to review", visa.counts.review],
-              ["Ready to submit", visa.counts.toSubmit],
-              ["Overdue visas", visa.counts.overdue],
-              ["Visas to deliver", visa.counts.toDeliver],
-            ] as const
-          ).map(([label, n]) => (
-            <Link key={label} href="/visa/queue">
-              <Metric label={label} value={String(n)} />
-            </Link>
+        {kpis
+          .filter((x) => x.show)
+          .map((x) => (
+            <Kpi key={x.title} {...x} />
           ))}
-        </section>
-      )}
-
-      <section aria-label="Activity" className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Today&apos;s Follow-ups</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {stats && stats.followups.length > 0 ? (
-              <ul className="flex flex-col gap-2 text-sm">
-                {stats.followups.map((f) => (
-                  <li key={f.id} className="flex justify-between gap-2">
-                    <span>{f.title}</span>
-                    <span className="text-muted-foreground">{f.due_date}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState icon={CalendarClock} title="No follow-ups due" />
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Recent Leads</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {stats && stats.recentLeads.length > 0 ? (
-              <ul className="flex flex-col gap-2 text-sm">
-                {stats.recentLeads.map((l) => (
-                  <li key={l.id} className="flex items-center justify-between gap-2">
-                    <Link href={`/leads/${l.id}`} className="hover:underline">
-                      {l.title}
-                    </Link>
-                    <StatusBadge value={l.status} />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState icon={UserPlus} title="No leads yet" />
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Upcoming Trips</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {stats && stats.upcomingTrips.length > 0 ? (
-              <ul className="flex flex-col gap-2 text-sm">
-                {stats.upcomingTrips.map((t) => (
-                  <li key={t.id} className="flex items-center justify-between gap-2">
-                    <Link href={`/bookings/${t.id}`} className="hover:underline">
-                      {t.title}
-                    </Link>
-                    <span className="text-muted-foreground">{t.travel_start ?? "TBD"}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState icon={Inbox} title="No upcoming trips" />
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Pending Payments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <EmptyState icon={CreditCard} title="Coming with payments" />
-          </CardContent>
-        </Card>
       </section>
-    </div>
-  );
-}
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <Card size="sm">
-      <CardHeader>
-        <CardTitle className="text-muted-foreground text-xs font-medium">{label}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold">{value}</p>
-      </CardContent>
-    </Card>
+      <section
+        aria-label="Charts"
+        className="grid min-h-0 gap-2.5 sm:grid-cols-2 lg:flex-[5] lg:grid-cols-3 lg:grid-rows-2"
+      >
+        {d.revenueByMonth && (
+          <Panel title="Monthly revenue" className={panel}>
+            <RevenueArea data={d.revenueByMonth} currency={d.currency} />
+          </Panel>
+        )}
+        {f && (
+          <Panel title="Enquiry conversion" className={panel}>
+            <FunnelBars
+              data={[
+                { stage: "Enquiries", value: f.enquiries },
+                { stage: "Quotes sent", value: f.quotations },
+                { stage: "Approved", value: f.approved },
+                { stage: "Bookings", value: f.bookings },
+              ]}
+            />
+          </Panel>
+        )}
+        {d.bookingStatus && (
+          <Panel title="Booking status" className={panel}>
+            <StatusDonut
+              data={Object.entries(d.bookingStatus).map(([name, value]) => ({
+                name: label(name),
+                value,
+              }))}
+            />
+          </Panel>
+        )}
+        {d.byDestination && (
+          <Panel title="Revenue by destination" className={panel}>
+            <HorizontalBars
+              data={d.byDestination.map((x) => ({ name: x.destination, value: x.value }))}
+              currency={d.currency}
+            />
+          </Panel>
+        )}
+        {d.collectionByMonth && (
+          <Panel title="Collected vs outstanding" className={panel}>
+            <CollectionBars data={d.collectionByMonth} currency={d.currency} />
+          </Panel>
+        )}
+        {d.staff && (
+          <Panel title="Staff performance (bookings)" className={panel}>
+            <HorizontalBars
+              money={false}
+              color="var(--chart-5)"
+              currency={d.currency}
+              data={d.staff.map((x) => ({
+                name: x.userId ? (names.get(x.userId) ?? "Former staff") : "Unassigned",
+                value: x.bookings,
+              }))}
+            />
+          </Panel>
+        )}
+      </section>
+
+      {ops.length > 0 ? (
+        <Card size="sm" className="h-56 gap-1 px-3 lg:h-auto lg:min-h-36 lg:flex-[2]">
+          <OpsTabs tabs={ops} />
+        </Card>
+      ) : (
+        k.enquiries === undefined &&
+        k.revenue === undefined && (
+          <p className="text-muted-foreground text-sm">
+            Your role has no dashboard data to show yet.
+          </p>
+        )
+      )}
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import { useId } from "react";
 import { useFormAction } from "@/lib/hooks/use-form-action";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { FormState } from "@/lib/auth/schemas";
@@ -23,6 +24,9 @@ export type FormField = {
   min?: number;
   step?: string;
 };
+
+/** Long lists (customers, countries, staff) become searchable; short ones stay native for speed and accessibility. */
+const SEARCHABLE_FROM = 8;
 
 const selectClass =
   "border-input bg-background focus-visible:ring-ring/50 focus-visible:border-ring h-8 w-full rounded-lg border px-2.5 text-sm outline-none focus-visible:ring-3";
@@ -88,6 +92,17 @@ export function EntityForm({ action, fields, submitLabel, hidden }: Props) {
                       rows={3}
                       defaultValue={dv as string}
                       placeholder={f.placeholder}
+                    />
+                  ) : type === "select" && (f.options?.length ?? 0) > SEARCHABLE_FROM ? (
+                    <Combobox
+                      id={common.id}
+                      name={f.name}
+                      options={f.options ?? []}
+                      defaultValue={dv as string}
+                      required={f.required}
+                      placeholder={f.placeholder ?? "Type to search…"}
+                      aria-invalid={errors ? true : undefined}
+                      aria-describedby={errors ? errId : undefined}
                     />
                   ) : type === "select" ? (
                     <select {...common} defaultValue={(dv as string) ?? ""} className={selectClass}>

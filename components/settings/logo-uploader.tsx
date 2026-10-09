@@ -18,7 +18,7 @@ export function LogoUploader({ logo }: { logo: string | null }) {
         <img
           src={logo}
           alt="Current agency logo"
-          className="bg-muted max-h-20 w-fit rounded border p-2"
+          className="max-h-20 w-fit rounded border bg-white object-contain p-2"
         />
       ) : (
         <p className="text-muted-foreground text-sm">No logo uploaded yet.</p>
@@ -27,7 +27,7 @@ export function LogoUploader({ logo }: { logo: string | null }) {
         <input
           name="logo"
           type="file"
-          accept="image/png,image/jpeg"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
           className="text-sm"
           aria-label="Logo file"
         />
@@ -52,7 +52,10 @@ export function LogoUploader({ logo }: { logo: string | null }) {
           </Button>
         )}
       </form>
-      <p className="text-muted-foreground text-xs">PNG or JPEG, up to 300 KB.</p>
+      <p className="text-muted-foreground text-xs">
+        PNG, JPEG, WebP or a simple SVG, up to 2 MB (at least 32 px). It is resized and converted to
+        PNG for sharp results on screen, PDFs and print.
+      </p>
       {state.message && (
         <p
           role={state.ok ? "status" : "alert"}

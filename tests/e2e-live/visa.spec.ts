@@ -84,7 +84,7 @@ async function login(page: Page) {
   await page.getByLabel(/email/i).fill(EMAIL);
   await page.getByLabel(/password/i).fill(PASSWORD);
   await page.getByRole("button", { name: /sign in/i }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
 }
 
 const PDF = Buffer.from(

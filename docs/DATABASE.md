@@ -155,3 +155,7 @@ Money: a visa application never holds payments itself. Its quotation is a normal
 ## Visa module, slice 3 (026)
 
 No new tables. Functions: `visa_report_summary(from, to)` and `visa_alerts()` (both security invoker, so RLS applies; cost and profit sections appear only with `visa.supplier.view`, revenue only with `visa.price.view`), and `import_visa_master(kind, rows, commit)` (security definer, needs `visa.price.edit`; `countries` and `products`; validates every row, previews when `commit` is false, skips duplicates, never overwrites). Outcomes (approved/rejected) are read from the application timeline (`visa_events.metadata.to`), so they stay correct after an application is closed.
+
+## Dashboard and branding (027)
+
+`dashboard_summary(from, to)` (security invoker; sections appear only if the caller holds the permission behind them; amounts are in the organization currency, other-currency bookings are counted not added; change figures only when the previous period has data; profit only for bookings whose every quotation line has a cost and only with `quotes.view_cost` + `quotes.view_profit`) and `global_search(q)` (security invoker; customers, bookings, enquiries, quotations, visa application numbers; never passport data; wildcard characters are literal). `organization_branding` gains `legal_name`, `trade_name`, `logo_width`, `logo_height`, `logo_updated_at`; a branding row is back-filled for every organization (saving branding updates that row, so a missing row used to "succeed" while saving nothing; saves now fail loudly if no row was updated).

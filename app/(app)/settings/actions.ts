@@ -7,6 +7,7 @@ import { requirePermission } from "@/lib/auth/session";
 import type { FormState } from "@/lib/auth/schemas";
 import { AppError } from "@/lib/utils/errors";
 import { formObject, runAction, throwIfDbError } from "@/lib/crm/action-utils";
+import { LogoError, processLogo } from "@/lib/branding/process-logo";
 
 const blank = (v: unknown) => (typeof v === "string" && v.trim() === "" ? undefined : v);
 const opt = <T extends z.ZodTypeAny>(s: T) => z.preprocess(blank, s.optional());
@@ -22,6 +23,8 @@ const phone = z
   .regex(/^[+0-9 ()-]{5,20}$/, "Enter a valid phone number");
 
 const brandingSchema = z.object({
+  legalName: opt(z.string().trim().max(200)),
+  tradeName: opt(z.string().trim().max(200)),
   primaryColor: opt(hex),
   secondaryColor: opt(hex),
   accentColor: opt(hex),
@@ -50,9 +53,11 @@ export async function saveBrandingAction(_prev: FormState, formData: FormData): 
   return runAction(async () => {
     const session = await requirePermission("settings.manage");
     const supabase = await createClient();
-    const { error } = await supabase
+    const { data: saved, error } = await supabase
       .from("organization_branding")
       .update({
+        legal_name: v.legalName ?? null,
+        trade_name: v.tradeName ?? null,
         primary_color: v.primaryColor ?? null,
         secondary_color: v.secondaryColor ?? null,
         accent_color: v.accentColor ?? null,
@@ -67,34 +72,48 @@ export async function saveBrandingAction(_prev: FormState, formData: FormData): 
         youtube_url: v.youtubeUrl ?? null,
         footer_text: v.footerText ?? null,
       })
-      .eq("organization_id", session.organization!.id);
+      .eq("organization_id", session.organization!.id)
+      .select("organization_id");
     throwIfDbError(error, "save branding");
-    revalidatePath("/settings/branding");
+    if (!saved?.length)
+      throw new AppError("Branding could not be saved. Please try again.", "NOT_SAVED");
+    revalidatePath("/", "layout");
     return { ok: true, message: "Branding saved." };
   });
 }
 
-const MAX_LOGO_BYTES = 300 * 1024;
-
-/** Accepts PNG/JPEG only, checked by file signature, and stores it as a data URI. No remote fetching. */
+/**
+ * Accepts PNG, JPEG, WebP or a vetted SVG, checked by file signature. The image is validated, resized and re-encoded as a
+ * fresh PNG on the server before it is stored, so the original bytes are never kept. No remote fetching.
+ */
 export async function uploadLogoAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const file = formData.get("logo");
   if (!(file instanceof File) || file.size === 0) return { message: "Choose an image to upload." };
-  if (file.size > MAX_LOGO_BYTES) return { message: "The logo must be 300 KB or smaller." };
+  if (file.size > 2 * 1024 * 1024) return { message: "The logo must be 2 MB or smaller." };
   return runAction(async () => {
     const session = await requirePermission("settings.manage");
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const png = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
-    const jpg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-    if (!png && !jpg) throw new AppError("The logo must be a PNG or JPEG image.", "INVALID_FILE");
-    const data = `data:image/${png ? "png" : "jpeg"};base64,${Buffer.from(bytes).toString("base64")}`;
+    let logo;
+    try {
+      logo = await processLogo(new Uint8Array(await file.arrayBuffer()));
+    } catch (e) {
+      if (e instanceof LogoError) throw new AppError(e.message, "INVALID_FILE");
+      throw e;
+    }
     const supabase = await createClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("organization_branding")
-      .update({ logo_data: data })
-      .eq("organization_id", session.organization!.id);
+      .update({
+        logo_data: logo.dataUri,
+        logo_width: logo.width,
+        logo_height: logo.height,
+        logo_updated_at: new Date().toISOString(),
+      })
+      .eq("organization_id", session.organization!.id)
+      .select("organization_id");
     throwIfDbError(error, "save logo");
-    revalidatePath("/settings/branding");
+    if (!data?.length)
+      throw new AppError("The logo could not be saved. Please try again.", "NOT_SAVED");
+    revalidatePath("/", "layout");
     return { ok: true, message: "Logo updated." };
   });
 }
@@ -105,10 +124,10 @@ export async function removeLogoAction(): Promise<FormState> {
     const supabase = await createClient();
     const { error } = await supabase
       .from("organization_branding")
-      .update({ logo_data: null })
+      .update({ logo_data: null, logo_width: null, logo_height: null, logo_updated_at: null })
       .eq("organization_id", session.organization!.id);
     throwIfDbError(error, "remove logo");
-    revalidatePath("/settings/branding");
+    revalidatePath("/", "layout");
     return { ok: true, message: "Logo removed." };
   });
 }

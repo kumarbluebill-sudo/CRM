@@ -110,6 +110,10 @@ export async function getTemplate(id: string): Promise<TemplateRow | null> {
 
 export type Branding = {
   logo_data: string | null;
+  legal_name?: string | null;
+  trade_name?: string | null;
+  logo_width?: number | null;
+  logo_height?: number | null;
   primary_color: string | null;
   secondary_color: string | null;
   accent_color: string | null;
