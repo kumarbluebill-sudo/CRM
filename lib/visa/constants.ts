@@ -40,6 +40,15 @@ export const DOCUMENT_STATUSES = [
   "EXPIRED",
 ] as const;
 
+export const DELIVERY_METHODS = [
+  "EMAIL",
+  "WHATSAPP",
+  "COURIER",
+  "HAND",
+  "PORTAL",
+  "OTHER",
+] as const;
+
 export const PRIORITIES = ["LOW", "NORMAL", "HIGH", "URGENT"] as const;
 export const VISA_TYPES = [
   "TOURIST",

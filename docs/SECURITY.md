@@ -127,3 +127,13 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - **Passports** live in `visa_traveller_identity` (needs `visa.document.view`); lists show them masked (`A12***67`); the duplicate finder returns only application number, traveller name and status, never the number. Passport numbers are kept out of the audit log and timeline.
 - **Files** use the existing private bucket and 60-second signed URLs. `documents` gained `visa_application_id`; its RLS now lets `visa.document.view/upload` roles reach files linked to a visa application while every other sensitive-document rule is unchanged (tested). The upload route takes the application and filing category from the checklist line in the database, not from the browser. Previews use a signed URL in a frame (CSP `frame-src` allows same-origin and the storage host only); every view/download is audited.
 - Applications are soft-deleted (`deleted_at`), only while new or cancelled; documents and audit rows are retained.
+
+## Visa module (slice 2)
+
+- **Price is server-side.** `visa_calc_price` reads fees and cost inside the database and returns only the selling price; a discount can never exceed the subtotal. The result is stored as a snapshot by `price_visa_application` (clients cannot update those columns), so later fee changes never rewrite an old quote. A discount needs `visa.discount` and a reason; the price locks once a quotation exists.
+- **Quotation and payments reuse the existing systems.** `create_visa_quotation` needs `visa.edit`, `visa.price.view` and `quotes.create`. Conversion to a booking links it to the application through a trigger; no payment, invoice or receipt code was changed.
+- **Supplier cost** in `visa_supplier_submissions` is readable only with `visa.supplier.view`; a submitter without `visa.supplier.edit` cannot store a cost.
+- **Final visas** (`visa_results`) need `visa.document.view` to read; the file goes through the same upload route, private bucket and signed URLs. The route finds the application from the traveller in the database and calls `record_visa_result`, which checks the file belongs to that application.
+- **Delivery** is recorded with a method and confirmation; a trigger refuses `DELIVERED` without it, so the rule holds even if the status is set another way.
+- **Messages** to customers are drafted by `queue_visa_communication` (address copied from the customer record, `do_not_contact` honoured, only `VISA_*` or `GENERAL` templates) and sent from the Messages tab by a person, as elsewhere. Template variables are an allow-list.
+- **Work queue** is a security-invoker function, so people only see what their permissions and RLS allow; another agency sees zeros.

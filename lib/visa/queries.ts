@@ -48,6 +48,15 @@ export type ApplicationRow = {
   customer_notes: string | null;
   status_reason: string | null;
   submitted_at: string | null;
+  express: boolean;
+  unit_price: number | null;
+  discount_amount: number;
+  discount_reason: string | null;
+  total_price: number | null;
+  price_currency: string | null;
+  priced_at: string | null;
+  expected_completion: string | null;
+  quotation_id: string | null;
   created_at: string;
   customers?: { id?: string; name: string; phone?: string | null; email?: string | null } | null;
   visa_countries?: { name: string; iso_code?: string } | null;
@@ -507,4 +516,142 @@ export async function findCustomerDuplicates(input: {
   });
   if (error) return [];
   return (data ?? []) as { customer_id: string; customer_name: string; matched_on: string }[];
+}
+
+// ---- commerce: pricing, quotation/booking, supplier, results, delivery, messages, work queue ----
+export async function getLinkedQuotation(id: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("quotations")
+    .select("id, quotation_number, status")
+    .eq("id", id)
+    .maybeSingle();
+  return data as { id: string; quotation_number: string; status: string } | null;
+}
+
+export async function getLinkedBooking(id: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("bookings")
+    .select("id, booking_number, status, currency, total_amount, paid_amount, balance_amount")
+    .eq("id", id)
+    .maybeSingle();
+  return data as {
+    id: string;
+    booking_number: string;
+    status: string;
+    currency: string;
+    total_amount: number;
+    paid_amount: number;
+    balance_amount: number;
+  } | null;
+}
+
+export type SubmissionRow = {
+  id: string;
+  supplier_id: string | null;
+  reference: string | null;
+  submitted_on: string;
+  expected_completion: string | null;
+  actual_completion: string | null;
+  cost: number | null;
+  notes: string | null;
+  suppliers?: { company_name: string } | null;
+};
+
+/** Empty for anyone without visa.supplier.view (row security hides the table). */
+export async function listSubmissions(applicationId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("visa_supplier_submissions")
+    .select("*, suppliers ( company_name )")
+    .eq("application_id", applicationId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as SubmissionRow[];
+}
+
+export type ResultRow = {
+  id: string;
+  traveller_id: string;
+  document_id: string | null;
+  visa_number: string | null;
+  valid_from: string | null;
+  valid_until: string | null;
+  notes: string | null;
+};
+
+export async function listResults(applicationId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("visa_results")
+    .select("*")
+    .eq("application_id", applicationId);
+  if (error) throw error;
+  return (data ?? []) as ResultRow[];
+}
+
+export async function listDeliveries(applicationId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("visa_deliveries")
+    .select("id, method, delivered_on, confirmation, notes, delivered_by")
+    .eq("application_id", applicationId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as {
+    id: string;
+    method: string;
+    delivered_on: string;
+    confirmation: string | null;
+    notes: string | null;
+    delivered_by: string | null;
+  }[];
+}
+
+export async function listVisaMessages(applicationId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("communications")
+    .select("id, channel, template_key, status, created_at, sent_at")
+    .eq("visa_application_id", applicationId)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (error) throw error;
+  return (data ?? []) as {
+    id: string;
+    channel: string;
+    template_key: string;
+    status: string;
+    created_at: string;
+    sent_at: string | null;
+  }[];
+}
+
+export type WorkQueue = {
+  review: { id: string; applicationId: string; number: string; name: string }[];
+  corrections: { applicationId: string; number: string; note: string | null }[];
+  toSubmit: { applicationId: string; number: string; travelDate: string | null }[];
+  overdue: { applicationId: string; number: string; expected: string }[];
+  toRecord: { applicationId: string; number: string }[];
+  toDeliver: { applicationId: string; number: string; travelDate: string | null }[];
+  followUps: { id: string; title: string; due: string; applicationId: string }[];
+  counts: Record<
+    | "review"
+    | "corrections"
+    | "toSubmit"
+    | "overdue"
+    | "toRecord"
+    | "toDeliver"
+    | "followUps"
+    | "unpriced",
+    number
+  >;
+};
+
+export async function getWorkQueue(mine = true) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("visa_work_queue", { p_mine: mine });
+  if (error) throw error;
+  return data as WorkQueue;
 }

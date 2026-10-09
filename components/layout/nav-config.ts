@@ -3,6 +3,7 @@ import {
   Bot,
   Briefcase,
   ClipboardCheck,
+  ListChecks,
   MessageSquareText,
   SlidersHorizontal,
   Stamp,
@@ -66,6 +67,7 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Visa",
     items: [
       { label: "Visa dashboard", href: "/visa", icon: Stamp },
+      { label: "My visa work", href: "/visa/queue", icon: ListChecks },
       { label: "Enquiries", href: "/visa/enquiries", icon: MessageSquareText },
       { label: "Applications", href: "/visa/applications", icon: ClipboardCheck },
       { label: "Products", href: "/visa/products", icon: Tags },

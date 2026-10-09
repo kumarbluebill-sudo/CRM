@@ -67,6 +67,7 @@ export const PERMISSIONS = [
   "visa.application.submit",
   "visa.application.close",
   "visa.report.view",
+  "visa.discount",
   "billing.manage",
   "users.manage",
   "settings.manage",
