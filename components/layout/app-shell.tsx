@@ -25,7 +25,7 @@ export function AppShell({
   banner?: React.ReactNode;
 }) {
   return (
-    <div className="bg-muted/40 flex h-dvh overflow-hidden">
+    <div className="bg-muted/40 flex h-dvh overflow-hidden print:block print:h-auto print:overflow-visible">
       <a
         href="#main"
         className="bg-background sr-only z-50 rounded px-3 py-2 text-sm focus:not-sr-only focus:absolute focus:top-2 focus:left-2"
@@ -42,7 +42,10 @@ export function AppShell({
           slot={headerSlot}
         />
         {banner}
-        <main id="main" className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6">
+        <main
+          id="main"
+          className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 print:overflow-visible print:p-0"
+        >
           {children}
         </main>
       </div>

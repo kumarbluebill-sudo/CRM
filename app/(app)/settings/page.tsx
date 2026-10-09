@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CreditCard, FileText, Palette, ScrollText, Users, Wallet } from "lucide-react";
+import {
+  CreditCard,
+  FileSpreadsheet,
+  FileText,
+  Palette,
+  ScrollText,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { PageHeader } from "@/components/crm/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireOrgSession } from "@/lib/auth/session";
@@ -16,6 +24,13 @@ export default async function SettingsPage() {
       text: "Logo, colours, contact details and footer used on PDFs.",
       icon: Palette,
       show: session.permissions.has("settings.manage"),
+    },
+    {
+      href: "/settings/invoicing",
+      title: "Invoicing and GST",
+      text: "Registered details, numbering, tax codes and bank details for invoices.",
+      icon: FileSpreadsheet,
+      show: session.permissions.has("invoicing.manage"),
     },
     {
       href: "/settings/team",

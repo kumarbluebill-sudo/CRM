@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { Download } from "lucide-react";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { EntityForm } from "@/components/forms/entity-form";
+import { CreateInvoiceButton } from "@/components/invoicing/create-invoice-button";
 import {
   DeleteScheduleButton,
   OnlinePayButton,
@@ -12,11 +14,7 @@ import { label, options } from "@/lib/crm/constants";
 import { formatMoney } from "@/lib/quotation/pricing";
 import { MANUAL_METHODS } from "@/lib/payments/schema";
 import { listBookingPayments } from "@/lib/payments/queries";
-import {
-  addScheduleAction,
-  issueInvoiceAction,
-  recordPaymentAction,
-} from "@/app/(app)/payments/actions";
+import { addScheduleAction, recordPaymentAction } from "@/app/(app)/payments/actions";
 
 /** Payments, instalments and invoices for one booking. Writes are offered only to payments.create. */
 export async function PaymentsPanel({
@@ -37,7 +35,7 @@ export async function PaymentsPanel({
   const { payments, schedule, invoices } = await listBookingPayments(bookingId);
   const money = (n: number) => formatMoney(Number(n), currency);
   const payable = canManage && !["DRAFT", "CANCELLED"].includes(bookingStatus);
-  const activeInvoice = invoices.find((i) => i.status === "ISSUED");
+  const activeInvoice = invoices.find((i) => i.status === "ISSUED" || i.status === "DRAFT");
 
   return (
     <Card>
@@ -182,7 +180,12 @@ export async function PaymentsPanel({
             <ul className="divide-y rounded-lg border text-sm">
               {invoices.map((i) => (
                 <li key={i.id} className="flex flex-wrap items-center gap-3 p-2.5">
-                  <span className="min-w-28 font-medium">{i.invoice_number}</span>
+                  <Link
+                    href={`/payments/invoices/${i.id}`}
+                    className="min-w-28 font-medium hover:underline"
+                  >
+                    {i.invoice_number ?? "Draft invoice"}
+                  </Link>
                   <span className="text-muted-foreground">
                     {i.issue_date}
                     {i.due_date ? ` · due ${i.due_date}` : ""}
@@ -203,7 +206,7 @@ export async function PaymentsPanel({
                     >
                       <Download className="size-3" aria-hidden /> PDF
                     </Button>
-                    {canManage && i.status === "ISSUED" && (
+                    {canManage && i.status === "ISSUED" && !i.tax_snapshot && (
                       <VoidInvoiceButton bookingId={bookingId} invoiceId={i.id} />
                     )}
                   </span>
@@ -212,19 +215,7 @@ export async function PaymentsPanel({
             </ul>
           )}
           {payable && !activeInvoice && (
-            <details className="rounded-lg border p-3">
-              <summary className="cursor-pointer text-sm font-medium">Issue invoice</summary>
-              <div className="pt-3">
-                <EntityForm
-                  action={issueInvoiceAction.bind(null, bookingId)}
-                  submitLabel="Issue invoice"
-                  fields={[
-                    { name: "dueDate", label: "Due date", type: "date" },
-                    { name: "notes", label: "Notes", type: "textarea", wide: true },
-                  ]}
-                />
-              </div>
-            </details>
+            <div>{canManage && <CreateInvoiceButton bookingId={bookingId} />}</div>
           )}
         </section>
       </CardContent>

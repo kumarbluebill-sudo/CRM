@@ -21,7 +21,7 @@ export function Header({
   slot?: React.ReactNode;
 }) {
   return (
-    <header className="bg-card flex h-14 shrink-0 items-center gap-2 border-b px-3 sm:px-5">
+    <header className="bg-card flex h-14 shrink-0 items-center gap-2 border-b px-3 sm:px-5 print:hidden">
       <MobileNav name={organizationName} />
       <p className="hidden max-w-48 truncate text-sm font-medium lg:block">{organizationName}</p>
       <SearchBox />
