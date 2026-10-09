@@ -206,6 +206,14 @@ export default async function ApplicationPage({
           <>
             <StatusBadge value={status} />
             {app.priority !== "NORMAL" && <StatusBadge value={app.priority} />}
+            {p.has("jobs.create") && (
+              <Link
+                href={`/jobs/new?relatedType=VISA_APPLICATION&relatedId=${id}&customerId=${app.customer_id}`}
+                className="text-primary text-sm underline"
+              >
+                Create job order
+              </Link>
+            )}
           </>
         }
       />

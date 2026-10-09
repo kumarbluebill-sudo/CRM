@@ -169,3 +169,9 @@ Functions: `gstin_valid`, `gst_state_valid`, `save_tax_profile`, `save_tax_signa
 ## Package studio (029)
 
 `package_details` (template, theme, pricing, policies, call to action; one row per itinerary), `package_images` (metadata only; files live in the private bucket under `<org>/packages/`), `package_image_links` (cover, gallery, hotel, day photos; composite keys keep photos inside one agency). `itineraries.status` also allows `ARCHIVED`. `duplicate_itinerary` now copies package details and photo links, so "Save as template" keeps the look. Functions: `save_package_details`, `set_package_status`.
+
+## Notifications, staff profiles and job orders (030)
+
+New: `notifications` (one row per recipient and event, de-duplicated by `dedupe_key`), `notification_preferences` (in-app and email choice per type), `notification_deliveries` (failures, for troubleshooting), `staff_profiles` (employee code, designation, department, phone, reporting manager, active), `job_orders` and `job_order_events` (append-only history). New permissions `jobs.view/create/assign/manage`.
+
+Functions: `notify_user`, `notify_permission` (internal helpers that never raise), `mark_notification_read`, `mark_all_notifications_read`, `set_notification_pref`, `save_staff_profile`, `staff_directory` (no phone or email), `create_job_order`, `accept_job_order`, `set_job_status`, `add_job_comment`, `reassign_job_order`, `update_job_order`, `jobs_dashboard`, and service-role only `run_notification_sweeps`, `pending_notification_emails`, `record_notification_email`. View `job_orders_v` adds the derived `is_overdue`. Triggers emit notifications for: lead assignment, booking creation, captured payments, issued invoices, visa status changes and rejected documents, and team joins, role changes and removals. The daily cron route runs the sweeps (departures, overdue payments, job deadlines and overdue jobs, missing visa documents) and then the opted-in email queue.
