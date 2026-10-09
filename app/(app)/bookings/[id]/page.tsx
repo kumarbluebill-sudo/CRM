@@ -77,6 +77,14 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
         actions={
           <>
             <StatusBadge value={booking.status} />
+            {session.permissions.has("jobs.create") && (
+              <Link
+                href={`/jobs/new?relatedType=BOOKING&relatedId=${id}&customerId=${booking.customer_id}`}
+                className="text-primary text-sm underline"
+              >
+                Create job order
+              </Link>
+            )}
             {session.permissions.has("ai.use") && (
               <Link href={`/ai-assistant?booking=${id}`} className="text-primary text-sm underline">
                 Ask AI

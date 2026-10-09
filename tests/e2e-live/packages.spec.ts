@@ -4,6 +4,7 @@ import { randomBytes } from "node:crypto";
 import pg from "pg";
 import sharp from "sharp";
 import { expect, test, type Page } from "@playwright/test";
+import { signIn } from "./session";
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -117,11 +118,7 @@ async function login(page: Page) {
   page.on("console", (m) => {
     if (m.type() === "error") consoleErrors.push(`${page.url()} ${m.text()}`);
   });
-  await page.goto("/login");
-  await page.getByLabel(/email/i).fill(EMAIL);
-  await page.getByLabel(/password/i).fill(PASSWORD);
-  await page.getByRole("button", { name: /sign in/i }).click();
-  await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
+  await signIn(page, EMAIL, PASSWORD);
 }
 
 const photo = (w = 1600, h = 1000, rgb = { r: 30, g: 120, b: 160 }) =>

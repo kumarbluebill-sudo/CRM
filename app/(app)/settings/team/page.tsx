@@ -62,6 +62,13 @@ export default async function TeamPage() {
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-5">
+      <p className="text-muted-foreground text-sm">
+        Designations, departments and employee codes are under{" "}
+        <a href="/settings/staff" className="text-primary underline">
+          Staff details
+        </a>
+        .
+      </p>
       <PageHeader
         title="Team"
         description={`${(members.data ?? []).length} of ${seats} seats used${

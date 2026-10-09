@@ -33,6 +33,13 @@ export default async function SettingsPage() {
       show: session.permissions.has("invoicing.manage"),
     },
     {
+      href: "/settings/staff",
+      title: "Staff details",
+      text: "Employee codes, designations, departments and reporting managers for job assignment.",
+      icon: Users,
+      show: session.permissions.has("users.manage"),
+    },
+    {
       href: "/settings/team",
       title: "Team",
       text: "Members, roles and invitations.",
