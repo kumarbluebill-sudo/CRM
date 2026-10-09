@@ -5,6 +5,8 @@ import { ItineraryBuilder } from "@/components/itinerary/builder";
 import { PageHeader } from "@/components/crm/page-header";
 import { requireOrgSession } from "@/lib/auth/session";
 import { uuid } from "@/lib/crm/schemas";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { ReviewBanner } from "@/components/itinerary/review-banner";
 import { flaggedEntries } from "@/lib/import/parse";
 import { getReviewState } from "@/lib/import/queries";
@@ -30,12 +32,21 @@ export default async function ItineraryBuilderPage({
         title={String(doc.title)}
         description={doc.isTemplate ? "Template" : undefined}
         actions={
-          <ItineraryActions
-            id={id}
-            canCreate={session.permissions.has("itineraries.create")}
-            canDelete={session.permissions.has("itineraries.delete")}
-            canQuote={session.permissions.has("quotes.create")}
-          />
+          <>
+            <Button
+              size="sm"
+              nativeButton={false}
+              render={<Link href={`/itineraries/${id}/package`} />}
+            >
+              Package studio
+            </Button>
+            <ItineraryActions
+              id={id}
+              canCreate={session.permissions.has("itineraries.create")}
+              canDelete={session.permissions.has("itineraries.delete")}
+              canQuote={session.permissions.has("quotes.create")}
+            />
+          </>
         }
       />
       {review.needsReview && (

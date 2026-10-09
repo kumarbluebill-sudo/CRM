@@ -148,3 +148,16 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 
 - Logo uploads are identified by their bytes (PNG, JPEG, WebP, SVG), limited to 2 MB, 32-6000 px, and always **re-encoded to a fresh PNG on the server** (sharp), so original bytes, metadata and markup are never stored or served. SVG is accepted only as plain vector artwork: scripts, event handlers, links, `<image>`/`<use>`/`<style>`, DOCTYPE/entities and any external reference cause a refusal rather than a "clean-up". Only people with `settings.manage` can change it.
 - The dashboard and search run as the caller (RLS applies). Search escapes wildcards and is length-limited. Dashboard range parameters are validated and fall back to a safe default.
+
+## GST invoices
+
+- **Tax is calculated only in the database** (`recalc_invoice`); the browser sends descriptions, quantities, prices, discounts and tax-code choices, never totals. Tests prove client-supplied totals are ignored.
+- **No tax data is assumed.** Rates and SAC codes are entered by the agency and must be verified by someone with `invoicing.manage` before they can be used under a GSTIN; changing a rate, SAC or treatment clears the verification, and issue re-checks every line. GSTINs are validated for shape, state and check character, in the database and in the app.
+- **Issued invoices cannot change.** A trigger refuses any update to an issued invoice or its lines (even from a superuser session); corrections are credit notes with their own numbers and exact proportional tax (no paise created or lost). The issued invoice carries a snapshot of the supplier details and tax codes used.
+- **Roles:** drafts and issuing need `payments.create`; the profile, tax codes, signature and credit notes need `invoicing.manage`. Other agencies see nothing (RLS), and invoice PDFs are rendered only for rows the caller can read.
+
+## Package photos
+
+- Uploads are checked by file signature (JPEG, PNG, WebP only), limited to 5 MB and 8000 px, then **cropped and re-encoded as a new JPEG with all metadata removed** (GPS and device data never survive). The uploader must confirm they have the right to use the photo.
+- Files are stored privately under the agency's folder; the database rejects any path outside that format. Photos reach the browser only through an authenticated route that checks row security first, and PDFs embed them server-side. There are no public or hotlinked URLs, and anonymous requests get 401.
+- Destructive buttons now meet colour-contrast requirements (found by the accessibility scan).

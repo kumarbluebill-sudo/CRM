@@ -34,7 +34,19 @@ export default async function InvoicesPage({
     <div className="mx-auto flex max-w-6xl flex-col gap-5">
       <PageHeader
         title="Invoices"
-        description="Issue invoices from a booking's Payments section."
+        description="Create an invoice from a booking's Payments section, edit the draft, then issue it."
+        actions={
+          session.permissions.has("invoicing.manage") && (
+            <Button
+              size="sm"
+              variant="outline"
+              nativeButton={false}
+              render={<Link href="/settings/invoicing" />}
+            >
+              Invoicing and GST settings
+            </Button>
+          )
+        }
       />
       <Card>
         <CardContent>
@@ -44,7 +56,12 @@ export default async function InvoicesPage({
             <ul className="divide-y text-sm">
               {rows.map((i) => (
                 <li key={i.id} className="flex flex-wrap items-center gap-3 py-2">
-                  <span className="min-w-28 font-medium">{i.invoice_number}</span>
+                  <Link
+                    href={`/payments/invoices/${i.id}`}
+                    className="min-w-28 font-medium hover:underline"
+                  >
+                    {i.invoice_number ?? "Draft invoice"}
+                  </Link>
                   <Link href={`/bookings/${i.booking_id}`} className="hover:underline">
                     {i.bookings?.booking_number}
                   </Link>
