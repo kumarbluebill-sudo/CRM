@@ -40,7 +40,7 @@ export function SidebarFrame({
     <aside
       data-collapsed={collapsed}
       className={cn(
-        "group bg-card hidden shrink-0 flex-col border-r transition-[width] duration-150 lg:flex",
+        "group bg-card hidden shrink-0 flex-col border-r transition-[width] duration-150 lg:flex print:hidden",
         collapsed ? "w-[4.25rem]" : "w-64",
       )}
     >

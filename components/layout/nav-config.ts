@@ -18,7 +18,6 @@ import {
   Mail,
   MapPinned,
   MessageCircle,
-  Package,
   Receipt,
   ScrollText,
   Settings,
@@ -51,10 +50,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     title: "Sales",
-    items: [
-      { label: "Quotations", href: "/quotations", icon: FileText },
-      { label: "Packages", href: "/packages", icon: Package, soon: true },
-    ],
+    items: [{ label: "Quotations", href: "/quotations", icon: FileText }],
   },
   {
     title: "Travel",

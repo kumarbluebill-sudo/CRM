@@ -159,3 +159,13 @@ No new tables. Functions: `visa_report_summary(from, to)` and `visa_alerts()` (b
 ## Dashboard and branding (027)
 
 `dashboard_summary(from, to)` (security invoker; sections appear only if the caller holds the permission behind them; amounts are in the organization currency, other-currency bookings are counted not added; change figures only when the previous period has data; profit only for bookings whose every quotation line has a cost and only with `quotes.view_cost` + `quotes.view_profit`) and `global_search(q)` (security invoker; customers, bookings, enquiries, quotations, visa application numbers; never passport data; wildcard characters are literal). `organization_branding` gains `legal_name`, `trade_name`, `logo_width`, `logo_height`, `logo_updated_at`; a branding row is back-filled for every organization (saving branding updates that row, so a missing row used to "succeed" while saving nothing; saves now fail loudly if no row was updated).
+
+## GST invoices (028)
+
+New: `organization_tax_profile` (legal and trade name, registered state, GSTIN, PAN, prefix, bank details, signature, defaults), `tax_codes` (agency-entered SAC code, rate and treatment; usable on an invoice only when verified), `invoice_lines`, `credit_notes`, `credit_note_lines`. `invoices` gains draft/cancelled/credited states, a nullable number (assigned on issue), customer GSTIN, place of supply, supply type (INTRA/INTER/NONE), tax and round-off totals, and a `tax_snapshot` that freezes the profile and codes used. New permission `invoicing.manage` (owner, admin, accountant); `billing.manage` still means subscription billing.
+
+Functions: `gstin_valid`, `gst_state_valid`, `save_tax_profile`, `save_tax_signature`, `save_tax_code`, `verify_tax_code`, `create_draft_invoice`, `update_draft_invoice`, `cancel_draft_invoice`, `issue_gst_invoice`, `create_credit_note`, `next_doc_number` (financial-year numbering, `PREFIX/YY-YY/NNNN`), `recalc_invoice` (the only place tax is calculated). Triggers make issued invoices and their lines immutable. Legacy invoices (no snapshot) keep working, including voiding.
+
+## Package studio (029)
+
+`package_details` (template, theme, pricing, policies, call to action; one row per itinerary), `package_images` (metadata only; files live in the private bucket under `<org>/packages/`), `package_image_links` (cover, gallery, hotel, day photos; composite keys keep photos inside one agency). `itineraries.status` also allows `ARCHIVED`. `duplicate_itinerary` now copies package details and photo links, so "Save as template" keeps the look. Functions: `save_package_details`, `set_package_status`.

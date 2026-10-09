@@ -31,8 +31,10 @@ export type ScheduleRow = {
 
 export type InvoiceRow = {
   id: string;
-  invoice_number: string;
+  invoice_number: string | null;
   booking_id: string;
+  tax_snapshot?: unknown;
+  doc_type?: string | null;
   status: string;
   issue_date: string;
   due_date: string | null;

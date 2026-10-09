@@ -66,7 +66,7 @@ export const itineraryDocSchema = z.object({
   inclusions: lines.default([]),
   exclusions: lines.default([]),
   notes: text(5000),
-  status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT"),
+  status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]).default("DRAFT"),
   isTemplate: z.boolean().default(false),
   days: z.array(daySchema).max(MAX_DAYS),
 });
@@ -102,7 +102,7 @@ export type EditorDoc = {
   inclusions: string;
   exclusions: string;
   notes: string;
-  status: "DRAFT" | "PUBLISHED";
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
   isTemplate: boolean;
   days: EditorDay[];
 };
@@ -127,7 +127,7 @@ export function toEditorDoc(raw: Loose): EditorDoc {
     inclusions: list(raw.inclusions),
     exclusions: list(raw.exclusions),
     notes: s(raw.notes),
-    status: raw.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT",
+    status: raw.status === "PUBLISHED" || raw.status === "ARCHIVED" ? raw.status : "DRAFT",
     isTemplate: raw.isTemplate === true,
     days: days.map((d) => ({
       key: newKey(),

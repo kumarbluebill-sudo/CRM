@@ -9,6 +9,9 @@ import { logger } from "@/lib/utils/logger";
 import { uuid } from "@/lib/crm/schemas";
 import { getBranding } from "@/lib/quotation/queries";
 import { InvoicePdf, type InvoicePdfProps } from "@/lib/pdf/finance-pdf";
+import { GstDocumentPdf } from "@/lib/pdf/gst-pdf";
+import { getInvoiceFull } from "@/lib/invoicing/queries";
+import { buildInvoicePdfProps } from "@/lib/invoicing/pdf-data";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -29,6 +32,24 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     const supabase = await createClient();
     const { data: inv } = await supabase.from("invoices").select("*").eq("id", id).maybeSingle();
     if (!inv) return json(404, "Not found."); // missing or other organization (RLS)
+    // Invoices from the GST module (drafts, and anything with a tax snapshot) use the GST layout.
+    if (inv.status === "DRAFT" || inv.status === "CANCELLED" || inv.tax_snapshot) {
+      const full = await getInvoiceFull(id);
+      if (!full) return json(404, "Not found.");
+      const gstProps = await buildInvoicePdfProps(full.invoice, full.lines);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const gstPdf = await renderToBuffer(createElement(GstDocumentPdf, gstProps) as any);
+      const label = full.invoice.invoice_number ?? `draft-${id.slice(0, 8)}`;
+      await audit(supabase, "DOWNLOAD", "invoice", id, { invoice: label });
+      return new NextResponse(new Uint8Array(gstPdf), {
+        headers: {
+          "content-type": "application/pdf",
+          "content-disposition": `inline; filename="${label.replace(/[^A-Za-z0-9-]/g, "_")}.pdf"`,
+          "cache-control": "private, no-store",
+          "x-content-type-options": "nosniff",
+        },
+      });
+    }
     const [{ data: booking }, branding] = await Promise.all([
       supabase
         .from("bookings")
