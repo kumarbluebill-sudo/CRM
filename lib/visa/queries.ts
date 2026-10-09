@@ -655,3 +655,56 @@ export async function getWorkQueue(mine = true) {
   if (error) throw error;
   return data as WorkQueue;
 }
+
+// ---- reports and alerts ----
+export type VisaReport = {
+  applications: {
+    created: number;
+    approved: number;
+    rejected: number;
+    cancelled: number;
+    delivered: number;
+    open: number;
+    byStatus: Record<string, number>;
+    byCountry: { country: string; count: number; approved: number; rejected: number }[];
+    byType: { type: string; count: number }[];
+    byStaff: { userId: string | null; count: number; approved: number; rejected: number }[];
+  };
+  enquiries: { created: number; converted: number; lost: number };
+  pending: { overdue: number; documentsPending: number; travelRisk: number };
+  revenue?: { currency: string; count: number; value: number }[];
+  profit?: { currency: string; applications: number; revenue: number; cost: number }[];
+  suppliers?: {
+    supplier: string;
+    submissions: number;
+    completed: number;
+    avgDays: number | null;
+    overdue: number;
+    cost: number | null;
+  }[];
+};
+
+export async function getVisaReport(range: { from: string; to: string }) {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("visa_report_summary", {
+    p_from: range.from,
+    p_to: range.to,
+  });
+  if (error) throw error;
+  return data as VisaReport;
+}
+
+export type VisaAlert = {
+  severity: "URGENT" | "WARNING";
+  kind: "TRAVEL" | "OVERDUE" | "PASSPORT" | "DOCUMENTS";
+  applicationId: string;
+  number: string;
+  message: string;
+};
+
+export async function getVisaAlerts() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("visa_alerts");
+  if (error) throw error;
+  return (data ?? []) as VisaAlert[];
+}

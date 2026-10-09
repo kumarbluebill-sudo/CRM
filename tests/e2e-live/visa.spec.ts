@@ -281,6 +281,8 @@ test("every visa page loads for the signed-in owner without errors", async ({ pa
     "/visa/applications/new",
     "/visa/queue",
     "/visa/queue?scope=all",
+    "/visa/reports",
+    "/visa/import",
     "/visa/products",
     "/visa/products/new",
     "/visa/settings",

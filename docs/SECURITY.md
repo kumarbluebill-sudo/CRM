@@ -137,3 +137,9 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - **Delivery** is recorded with a method and confirmation; a trigger refuses `DELIVERED` without it, so the rule holds even if the status is set another way.
 - **Messages** to customers are drafted by `queue_visa_communication` (address copied from the customer record, `do_not_contact` honoured, only `VISA_*` or `GENERAL` templates) and sent from the Messages tab by a person, as elsewhere. Template variables are an allow-list.
 - **Work queue** is a security-invoker function, so people only see what their permissions and RLS allow; another agency sees zeros.
+
+## Visa module (slice 3)
+
+- **Reports and alerts run as the caller** (security invoker). Reports need `visa.report.view`; revenue needs `visa.price.view`; profit and supplier performance need `visa.supplier.view`. Profit counts only applications with a recorded cost, so a missing cost never reads as full margin. Alerts never contain passport numbers.
+- **CSV export** (`/api/visa/export`) is limited to applications, enquiries and (with `visa.supplier.view`) supplier submissions. No passport data or contact details are included; cells starting with `= + - @` are neutralised; each export is rate-limited and audited.
+- **CSV import** is a two-step flow: check (writes nothing, row-by-row result) then confirm. Rows that already exist are skipped, never overwritten. It needs `visa.price.edit`; government and supplier fees additionally need `visa.supplier.edit`. Files are limited to 300 KB and 500 rows, columns are an allow-list, and every imported product records its source, creator and a price-history entry. Imported text is only ever stored as data.
