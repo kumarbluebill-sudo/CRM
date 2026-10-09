@@ -32,7 +32,7 @@ export function SendMessageForm({ bookingId }: { bookingId: string }) {
             Template
           </label>
           <select id="msg-template" name="template" defaultValue="GENERAL" className={selectClass}>
-            {TEMPLATE_KEYS.map((k) => (
+            {TEMPLATE_KEYS.filter((k) => !k.startsWith("VISA_")).map((k) => (
               <option key={k} value={k}>
                 {TEMPLATE_LABELS[k]}
               </option>

@@ -662,7 +662,13 @@ describe("visa module: RLS, permissions, workflow (local Postgres)", () => {
       await setStatus(ops, "PROCESSING");
       await setStatus(ops, "APPROVED");
       await setStatus(ops, "VISA_RECEIVED");
-      await setStatus(ops, "DELIVERED");
+      expect(await fails(() => setStatus(ops, "DELIVERED"))).toBe(true); // delivery must be recorded
+      const lead = (
+        await one(ops, "select id from visa_travellers where application_id = $1 limit 1", [app])
+      ).id;
+      await q1(ops, "select public.record_visa_result($1, $2, $3)", [app, lead, await upload(ops)]);
+      await q1(ops, "select public.record_visa_delivery($1, 'EMAIL')", [app]);
+      expect(await status()).toBe("DELIVERED");
       await setStatus(ops, "CLOSED");
       expect(await status()).toBe("CLOSED");
       expect(await fails(() => setStatus(ops, "NEW"))).toBe(true);
@@ -782,7 +788,10 @@ describe("visa module: RLS, permissions, workflow (local Postgres)", () => {
         [app],
       );
       expect(
-        await q1(exec, "select id from tasks where related_type = 'VISA_APPLICATION'"),
+        await q1(
+          exec,
+          "select id from tasks where related_type = 'VISA_APPLICATION' and title = 'Call customer about passport'",
+        ),
       ).toHaveLength(1);
       expect(
         await fails(() =>

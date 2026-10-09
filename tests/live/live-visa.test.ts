@@ -449,7 +449,36 @@ describe.skipIf(!LIVE)("live Supabase: visa module (throwaway data, cleaned up)"
     await step("PROCESSING");
     await step("APPROVED");
     await step("VISA_RECEIVED");
-    await step("DELIVERED");
+    expect(await denied(ops.rpc("set_visa_status", { p_id: app, p_status: "DELIVERED" }))).toBe(
+      true,
+    ); // delivery must be recorded first
+    const finalDoc = await ops
+      .from("documents")
+      .insert({
+        category: "VISA",
+        name: "visa.pdf",
+        storage_path: `${orgA}/${uid()}.pdf`,
+        mime_type: "application/pdf",
+        size_bytes: 10,
+        sha256: "d".repeat(64),
+        visa_application_id: app,
+      })
+      .select("id")
+      .single();
+    const leadTraveller = (
+      await a
+        .from("visa_travellers")
+        .select("id")
+        .eq("application_id", app)
+        .eq("is_lead", true)
+        .single()
+    ).data!;
+    await rpc(ops, "record_visa_result", {
+      p_app: app,
+      p_traveller: leadTraveller.id,
+      p_document: finalDoc.data!.id,
+    });
+    await rpc(ops, "record_visa_delivery", { p_app: app, p_method: "EMAIL" });
     await step("CLOSED");
     expect(
       (
@@ -509,5 +538,121 @@ describe.skipIf(!LIVE)("live Supabase: visa module (throwaway data, cleaned up)"
     const dash = await rpc(a, "visa_dashboard");
     expect(dash.byStatus.CLOSED).toBe(1);
     expect((await rpc(b, "visa_dashboard")).byStatus).toEqual({});
+  });
+
+  it("prices, quotes and books a visa, then runs supplier, final visa, delivery and messaging", async () => {
+    const app2 = await rpc<string>(a, "create_visa_application", {
+      p_customer: customer,
+      p_product: product,
+      p_nationality: "Indian",
+    });
+    const calc = await rpc(exec, "price_visa_application", { p_app: app2 });
+    expect(Number(calc.total)).toBeGreaterThan(0);
+    expect(
+      await denied(
+        exec.rpc("price_visa_application", { p_app: app2, p_discount: 50, p_reason: "friend" }),
+      ),
+    ).toBe(true); // no visa.discount
+    await rpc(a, "price_visa_application", {
+      p_app: app2,
+      p_discount: 50,
+      p_reason: "Repeat client",
+    });
+    expect(await denied(b.rpc("price_visa_application", { p_app: app2 }))).toBe(true);
+    expect(
+      await denied(a.from("visa_applications").update({ total_price: 1 }).eq("id", app2)),
+    ).toBe(true);
+
+    const quotation = await rpc<string>(a, "create_visa_quotation", { p_app: app2 });
+    const items = (await a.from("quotation_items").select("type").eq("quotation_id", quotation))
+      .data!;
+    expect(items.map((i) => i.type)).toEqual(["VISA"]);
+    expect(await denied(a.rpc("price_visa_application", { p_app: app2 }))).toBe(true); // locked
+    expect(await denied(b.rpc("create_visa_quotation", { p_app: app2 }))).toBe(true);
+
+    const db = new pg.Client({ connectionString: DB, ssl: { rejectUnauthorized: false } });
+    await db.connect();
+    try {
+      await db.query("update quotations set status = 'APPROVED' where id = $1", [quotation]);
+      const booking = await rpc<string>(a, "convert_quotation_to_booking", {
+        p_quotation: quotation,
+      });
+      expect(
+        (await a.from("visa_applications").select("booking_id").eq("id", app2).single()).data,
+      ).toEqual({
+        booking_id: booking,
+      });
+
+      await db.query("update visa_applications set status = 'SUBMITTED' where id = $1", [app2]);
+      expect(
+        (await a.from("visa_applications").select("expected_completion").eq("id", app2).single())
+          .data!.expected_completion,
+      ).not.toBeNull();
+      await rpc(ops, "record_supplier_submission", {
+        p_app: app2,
+        p_reference: "SUP-1",
+        p_cost: 1200,
+      });
+      expect((await ops.from("visa_supplier_submissions").select("cost")).data).toHaveLength(1);
+      expect((await exec.from("visa_supplier_submissions").select("cost")).data).toEqual([]);
+      expect((await b.from("visa_supplier_submissions").select("cost")).data).toEqual([]);
+
+      await db.query("update visa_applications set status = 'APPROVED' where id = $1", [app2]);
+      const t = (await a.from("visa_travellers").select("id").eq("application_id", app2).single())
+        .data!;
+      const file = await ops
+        .from("documents")
+        .insert({
+          category: "VISA",
+          name: "final.pdf",
+          storage_path: `${orgA}/${uid()}.pdf`,
+          mime_type: "application/pdf",
+          size_bytes: 10,
+          sha256: "e".repeat(64),
+          visa_application_id: app2,
+        })
+        .select("id")
+        .single();
+      await rpc(ops, "record_visa_result", {
+        p_app: app2,
+        p_traveller: t.id,
+        p_document: file.data!.id,
+        p_visa_number: "TH1234567",
+      });
+      expect((await b.from("visa_results").select("id")).data).toEqual([]);
+      await db.query("update visa_applications set status = 'VISA_RECEIVED' where id = $1", [app2]);
+      await rpc(ops, "record_visa_delivery", { p_app: app2, p_method: "EMAIL" });
+      expect(
+        (await a.from("visa_applications").select("status").eq("id", app2).single()).data,
+      ).toEqual({
+        status: "DELIVERED",
+      });
+    } finally {
+      await db.end();
+    }
+
+    const msg = await rpc<string>(exec, "queue_visa_communication", {
+      p_channel: "EMAIL",
+      p_template: "VISA_STATUS_UPDATE",
+      p_app: app2,
+      p_vars: { customer_name: "Raj" },
+    });
+    expect(msg).toBeTruthy();
+    expect(
+      await denied(
+        b.rpc("queue_visa_communication", {
+          p_channel: "EMAIL",
+          p_template: "GENERAL",
+          p_app: app2,
+        }),
+      ),
+    ).toBe(true);
+    const queue = await rpc(ops, "visa_work_queue", { p_mine: false });
+    expect(queue.counts).toHaveProperty("overdue");
+    expect(
+      Object.values((await rpc(b, "visa_work_queue", { p_mine: false })).counts).every(
+        (n) => n === 0,
+      ),
+    ).toBe(true);
   });
 });

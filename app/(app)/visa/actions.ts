@@ -6,6 +6,8 @@ import { requirePermission } from "@/lib/auth/session";
 import type { FormState } from "@/lib/auth/schemas";
 import { AppError } from "@/lib/utils/errors";
 import { rateLimit } from "@/lib/rate-limit";
+import { deliverCommunication } from "@/lib/comms/deliver";
+import { getBranding } from "@/lib/quotation/queries";
 import { formObject, redirect, runAction, throwIfDbError } from "@/lib/crm/action-utils";
 import { uuid } from "@/lib/crm/schemas";
 import {
@@ -18,6 +20,12 @@ import {
   applicationSchema,
   assignSchema,
   convertSchema,
+  deliverySchema,
+  expectedSchema,
+  priceSchema,
+  resultSchema,
+  submissionSchema,
+  visaMessageSchema,
   countrySchema,
   documentTypeSchema,
   enquirySchema,
@@ -73,6 +81,30 @@ function throwVisaError(error: DbError, context: string) {
       throw new AppError(
         "Only new or cancelled applications can be deleted.",
         "NOT_DELETABLE",
+        409,
+      );
+    case "P0031":
+      throw new AppError("Express processing isn't offered for this product.", "NO_EXPRESS", 409);
+    case "P0032":
+      throw new AppError(
+        "The price is locked once a quotation has been created.",
+        "PRICE_LOCKED",
+        409,
+      );
+    case "P0033":
+      throw new AppError("Record the delivery before marking it delivered.", "NO_DELIVERY", 409);
+    case "P0034":
+      throw new AppError("Price the application first.", "NOT_PRICED", 409);
+    case "P0035":
+      throw new AppError("This application already has a quotation.", "HAS_QUOTATION", 409);
+    case "P0036":
+      throw new AppError("Attach the final visa file before delivery.", "NO_RESULT_FILE", 409);
+    case "P0014":
+      throw new AppError("This customer has asked not to be contacted.", "DO_NOT_CONTACT", 409);
+    case "P0015":
+      throw new AppError(
+        "The customer has no email or phone number for that channel.",
+        "NO_ADDRESS",
         409,
       );
     case "23505":
@@ -673,4 +705,208 @@ export async function removeRequirementAction(productId: string, id: string): Pr
     revalidatePath(`/visa/products/${productId}`);
     return { ok: true, message: "Requirement removed." };
   });
+}
+
+/* ---------------- commerce: pricing, quotation, supplier, results, delivery, messages ---------------- */
+
+export async function priceApplicationAction(
+  id: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  if (!uuid.safeParse(id).success) return { message: "Application not found." };
+  const parsed = priceSchema.safeParse(formObject(formData));
+  if (!parsed.success) return bad(parsed);
+  const v = parsed.data;
+  return runAction(async () => {
+    await guard("visa.edit", "visa-price-app", 30);
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("price_visa_application", {
+      p_app: id,
+      p_express: v.express,
+      p_discount: v.discount,
+      p_reason: v.reason ?? null,
+    });
+    throwVisaError(error, "price visa application");
+    revalidatePath(appPath(id));
+    return { ok: true, message: "Price calculated and saved." };
+  });
+}
+
+export async function createVisaQuotationAction(id: string): Promise<FormState> {
+  if (!uuid.safeParse(id).success) return { message: "Application not found." };
+  return runAction(async () => {
+    await guard("visa.edit", "visa-quote", 20);
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("create_visa_quotation", { p_app: id });
+    throwVisaError(error, "create visa quotation");
+    revalidatePath(appPath(id));
+    revalidatePath("/quotations");
+    return { ok: true, message: "Quotation created. Open it to review and send." };
+  });
+}
+
+export async function recordSubmissionAction(
+  id: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  if (!uuid.safeParse(id).success) return { message: "Application not found." };
+  const parsed = submissionSchema.safeParse(formObject(formData));
+  if (!parsed.success) return bad(parsed);
+  const v = parsed.data;
+  return runAction(async () => {
+    await guard("visa.application.submit", "visa-submission", 30);
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("record_supplier_submission", {
+      p_app: id,
+      p_supplier: v.supplierId ?? null,
+      p_reference: v.reference ?? null,
+      p_cost: v.cost ?? null,
+      p_notes: v.notes ?? null,
+    });
+    throwVisaError(error, "record supplier submission");
+    revalidatePath(appPath(id));
+    return { ok: true, message: "Supplier submission recorded." };
+  });
+}
+
+export async function setExpectedCompletionAction(
+  id: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  if (!uuid.safeParse(id).success) return { message: "Application not found." };
+  const parsed = expectedSchema.safeParse(formObject(formData));
+  if (!parsed.success) return bad(parsed);
+  return runAction(async () => {
+    await guard("visa.process", "visa-expected", 30);
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("set_visa_expected_completion", {
+      p_app: id,
+      p_date: parsed.data.expectedCompletion ?? null,
+    });
+    throwVisaError(error, "set expected completion");
+    revalidatePath(appPath(id));
+    revalidatePath("/visa/queue");
+    return { ok: true, message: "Expected completion saved." };
+  });
+}
+
+export async function recordResultAction(
+  id: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  if (!uuid.safeParse(id).success) return { message: "Application not found." };
+  const parsed = resultSchema.safeParse(formObject(formData));
+  if (!parsed.success) return bad(parsed);
+  const v = parsed.data;
+  return runAction(async () => {
+    await guard("visa.process", "visa-result", 30);
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("record_visa_result", {
+      p_app: id,
+      p_traveller: v.travellerId,
+      p_document: null,
+      p_visa_number: v.visaNumber ?? null,
+      p_valid_from: v.validFrom ?? null,
+      p_valid_until: v.validUntil ?? null,
+      p_notes: v.notes ?? null,
+    });
+    throwVisaError(error, "record visa result");
+    revalidatePath(appPath(id));
+    return { ok: true, message: "Visa details saved." };
+  });
+}
+
+export async function recordDeliveryAction(
+  id: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  if (!uuid.safeParse(id).success) return { message: "Application not found." };
+  const parsed = deliverySchema.safeParse(formObject(formData));
+  if (!parsed.success) return bad(parsed);
+  const v = parsed.data;
+  return runAction(async () => {
+    await guard("visa.process", "visa-delivery", 30);
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("record_visa_delivery", {
+      p_app: id,
+      p_method: v.method,
+      p_confirmation: v.confirmation ?? null,
+      p_notes: v.notes ?? null,
+    });
+    throwVisaError(error, "record visa delivery");
+    revalidatePath(appPath(id));
+    revalidatePath("/visa");
+    revalidatePath("/visa/queue");
+    return { ok: true, message: "Delivery recorded." };
+  });
+}
+
+type SendState = FormState & { waUrl?: string };
+
+/** Queues and sends a customer message about an application. Variables come from the database, not the browser. */
+export async function sendVisaMessageAction(
+  id: string,
+  _prev: SendState,
+  formData: FormData,
+): Promise<SendState> {
+  if (!uuid.safeParse(id).success) return { message: "Application not found." };
+  const parsed = visaMessageSchema.safeParse(formObject(formData));
+  if (!parsed.success) return bad(parsed);
+  const v = parsed.data;
+  try {
+    const session = await guard("communications.send", "visa-message", 30);
+    const supabase = await createClient();
+    const { data: a } = await supabase
+      .from("visa_applications")
+      .select(
+        "application_number, visa_type, expected_completion, customers ( name ), visa_countries ( name )",
+      )
+      .eq("id", id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!a) throw new AppError("Application not found.", "NOT_FOUND", 404);
+    const { data: open } = await supabase
+      .from("visa_application_documents")
+      .select("name, status")
+      .eq("application_id", id)
+      .eq("required", true)
+      .in("status", ["PENDING", "REQUESTED", "REJECTED", "CORRECTION_REQUIRED", "EXPIRED"]);
+    const customer = a.customers as unknown as { name: string } | null;
+    const country = a.visa_countries as unknown as { name: string } | null;
+    const vars: Record<string, string> = {
+      customer_name: customer?.name ?? "",
+      application_number: a.application_number as string,
+      country: country?.name ?? "",
+      visa_type: String(a.visa_type).toLowerCase(),
+      documents_pending:
+        (open ?? []).map((d) => d.name as string).join(", ") || "nothing outstanding",
+      expected_completion: (a.expected_completion as string | null) ?? "to be confirmed",
+      message: v.message ?? "",
+    };
+    const { data: cid, error } = await supabase.rpc("queue_visa_communication", {
+      p_channel: v.channel,
+      p_template: v.template,
+      p_app: id,
+      p_vars: vars,
+    });
+    throwVisaError(error, "queue visa message");
+    const branding = await getBranding();
+    const result = await deliverCommunication(
+      supabase,
+      cid as string,
+      session.organization?.name ?? "Your travel agency",
+      branding?.email ?? null,
+    );
+    revalidatePath(appPath(id));
+    revalidatePath("/communications");
+    return { ok: result.status === "SENT", message: result.message, waUrl: result.waUrl };
+  } catch (error) {
+    if (error instanceof AppError) return { message: error.message };
+    return { message: "Something went wrong. Please try again." };
+  }
 }

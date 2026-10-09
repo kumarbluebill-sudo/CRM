@@ -9,7 +9,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { requireOrgSession } from "@/lib/auth/session";
 import { label } from "@/lib/crm/constants";
 import { APPLICATION_STATUSES, isTravelUrgent } from "@/lib/visa/constants";
-import { getVisaDashboard, listApplications, listEnquiries } from "@/lib/visa/queries";
+import {
+  getVisaDashboard,
+  getWorkQueue,
+  listApplications,
+  listEnquiries,
+} from "@/lib/visa/queries";
 
 export const metadata: Metadata = { title: "Visa dashboard" };
 
@@ -50,8 +55,9 @@ export default async function VisaDashboardPage() {
       />
     );
   }
-  const [d, recent, due] = await Promise.all([
+  const [d, q, recent, due] = await Promise.all([
     getVisaDashboard(),
+    getWorkQueue(false),
     listApplications({ canSeePassports: false, page: 1 }),
     listEnquiries({ status: "FOLLOW_UP", page: 1 }),
   ]);
@@ -121,6 +127,20 @@ export default async function VisaDashboardPage() {
           value={by.READY_FOR_SUBMISSION ?? 0}
           href="/visa/applications?status=READY_FOR_SUBMISSION"
         />
+        <Stat
+          title="Overdue at supplier / embassy"
+          value={q.counts.overdue}
+          href="/visa/queue?scope=all"
+          tone="warn"
+        />
+        <Stat title="Visas to deliver" value={q.counts.toDeliver} href="/visa/queue?scope=all" />
+        <Stat
+          title="Visa follow-ups due"
+          value={q.counts.followUps}
+          href="/visa/queue?scope=all"
+          tone="warn"
+        />
+        <Stat title="Waiting to be priced" value={q.counts.unpriced} href="/visa/queue?scope=all" />
       </section>
 
       <Card>

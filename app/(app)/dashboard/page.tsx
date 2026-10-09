@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireOrgSession } from "@/lib/auth/session";
 import { getDashboardStats } from "@/lib/crm/queries";
+import { getWorkQueue } from "@/lib/visa/queries";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -17,6 +18,9 @@ export default async function DashboardPage() {
   const session = await requireOrgSession();
   const canLeads = session.permissions.has("leads.view");
   const stats = canLeads ? await getDashboardStats() : null;
+  const visa = session.permissions.has("visa.view")
+    ? await getWorkQueue(true).catch(() => null)
+    : null;
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const firstName = session.fullName.split(" ")[0] || "there";
@@ -78,6 +82,23 @@ export default async function DashboardPage() {
           <Metric key={m} label={m} value="—" />
         ))}
       </section>
+
+      {visa && (
+        <section aria-label="Visa work" className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {(
+            [
+              ["Visa documents to review", visa.counts.review],
+              ["Ready to submit", visa.counts.toSubmit],
+              ["Overdue visas", visa.counts.overdue],
+              ["Visas to deliver", visa.counts.toDeliver],
+            ] as const
+          ).map(([label, n]) => (
+            <Link key={label} href="/visa/queue">
+              <Metric label={label} value={String(n)} />
+            </Link>
+          ))}
+        </section>
+      )}
 
       <section aria-label="Activity" className="grid gap-4 md:grid-cols-2">
         <Card>

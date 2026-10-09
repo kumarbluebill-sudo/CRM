@@ -279,6 +279,8 @@ test("every visa page loads for the signed-in owner without errors", async ({ pa
     "/visa/enquiries/new",
     "/visa/applications",
     "/visa/applications/new",
+    "/visa/queue",
+    "/visa/queue?scope=all",
     "/visa/products",
     "/visa/products/new",
     "/visa/settings",
@@ -296,6 +298,36 @@ test("every visa page loads for the signed-in owner without errors", async ({ pa
     }
     if (/something went wrong|application error/i.test(await page.locator("body").innerText()))
       failures.push(`${p}: error page`);
+  }
+  // every tab of an application (created by the earlier tests in this file)
+  await page.goto("/visa/applications");
+  const appLink = page
+    .locator('a[href^="/visa/applications/"]')
+    .filter({ hasText: /^VISA-/ })
+    .first();
+  const href = (await appLink.count()) ? await appLink.getAttribute("href") : null;
+  if (href && !href.endsWith("/new")) {
+    for (const tab of [
+      "overview",
+      "travellers",
+      "documents",
+      "pricing",
+      "payments",
+      "processing",
+      "supplier",
+      "delivery",
+      "messages",
+      "tasks",
+      "notes",
+      "timeline",
+    ]) {
+      const res = await page.goto(`${href}?tab=${tab}`);
+      if ((res?.status() ?? 0) !== 200) failures.push(`${tab}: HTTP ${res?.status()}`);
+      else if (
+        /something went wrong|application error/i.test(await page.locator("body").innerText())
+      )
+        failures.push(`${tab}: error page`);
+    }
   }
   expect(failures).toEqual([]);
   expect(consoleErrors.filter((e) => !/favicon/i.test(e))).toEqual([]);

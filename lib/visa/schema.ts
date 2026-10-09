@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { uuid } from "@/lib/crm/schemas";
-import { APPLICANT_TYPES, ENTRY_TYPES, PRIORITIES, VISA_TYPES } from "@/lib/visa/constants";
+import {
+  APPLICANT_TYPES,
+  DELIVERY_METHODS,
+  ENTRY_TYPES,
+  PRIORITIES,
+  VISA_TYPES,
+} from "@/lib/visa/constants";
 
 const blank = (v: unknown) => (typeof v === "string" && v.trim() === "" ? undefined : v);
 const text = (max: number) => z.preprocess(blank, z.string().trim().max(max).optional());
@@ -146,4 +152,55 @@ export const notesSchema = z.object({
   customerNotes: text(2000),
   priority: z.enum(PRIORITIES),
   travelDate: date,
+});
+
+const checkbox = z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean());
+
+export const priceSchema = z.object({
+  express: checkbox,
+  discount: money.transform((v) => v ?? 0),
+  reason: text(300),
+});
+
+export const submissionSchema = z.object({
+  supplierId: optId,
+  reference: text(100),
+  cost: money,
+  notes: text(1000),
+});
+
+export const expectedSchema = z.object({ expectedCompletion: date });
+
+export const resultSchema = z.object({
+  travellerId: uuid,
+  visaNumber: z.preprocess(
+    blank,
+    z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z0-9 /-]{3,40}$/, "Use 3-40 letters, digits, spaces, / or -.")
+      .optional(),
+  ),
+  validFrom: date,
+  validUntil: date,
+  notes: text(500),
+});
+
+export const deliverySchema = z.object({
+  method: z.enum(DELIVERY_METHODS),
+  confirmation: text(300),
+  notes: text(1000),
+});
+
+export const visaMessageSchema = z.object({
+  channel: z.enum(["EMAIL", "WHATSAPP"]),
+  template: z.enum([
+    "VISA_DOCUMENT_REQUEST",
+    "VISA_CORRECTION",
+    "VISA_STATUS_UPDATE",
+    "VISA_APPROVED",
+    "VISA_READY",
+    "GENERAL",
+  ]),
+  message: text(500),
 });
