@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 
-export function MobileNav() {
+export function MobileNav({ name }: { name: string }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -20,7 +20,7 @@ export function MobileNav() {
       </SheetTrigger>
       <SheetContent side="left" className="w-72 overflow-y-auto p-0">
         <SheetHeader className="border-b">
-          <SheetTitle>Smart Travel CRM</SheetTitle>
+          <SheetTitle>{name}</SheetTitle>
         </SheetHeader>
         <SidebarNav onNavigate={() => setOpen(false)} />
       </SheetContent>

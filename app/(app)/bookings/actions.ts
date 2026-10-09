@@ -224,17 +224,15 @@ export async function savePassportAction(
   return runAction(async () => {
     await requirePermission("passengers.view_sensitive");
     const supabase = await createClient();
-    const { error } = await supabase
-      .from("passenger_identity")
-      .upsert(
-        {
-          passenger_id: passengerId,
-          passport_number: v.passportNumber,
-          passport_expiry: v.passportExpiry ?? null,
-          passport_country: v.passportCountry ?? null,
-        },
-        { onConflict: "passenger_id" },
-      );
+    const { error } = await supabase.from("passenger_identity").upsert(
+      {
+        passenger_id: passengerId,
+        passport_number: v.passportNumber,
+        passport_expiry: v.passportExpiry ?? null,
+        passport_country: v.passportCountry ?? null,
+      },
+      { onConflict: "passenger_id" },
+    );
     throwBookingError(error, "save passport");
     await audit(supabase, "UPDATE", "passenger_identity", passengerId); // never the number itself
     revalidatePath(bookingPath(bookingId));
