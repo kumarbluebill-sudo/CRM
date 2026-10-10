@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LocalTime } from "@/components/datetime/local-time";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BookingItemEditor } from "@/components/booking/item-editor";
@@ -352,7 +353,7 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
                   {h.reason ? <span className="text-muted-foreground"> · {h.reason}</span> : null}
                 </span>
                 <span className="text-muted-foreground">
-                  {new Date(h.created_at).toLocaleString("en-IN")}
+                  <LocalTime value={h.created_at} />
                 </span>
               </li>
             ))}

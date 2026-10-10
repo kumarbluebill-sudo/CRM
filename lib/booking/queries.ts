@@ -67,6 +67,10 @@ export type BookingItemRow = {
   unit_price: number | null;
   supplier_id: string | null;
   service_date: string | null;
+  starts_at: string | null;
+  ends_at: string | null;
+  event_tz: string | null;
+  dest_tz: string | null;
   confirmation_status: string;
   confirmation_reference: string | null;
   notes: string | null;

@@ -63,10 +63,16 @@ export const passportSchema = z.object({
   passportCountry: opt(z.string().trim().max(100)),
 });
 
+const localDateTime = z.string().regex(/^d{4}-d{2}-d{2}Td{2}:d{2}$/, "Enter a date and time");
+
 export const bookingItemSchema = z.object({
   description: z.string().trim().min(1, "Enter a description").max(500),
   supplierId: opt(z.string().uuid()),
   serviceDate: opt(isoDate),
+  startsLocal: opt(localDateTime),
+  endsLocal: opt(localDateTime),
+  eventTz: opt(z.string().trim().max(64)),
+  destTz: opt(z.string().trim().max(64)),
   confirmationStatus: z.enum(CONFIRMATION_STATUSES).default("PENDING"),
   confirmationReference: opt(z.string().trim().max(100)),
   notes: opt(z.string().trim().max(1000)),

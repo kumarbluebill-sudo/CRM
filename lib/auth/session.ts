@@ -56,11 +56,9 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
 
   let permissions = new Set<string>();
   if (member) {
-    const { data: rows } = await supabase
-      .from("role_permissions")
-      .select("permission_key")
-      .eq("role_key", member.role);
-    permissions = new Set((rows ?? []).map((r) => r.permission_key));
+    // the database resolves custom roles and system roles alike (and returns nothing for deactivated staff)
+    const { data: keys } = await supabase.rpc("my_permissions");
+    permissions = new Set(((keys ?? []) as unknown as string[]).map(String));
   }
 
   const org = Array.isArray(member?.organizations)
