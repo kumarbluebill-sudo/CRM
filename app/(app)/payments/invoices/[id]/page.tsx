@@ -93,7 +93,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
       {isDraft && !profileReady && (
         <p
           role="note"
-          className="rounded-lg border border-tone-warn/30 bg-tone-warn-soft p-3 text-sm text-tone-warn"
+          className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn rounded-lg border p-3 text-sm"
         >
           The invoicing profile (legal name, address and state) isn&apos;t complete, so this
           can&apos;t be issued yet.{" "}

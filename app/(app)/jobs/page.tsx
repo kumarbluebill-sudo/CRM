@@ -244,7 +244,7 @@ export default async function JobsPage({
                         <td className="text-muted-foreground">{s.department ?? "–"}</td>
                         <td className="text-right">{s.open_jobs ?? 0}</td>
                         <td
-                          className={`text-right ${(s.overdue_jobs ?? 0) > 0 ? "font-semibold text-tone-bad" : ""}`}
+                          className={`text-right ${(s.overdue_jobs ?? 0) > 0 ? "text-tone-bad font-semibold" : ""}`}
                         >
                           {s.overdue_jobs ?? 0}
                         </td>
@@ -287,7 +287,7 @@ export default async function JobsPage({
                         : "Unassigned"}
                     </span>
                     <span
-                      className={`text-xs ${j.is_overdue ? "font-semibold text-tone-bad" : "text-muted-foreground"}`}
+                      className={`text-xs ${j.is_overdue ? "text-tone-bad font-semibold" : "text-muted-foreground"}`}
                     >
                       {j.deadline ? `Due ${j.deadline}` : "No deadline"}
                     </span>

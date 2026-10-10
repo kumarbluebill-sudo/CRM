@@ -58,7 +58,9 @@ export function Header({
         >
           {initials(user.name)}
         </span>
-        <span className="text-foreground hidden max-w-32 truncate font-medium md:inline">{user.name}</span>
+        <span className="text-foreground hidden max-w-32 truncate font-medium md:inline">
+          {user.name}
+        </span>
       </Link>
       <form action={logoutAction}>
         <Button type="submit" variant="ghost" size="sm">

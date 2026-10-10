@@ -55,7 +55,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {blockedForMfa ? (
         <div
           role="alert"
-          className="mx-auto max-w-lg rounded-xl border border-tone-warn/30 bg-tone-warn-soft p-6 text-sm text-tone-warn"
+          className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn mx-auto max-w-lg rounded-xl border p-6 text-sm"
         >
           <h1 className="text-lg font-semibold">Set up two-step verification to continue</h1>
           <p className="mt-2">

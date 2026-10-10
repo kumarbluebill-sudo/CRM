@@ -266,7 +266,7 @@ export async function SupplierTab({ app, p }: { app: ApplicationRow; p: Perms })
               <>
                 {app.expected_completion}
                 {overdue && (
-                  <span className="ml-2 text-tone-bad">Overdue by {Math.abs(left!)} day(s)</span>
+                  <span className="text-tone-bad ml-2">Overdue by {Math.abs(left!)} day(s)</span>
                 )}
                 {submitted && left !== null && left >= 0 && (
                   <span className="text-muted-foreground ml-2">in {left} day(s)</span>

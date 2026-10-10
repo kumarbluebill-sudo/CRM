@@ -149,7 +149,7 @@ export default async function VisaDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="size-4 text-tone-bad" aria-hidden /> Alerts
+              <AlertTriangle className="text-tone-bad size-4" aria-hidden /> Alerts
               <span className="bg-muted rounded-full px-2 py-0.5 text-xs">{alerts.length}</span>
             </CardTitle>
           </CardHeader>
@@ -213,7 +213,7 @@ export default async function VisaDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="size-4 text-tone-bad" aria-hidden /> Needs attention
+              <AlertTriangle className="text-tone-bad size-4" aria-hidden /> Needs attention
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -232,7 +232,7 @@ export default async function VisaDashboardPage() {
                   )}
                   <span className="ml-auto flex gap-2">
                     {isTravelUrgent(a.travel_date, a.status) && (
-                      <span className="text-xs text-tone-bad">Travel date approaching</span>
+                      <span className="text-tone-bad text-xs">Travel date approaching</span>
                     )}
                     <StatusBadge value={a.status} />
                   </span>

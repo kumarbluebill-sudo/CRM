@@ -38,7 +38,7 @@ export default async function ImportReviewPage({ params }: { params: Promise<{ i
 
       <div
         role="note"
-        className="flex gap-3 rounded-lg border border-tone-warn/30 bg-tone-warn-soft p-4 text-sm text-tone-warn"
+        className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn flex gap-3 rounded-lg border p-4 text-sm"
       >
         <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
         <p>

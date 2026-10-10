@@ -109,7 +109,7 @@ export function PackagePreview({ doc }: { doc: PackageDocument }) {
       style={{ fontFamily: serif ? "Georgia, 'Times New Roman', serif" : undefined }}
     >
       {doc.draft && (
-        <p className="text-xs font-semibold text-tone-bad print:hidden">DRAFT: not published</p>
+        <p className="text-tone-bad text-xs font-semibold print:hidden">DRAFT: not published</p>
       )}
       <div className="flex items-center justify-between gap-3">
         {doc.logo ? (
@@ -128,12 +128,12 @@ export function PackagePreview({ doc }: { doc: PackageDocument }) {
         </span>
       </div>
       {Cover}
-      <p className="text-center text-sm text-tone-neutral italic">{doc.tagline}</p>
+      <p className="text-tone-neutral text-center text-sm italic">{doc.tagline}</p>
 
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-5">
         {facts.map(([k, v]) => (
           <div key={k} className="rounded-lg border p-2">
-            <dt className="text-[10px] text-tone-neutral uppercase">{k}</dt>
+            <dt className="text-tone-neutral text-[10px] uppercase">{k}</dt>
             <dd className="text-sm font-semibold">{v}</dd>
           </div>
         ))}
@@ -238,12 +238,12 @@ export function PackagePreview({ doc }: { doc: PackageDocument }) {
                   <h3 className="font-semibold" style={{ color: secondary }}>
                     {d.title}
                   </h3>
-                  {d.date && <p className="text-xs text-tone-neutral">{fmtDate(d.date)}</p>}
+                  {d.date && <p className="text-tone-neutral text-xs">{fmtDate(d.date)}</p>}
                   {d.description && (
                     <p className="mt-0.5 text-sm whitespace-pre-line">{d.description}</p>
                   )}
                   {d.items.length > 0 && (
-                    <ul className="mt-1 list-disc pl-5 text-sm text-tone-neutral">
+                    <ul className="text-tone-neutral mt-1 list-disc pl-5 text-sm">
                       {d.items.map((it, i) => (
                         <li key={i}>
                           {it.time && <span className="text-tone-neutral">{it.time} </span>}

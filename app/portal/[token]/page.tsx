@@ -65,7 +65,7 @@ export default async function PortalPage({ params }: { params: Promise<{ token: 
       {cancelled && (
         <p
           role="note"
-          className="rounded-lg border border-tone-bad/30 bg-tone-bad-soft p-3 text-sm text-tone-bad"
+          className="border-tone-bad/30 bg-tone-bad-soft text-tone-bad rounded-lg border p-3 text-sm"
         >
           This booking has been cancelled. Please contact us if you have questions.
         </p>

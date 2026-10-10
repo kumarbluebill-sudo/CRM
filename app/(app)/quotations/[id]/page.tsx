@@ -70,7 +70,7 @@ export default async function QuotationPage({ params }: { params: Promise<{ id: 
       {!editable && (
         <p
           role="note"
-          className="rounded-lg border border-tone-warn/30 bg-tone-warn-soft p-3 text-sm text-tone-warn"
+          className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn rounded-lg border p-3 text-sm"
         >
           {["DRAFT", "NEGOTIATION"].includes(status)
             ? "You have read-only access to this quotation."

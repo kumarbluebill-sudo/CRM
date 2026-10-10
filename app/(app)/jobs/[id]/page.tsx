@@ -84,7 +84,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
                   <p className="text-muted-foreground text-xs">{k}</p>
                   <p
                     className={
-                      k === "Deadline" && job.is_overdue ? "font-semibold text-tone-bad" : ""
+                      k === "Deadline" && job.is_overdue ? "text-tone-bad font-semibold" : ""
                     }
                   >
                     {v || "–"}

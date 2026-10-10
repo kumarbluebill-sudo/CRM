@@ -23,7 +23,7 @@ export async function BillingBanner() {
   return (
     <div
       role="status"
-      className="flex flex-wrap items-center justify-between gap-2 border-b border-tone-warn/30 bg-tone-warn-soft px-4 py-2 text-sm text-tone-warn"
+      className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2 text-sm"
     >
       <span>{TEXT[notice.kind](notice.days)}</span>
       <Link href="/settings/billing" className="font-medium underline">

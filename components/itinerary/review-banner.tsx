@@ -24,7 +24,7 @@ export function ReviewBanner({
     <div
       role="region"
       aria-label="Review required"
-      className="rounded-lg border border-tone-warn/30 bg-tone-warn-soft p-4 text-sm text-tone-warn"
+      className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn rounded-lg border p-4 text-sm"
     >
       <div className="flex items-start gap-3">
         <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />

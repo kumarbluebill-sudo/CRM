@@ -14,7 +14,17 @@ const TONE_CLASS: Record<Tone, string> = {
 };
 
 const GROUPS: Record<Tone, string[]> = {
-  neutral: ["LOST", "DRAFT", "LOW", "ON_HOLD", "TODO", "CLOSED", "NOT_REQUIRED", "VOID", "CANCELLED"],
+  neutral: [
+    "LOST",
+    "DRAFT",
+    "LOW",
+    "ON_HOLD",
+    "TODO",
+    "CLOSED",
+    "NOT_REQUIRED",
+    "VOID",
+    "CANCELLED",
+  ],
   primary: ["NEW", "IN_PROGRESS", "SUBMITTED", "PROCESSING", "UPLOADED", "ISSUED"],
   info: [
     "CONTACTED",

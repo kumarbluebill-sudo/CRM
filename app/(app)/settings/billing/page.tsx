@@ -45,7 +45,7 @@ function Meter({
         aria-valuemax={100}
       >
         <div
-          className={pct >= 90 ? "h-full bg-tone-bad" : "bg-primary h-full"}
+          className={pct >= 90 ? "bg-tone-bad h-full" : "bg-primary h-full"}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -99,7 +99,7 @@ export default async function BillingPage() {
           {!l.inForce && (
             <p
               role="note"
-              className="rounded-lg border border-tone-warn/30 bg-tone-warn-soft p-3 text-tone-warn"
+              className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn rounded-lg border p-3"
             >
               Your trial or subscription has ended, so the Free plan&apos;s limits apply. Your data
               is safe and nothing has been deleted.

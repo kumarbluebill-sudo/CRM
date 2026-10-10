@@ -160,6 +160,28 @@
 }
 
 @layer base {
+  /* Tables: muted header row, hover rows, roomy cells. Right-align amounts with text-right + tabular-nums. */
+  table thead tr {
+    background: var(--muted);
+  }
+  table th {
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  table tbody tr {
+    border-top: 1px solid var(--border);
+  }
+  table tbody tr:hover {
+    background: var(--muted);
+  }
+  .tabular-nums,
+  table td.text-right {
+    font-variant-numeric: tabular-nums;
+  }
+  svg.lucide {
+    stroke-width: 1.75;
+  }
   * {
     @apply border-border outline-ring/50;
   }

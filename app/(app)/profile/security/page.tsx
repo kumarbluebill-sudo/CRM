@@ -42,7 +42,7 @@ export default async function SecurityPage({
       {required && !enrolled && (
         <p
           role="alert"
-          className="rounded-lg border border-tone-warn/30 bg-tone-warn-soft p-3 text-sm text-tone-warn"
+          className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn rounded-lg border p-3 text-sm"
         >
           Your agency requires owners and admins to use two-step verification. Set it up below to
           continue.
@@ -63,7 +63,7 @@ export default async function SecurityPage({
               {verified.map((f) => (
                 <li key={f.id} className="flex flex-wrap items-center gap-3 py-2">
                   <span className="font-medium">{f.friendly_name ?? "Authenticator app"}</span>
-                  <span className="text-xs text-tone-ok">On</span>
+                  <span className="text-tone-ok text-xs">On</span>
                   <span className="text-muted-foreground text-xs">
                     added {f.created_at.slice(0, 10)}
                   </span>

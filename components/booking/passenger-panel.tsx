@@ -148,7 +148,7 @@ function PassengerCard({
       </div>
 
       {canSensitive && (
-        <div className="mt-3 rounded-md border bg-tone-warn-soft p-2">
+        <div className="bg-tone-warn-soft mt-3 rounded-md border p-2">
           <p className="flex items-center gap-1.5 text-xs font-semibold uppercase">
             <ShieldCheck className="size-3.5" aria-hidden /> Passport (restricted)
           </p>
@@ -280,10 +280,7 @@ function PassportRow({
         {passport.country ?? "Country not set"} · expires {passport.expiry ?? "unknown"}
       </p>
       {warning && (
-        <p
-          role="alert"
-          className="flex items-center gap-1.5 text-xs font-medium text-tone-warn"
-        >
+        <p role="alert" className="text-tone-warn flex items-center gap-1.5 text-xs font-medium">
           <AlertTriangle className="size-3.5" aria-hidden /> {warning}
         </p>
       )}

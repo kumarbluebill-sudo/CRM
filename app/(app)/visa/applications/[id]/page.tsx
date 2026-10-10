@@ -223,7 +223,7 @@ export default async function ApplicationPage({
         checklist.some((c) => c.status === "CORRECTION_REQUIRED" || c.status === "REJECTED")) && (
         <div
           role="note"
-          className="flex gap-3 rounded-lg border border-tone-warn/30 bg-tone-warn-soft p-3 text-sm text-tone-warn"
+          className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn flex gap-3 rounded-lg border p-3 text-sm"
         >
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <ul className="flex flex-col gap-1">
@@ -346,7 +346,7 @@ export default async function ApplicationPage({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
-                  {warn && <p className="text-sm text-tone-bad">{warn}</p>}
+                  {warn && <p className="text-tone-bad text-sm">{warn}</p>}
                   <p className="text-muted-foreground text-sm">
                     {[t.nationality, t.date_of_birth, t.mobile, t.email]
                       .filter(Boolean)

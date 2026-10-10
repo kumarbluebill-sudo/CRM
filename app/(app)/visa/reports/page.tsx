@@ -256,7 +256,9 @@ export default async function VisaReportsPage({
                     <span>
                       {s.avgDays != null ? `${s.avgDays} days average` : "no completions yet"}
                     </span>
-                    <span className={s.overdue > 0 ? "text-tone-bad" : ""}>{s.overdue} overdue</span>
+                    <span className={s.overdue > 0 ? "text-tone-bad" : ""}>
+                      {s.overdue} overdue
+                    </span>
                   </li>
                 ))}
               </ul>

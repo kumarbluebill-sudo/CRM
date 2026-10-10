@@ -19,7 +19,7 @@ export function Bars({
           </div>
           <div className="bg-muted h-2 overflow-hidden rounded-full" aria-hidden>
             <div
-              className={tone === "warn" ? "h-full bg-tone-warn" : "bg-primary h-full"}
+              className={tone === "warn" ? "bg-tone-warn h-full" : "bg-primary h-full"}
               style={{ width: `${Math.max(2, Math.round((r.value / max) * 100))}%` }}
             />
           </div>

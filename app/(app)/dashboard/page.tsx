@@ -61,11 +61,13 @@ function Kpi({
   return (
     <Link
       href={href}
-      className="bg-card hover:bg-muted/50 focus-visible:ring-ring ring-foreground/10 flex min-w-0 flex-col rounded-xl px-3 py-2 ring-1 focus-visible:ring-2 focus-visible:outline-none"
+      className="bg-card hover:bg-muted/50 focus-visible:ring-ring flex min-w-0 flex-col rounded-xl border px-3 py-2 shadow-xs focus-visible:ring-2 focus-visible:outline-none"
     >
       <span className="text-muted-foreground truncate text-[11px]">{title}</span>
       <span className="flex items-baseline gap-2">
-        <span className="truncate text-lg leading-tight font-semibold">{value}</span>
+        <span className="truncate text-lg leading-tight font-semibold tracking-tight tabular-nums">
+          {value}
+        </span>
         {delta}
       </span>
       {note && <span className="text-muted-foreground truncate text-[10px]">{note}</span>}

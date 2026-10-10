@@ -158,7 +158,7 @@ export function InvoiceEditor({
       {error && (
         <p
           role="alert"
-          className="text-destructive rounded-lg border border-tone-bad/30 bg-tone-bad-soft p-3 text-sm"
+          className="text-destructive border-tone-bad/30 bg-tone-bad-soft rounded-lg border p-3 text-sm"
         >
           {error}
         </p>
