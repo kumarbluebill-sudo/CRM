@@ -17,6 +17,8 @@ import {
   type FormState,
 } from "@/lib/auth/schemas";
 import { getSessionContext } from "@/lib/auth/session";
+import { safeNext } from "@/lib/auth/recent";
+import { logSecurityEvent } from "@/lib/security/log";
 
 const NOT_CONFIGURED: FormState = {
   message: "The service is not configured yet. Please contact support.",
@@ -47,6 +49,7 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
   ]);
   if (!byIp.allowed || !byEmail.allowed) {
     logger.warn("login throttled", { ip });
+    await logSecurityEvent("LOGIN_THROTTLED", email, ip);
     return TOO_MANY;
   }
 
@@ -54,6 +57,12 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
     logger.warn("login failed", { code: error.code });
+    await logSecurityEvent(
+      "LOGIN_FAILED",
+      email,
+      ip,
+      error.code === "email_not_confirmed" ? "e-mail not confirmed" : "wrong password",
+    );
     // Same message for unknown user / wrong password to avoid account enumeration.
     return {
       message:
@@ -62,8 +71,81 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
           : "Invalid email or password.",
     };
   }
+  // A person with an authenticator still has to complete the second step before they can see anything.
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") redirect("/login/mfa");
   if (data.user) await audit(supabase, "LOGIN", "user", data.user.id); // no-op until the user belongs to an organization
   redirect("/dashboard");
+}
+
+const CODE_ERROR: FormState = {
+  fieldErrors: { code: ["Enter the 6-digit code from your authenticator app."] },
+};
+
+/** Second step of sign-in: checks the 6-digit code, throttled per person and per address. */
+export async function verifyMfaAction(
+  next: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const code = String(formData.get("code") ?? "").replace(/s/g, "");
+  if (!/^[0-9]{6}$/.test(code)) return CODE_ERROR;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const ip = await clientIp();
+  const [byUser, byIp] = await Promise.all([
+    rateLimit(`mfa-user:${user.id}`, 6, 5 * 60_000),
+    rateLimit(`mfa-ip:${ip}`, 30, 5 * 60_000),
+  ]);
+  if (!byUser.allowed || !byIp.allowed) return TOO_MANY;
+
+  const { data: factors } = await supabase.auth.mfa.listFactors();
+  const factor = factors?.totp?.find((f) => f.status === "verified");
+  if (!factor) redirect(safeNext(next));
+  const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
+  if (error) {
+    await supabase.rpc("log_my_security_event", { p_kind: "MFA_FAILED", p_ip: ip });
+    return { message: "That code didn't work. Check the code and try again." };
+  }
+  await audit(supabase, "LOGIN", "user", user.id, { mfa: true });
+  redirect(safeNext(next));
+}
+
+/** Asks for the password again before a sensitive step. A fresh sign-in resets the "recently signed in" clock. */
+export async function reauthAction(
+  next: string,
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const password = String(formData.get("password") ?? "");
+  if (!password) return { fieldErrors: { password: ["Enter your password."] } };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) redirect("/login");
+  const ip = await clientIp();
+  const [byUser, byIp] = await Promise.all([
+    rateLimit(`reauth-user:${user.id}`, 6, 10 * 60_000),
+    rateLimit(`login-ip:${ip}`, 20, 10 * 60_000),
+  ]);
+  if (!byUser.allowed || !byIp.allowed) {
+    await logSecurityEvent("LOGIN_THROTTLED", user.email, ip, "re-confirmation");
+    return TOO_MANY;
+  }
+  const { error } = await supabase.auth.signInWithPassword({ email: user.email, password });
+  if (error) {
+    await logSecurityEvent("LOGIN_FAILED", user.email, ip, "re-confirmation");
+    return { message: "That password isn't right." };
+  }
+  await supabase.rpc("log_my_security_event", { p_kind: "REAUTH_OK", p_ip: ip });
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2")
+    redirect(`/login/mfa?next=${encodeURIComponent(safeNext(next))}`);
+  redirect(safeNext(next));
 }
 
 export async function registerAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -178,6 +260,7 @@ export async function createOrganizationAction(
 
   const session = await getSessionContext();
   if (!session) redirect("/login");
+  if (session.needsMfa) redirect("/login/mfa");
   if (session.organization) redirect("/dashboard");
 
   const supabase = await createClient();
@@ -193,6 +276,7 @@ export async function createOrganizationAction(
 export async function acceptInviteAction(): Promise<FormState> {
   const session = await getSessionContext();
   if (!session) redirect("/login");
+  if (session.needsMfa) redirect("/login/mfa");
   if (session.organization) redirect("/dashboard");
   const supabase = await createClient();
   const { error } = await supabase.rpc("accept_invite");

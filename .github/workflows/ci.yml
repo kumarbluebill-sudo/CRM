@@ -32,6 +32,8 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      - name: Secret scan (tracked files)
+        run: npm run scan:secrets
       - name: Dependency audit (production, high and above)
         run: npm audit --omit=dev --audit-level=high
 

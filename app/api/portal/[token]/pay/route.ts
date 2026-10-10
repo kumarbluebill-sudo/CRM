@@ -7,6 +7,7 @@ import { clientIp } from "@/lib/portal/queries";
 import { hashPortalToken, isPortalToken } from "@/lib/portal/token";
 import { rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/utils/logger";
+import { sameOrigin } from "@/lib/utils/origin";
 
 export const runtime = "nodejs";
 const json = (status: number, error: string) => NextResponse.json({ error }, { status });
@@ -17,6 +18,7 @@ const body = z.object({ amount: z.number().positive().max(1_000_000_000).multipl
  * balance; the payment becomes paid only through the signed Razorpay webhook.
  */
 export async function POST(req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
+  if (!sameOrigin(req)) return json(403, "Request not allowed.");
   const { token } = await ctx.params;
   if (!isPortalToken(token)) return json(404, "This link isn't valid.");
   const ip = await clientIp();

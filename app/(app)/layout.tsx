@@ -2,6 +2,9 @@ import { BillingBanner } from "@/components/billing/billing-banner";
 import { AppShell } from "@/components/layout/app-shell";
 import type { QuickAction } from "@/components/layout/header-actions";
 import { requireOrgSession } from "@/lib/auth/session";
+import { headers } from "next/headers";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { getOrgBrand } from "@/lib/branding";
 import { NotificationBell } from "@/components/notifications/bell";
 import { latestNotifications, unreadCount } from "@/lib/notifications/queries";
@@ -11,6 +14,20 @@ import { latestNotifications, unreadCount } from "@/lib/notifications/queries";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await requireOrgSession();
   const brand = await getOrgBrand(session.organization.name);
+
+  // Agencies can require two-step verification for owners and admins. Until they set it up, only the page that
+  // does it (and sign-out) is available; everything else shows a short explanation.
+  let blockedForMfa = false;
+  if (session.role === "OWNER" || session.role === "ADMIN") {
+    const supabase = await createClient();
+    const [{ data: settings }, { data: enrolled }] = await Promise.all([
+      supabase.from("organization_settings").select("require_admin_mfa").maybeSingle(),
+      supabase.rpc("my_mfa_enrolled"),
+    ]);
+    const path = (await headers()).get("x-crm-path") ?? "";
+    blockedForMfa =
+      Boolean(settings?.require_admin_mfa) && !enrolled && !path.startsWith("/profile/security");
+  }
   const can = (p: string) => session.permissions.has(p);
   const [unread, latest] = await Promise.all([
     unreadCount().catch(() => 0),
@@ -35,7 +52,25 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       banner={<BillingBanner />}
       headerSlot={<NotificationBell initialUnread={unread} initialItems={latest} />}
     >
-      {children}
+      {blockedForMfa ? (
+        <div
+          role="alert"
+          className="mx-auto max-w-lg rounded-xl border border-amber-300 bg-amber-50 p-6 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
+        >
+          <h1 className="text-lg font-semibold">Set up two-step verification to continue</h1>
+          <p className="mt-2">
+            Your agency requires owners and admins to use an authenticator app. It takes about a
+            minute.
+          </p>
+          <p className="mt-4">
+            <Link href="/profile/security?required=1" className="font-medium underline">
+              Set it up now
+            </Link>
+          </p>
+        </div>
+      ) : (
+        children
+      )}
     </AppShell>
   );
 }

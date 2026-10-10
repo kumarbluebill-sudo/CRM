@@ -101,6 +101,57 @@ describe("schema-wide security invariants (local Postgres)", () => {
       await fails(() => q1(a.userId, "select razorpay_subscription_id from subscriptions")),
     ).toBe(true);
   });
+
+  it("every function a signed-in user can call checks who they are before doing anything", async () => {
+    // SECURITY DEFINER bypasses row security, so each one must consult the caller (organization, permission or user id).
+    const guards =
+      /(current_org_id|has_permission|visa_require|job_require|auth.uid()|is_super_admin|current_user_role|mfa_satisfied)/;
+    const fns = await rows<{ proname: string; prosrc: string }>(
+      `select p.proname, p.prosrc from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+        where n.nspname = 'public' and p.prosecdef and p.prorettype <> 'trigger'::regtype
+          and has_function_privilege('authenticated', p.oid, 'execute')
+          and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')`,
+    );
+    expect(fns.length).toBeGreaterThan(80);
+    // pure helpers that take everything they need as arguments and read no tenant data
+    const pure = new Set([
+      "gstin_valid",
+      "gst_state_valid",
+      "mfa_satisfied",
+      "visa_applicant_type",
+      "visa_add_working_days",
+    ]);
+    const unguarded = fns
+      .filter((f) => !pure.has(f.proname) && !guards.test(f.prosrc))
+      .map((f) => f.proname);
+    expect(unguarded).toEqual([]);
+  });
+
+  it("internal and service-only functions cannot be called by signed-in or anonymous users", async () => {
+    const internal = [
+      "notify_user",
+      "notify_permission",
+      "security_event_insert",
+      "log_security_event",
+      "prune_security_events",
+      "run_notification_sweeps",
+      "pending_notification_emails",
+      "record_notification_email",
+      "recalc_invoice",
+      "next_doc_number",
+      "job_log",
+      "job_check_assignee",
+      "visa_log",
+      "truncate_ip",
+    ];
+    const r = await rows<{ proname: string; who: string }>(
+      `select p.proname, r.rolname as who
+         from pg_proc p join pg_namespace n on n.oid = p.pronamespace, (values ('anon'), ('authenticated')) as r(rolname)
+        where n.nspname = 'public' and p.proname = any($1) and has_function_privilege(r.rolname, p.oid, 'execute')`,
+      [internal],
+    );
+    expect(r).toEqual([]);
+  });
 });
 
 describe("payment credentials, org-scoped webhooks and invitations (local Postgres)", () => {

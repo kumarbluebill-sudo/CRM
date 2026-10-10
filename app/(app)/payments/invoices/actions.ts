@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
+import { requireRecentAuth } from "@/lib/auth/recent";
 import type { FormState } from "@/lib/auth/schemas";
 import { AppError } from "@/lib/utils/errors";
 import { rateLimit } from "@/lib/rate-limit";
@@ -97,6 +98,7 @@ export async function createCreditNoteAction(
     return { fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
   return runAction(async () => {
     await guard("invoicing.manage", "credit-note", 10);
+    await requireRecentAuth();
     const supabase = await createClient();
     const { data, error } = await supabase.rpc("create_credit_note", {
       p_invoice: id,

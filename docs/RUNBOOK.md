@@ -68,3 +68,15 @@ update public.portal_links set revoked_at = now() where organization_id = '<org 
 Customers may ask for access to, or deletion of, their data. There is no self-service workflow yet. Process manually:
 export the customer's rows (customers, passengers, bookings, documents metadata), delete or anonymise on request subject
 to the agency's legal retention duties, and remove the objects from the `documents` bucket. Record the request.
+
+### Restore drill (do this once before go-live, then every quarter)
+
+1. In Supabase, take or confirm a recent backup (Dashboard > Database > Backups). Never run a restore, reset or destructive migration against the production project without a verified backup you have seen.
+2. Create a **scratch** project, restore the backup into it (or apply `npm run db:bundle` output to it and load a dump).
+3. Point a local `.env.scratch` at it and run `node --env-file=.env.scratch scripts/migrate.mjs --status`; all migrations should show as applied.
+4. Run `RUN_LIVE=1` tests against the scratch project only, sign in, open a booking, an invoice PDF and a document (documents live in Storage, which is backed up separately).
+5. Record the date, the backup used, how long it took and anything surprising here. Delete the scratch project.
+
+### Locked out of two-step verification
+
+If a person loses their phone: confirm their identity another way, then in Supabase Dashboard > Authentication > Users open the user, delete their TOTP factor, and ask them to sign in and set it up again. Their *authenticator removed* event appears under Settings > Security. If the only owner is locked out and the agency requires it, remove the factor the same way.

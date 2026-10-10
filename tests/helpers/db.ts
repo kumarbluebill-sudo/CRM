@@ -18,6 +18,15 @@ create table auth.users (
 create function auth.uid() returns uuid language sql stable as $$
   select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
 $$;
+create function auth.jwt() returns jsonb language sql stable as $$
+  select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb
+$$;
+create table auth.mfa_factors (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null,
+  status text not null default 'unverified',
+  factor_type text not null default 'totp'
+);
 create role anon nologin;
 create role authenticated nologin;
 grant usage on schema public, auth to anon, authenticated;
@@ -55,11 +64,12 @@ export async function asUser<T>(
   db: PGlite,
   userId: string | null,
   fn: (db: PGlite) => Promise<T>,
+  aal: "aal1" | "aal2" = "aal1",
 ): Promise<T> {
   await db.exec(
     userId
-      ? `set role authenticated; select set_config('request.jwt.claim.sub', '${userId}', false);`
-      : `set role anon; select set_config('request.jwt.claim.sub', '', false);`,
+      ? `set role authenticated; select set_config('request.jwt.claim.sub', '${userId}', false); select set_config('request.jwt.claims', '{"sub":"${userId}","aal":"${aal}"}', false);`
+      : `set role anon; select set_config('request.jwt.claim.sub', '', false); select set_config('request.jwt.claims', '{}', false);`,
   );
   try {
     return await fn(db);

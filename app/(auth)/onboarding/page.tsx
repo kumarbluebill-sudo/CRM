@@ -11,6 +11,7 @@ export const metadata: Metadata = { title: "Set up your agency" };
 export default async function OnboardingPage() {
   const session = await getSessionContext();
   if (!session) redirect("/login");
+  if (session.needsMfa) redirect("/login/mfa");
   if (session.organization) redirect("/dashboard");
 
   const supabase = await createClient();

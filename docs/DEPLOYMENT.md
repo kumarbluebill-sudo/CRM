@@ -165,3 +165,22 @@ Operations
 - No data-erasure/retention workflow, no MFA, no per-organization data export.
 - Refunds, GST/tax invoicing and supplier payables are not implemented.
 - Email delivery tracking and WhatsApp delivery confirmation are not implemented (WhatsApp uses click-to-chat).
+
+## 11. Added in v1.2.0 (security)
+
+- Apply migrations `027`–`031` (`npm run db:migrate`). `031` makes the database honour two-step verification and adds `security_events`; it is additive.
+- Optional env var `SESSION_IDLE_MINUTES` (default 480, range 5–1440). Nothing new is secret or public.
+- Turn on **Authentication > Multi-factor > TOTP** in the Supabase dashboard (enabled by default on new projects) or enrolment will fail.
+- The daily cron (`/api/cron/automation`) now also prunes old security events; make sure `CRON_SECRET` is set.
+- `NEXT_PUBLIC_APP_URL` must be the real site address: it is used for the same-origin check on the public payment route and for email links.
+
+## 12. GST: checklist before real invoices are issued
+
+An accountant should confirm each item; the software does not assume any rate or code.
+
+- [ ] Legal name, GSTIN, state and address in *Settings > Invoicing and GST* match the registration certificate.
+- [ ] Every tax code (name, SAC, rate, treatment) was entered from current official notifications or the accountant's advice, then verified.
+- [ ] Place-of-supply rule (intra vs inter-state) and any exempt/zero-rated cases match how the agency actually supplies services (e.g. tour operator, agent, or pure-agent expenses).
+- [ ] Invoice number prefix and series follow the agency's policy; credit notes are used for corrections.
+- [ ] A sample invoice and credit note PDF were checked line by line against a manual calculation.
+- [ ] Return filing and e-invoicing/e-way thresholds were assessed separately; this app does not file returns or generate IRNs.
