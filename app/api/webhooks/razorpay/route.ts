@@ -46,6 +46,10 @@ export async function POST(req: NextRequest) {
     p_sub: sub.subscriptionId,
     p_rzp_plan: sub.planId,
     p_period_end: sub.periodEnd,
+    p_payment_id: sub.payment?.id ?? null,
+    p_amount: sub.payment?.amount ?? null,
+    p_currency: sub.payment?.currency ?? null,
+    p_payment_status: sub.payment?.status ?? null,
   });
   if (error) {
     logger.error("platform webhook: apply failed", { code: error.code });

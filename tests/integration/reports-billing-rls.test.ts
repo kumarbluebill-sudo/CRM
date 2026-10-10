@@ -140,7 +140,7 @@ describe("reports and subscriptions (local Postgres)", () => {
     it("starts every organization on a 14-day Pro trial", async () => {
       const l = await limits(a.userId);
       expect(l).toMatchObject({ planKey: "PRO", status: "TRIALING", inForce: true });
-      expect(l.limits.seats).toBe(25);
+      expect(l.limits.seats).toBe(15);
       expect(new Date(l.trialEndsAt).getTime()).toBeGreaterThan(Date.now() + 13 * 86400000);
     });
 
@@ -167,7 +167,7 @@ describe("reports and subscriptions (local Postgres)", () => {
       expect(
         (await q1(b.userId, "select organization_id from subscriptions"))[0].organization_id,
       ).toBe(b.orgId);
-      expect((await q1(a.userId, "select key from plans")).length).toBe(3);
+      expect((await q1(a.userId, "select key from plans")).length).toBe(5);
     });
 
     it("falls back to the Free plan when the trial ends, and enforces limits in the database", async () => {
@@ -306,7 +306,7 @@ describe("reports and subscriptions (local Postgres)", () => {
       expect(s).toMatchObject({ status: "ACTIVE", plan_key: "STARTER", pending_plan_key: null });
       const l = await limits(a.userId);
       expect(l).toMatchObject({ planKey: "STARTER", inForce: true });
-      expect(l.limits.seats).toBe(5);
+      expect(l.limits.seats).toBe(2);
       expect(await event("bill_3", "subscription.updated", sub, "plan_starter1", future)).toBe(
         "ignored",
       );
@@ -331,8 +331,9 @@ describe("reports and subscriptions (local Postgres)", () => {
         [a.orgId],
       );
       expect(await limits(a.userId)).toMatchObject({ planKey: "FREE", inForce: false });
+      // a payment failure after the paid period ended is not a legal jump from CANCELLED: recorded, not applied
       expect(await event("bill_6", "subscription.halted", sub, "plan_starter1", null)).toBe(
-        "expired",
+        "invalid_transition",
       );
     });
 
