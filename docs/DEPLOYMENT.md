@@ -10,11 +10,11 @@ staging exercise and work through the smoke tests before inviting real customers
 
 Use **separate Supabase projects** (and separate Razorpay test/live keys) for each of:
 
-| Environment | Branch | Purpose |
-|-------------|--------|---------|
-| Development | local | `npm run dev`, your own Supabase project or none (the app runs without Supabase configured) |
-| Staging / Preview | `develop` (Vercel preview) | Razorpay **test** keys, a separate Supabase project, fake data |
-| Production | `main` | Razorpay live keys, the production Supabase project |
+| Environment       | Branch                     | Purpose                                                                                     |
+| ----------------- | -------------------------- | ------------------------------------------------------------------------------------------- |
+| Development       | local                      | `npm run dev`, your own Supabase project or none (the app runs without Supabase configured) |
+| Staging / Preview | `develop` (Vercel preview) | Razorpay **test** keys, a separate Supabase project, fake data                              |
+| Production        | `main`                     | Razorpay live keys, the production Supabase project                                         |
 
 Never point a preview deployment at the production database.
 
@@ -65,20 +65,20 @@ update public.plans set price_paise = 199900, limits = '{"seats":5,"bookingsPerM
 Set in Vercel → Project → Settings → Environment Variables, per environment. `npm run check-env` (load a file with
 `node --env-file=<file> scripts/check-env.mjs`) validates them and prints names only.
 
-| Variable | Required | Notes |
-|----------|----------|-------|
-| `NEXT_PUBLIC_SUPABASE_URL` | yes | public |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | yes | public. The legacy name `NEXT_PUBLIC_SUPABASE_ANON_KEY` also works |
-| `SUPABASE_SERVICE_ROLE_KEY` | yes | **secret**, server only |
-| `NEXT_PUBLIC_APP_URL` | yes | `https://your-domain` with no trailing slash |
-| `ENCRYPTION_KEY` | yes | **secret**. 32 random bytes, base64. Encrypts agencies' Razorpay keys. Generate once; back it up in your password manager; losing it means agencies must re-enter their keys |
-| `CRON_SECRET` | yes | **secret**, 16+ chars. Vercel sends it to cron routes; also guards the deep health check |
-| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | yes in production | without them rate limits are per-instance only |
-| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | to sell subscriptions | the **platform's** account (subscriptions to your product). Agencies' customer payments use their own keys, entered in the app |
-| `RESEND_API_KEY`, `EMAIL_FROM` | for email | `EMAIL_FROM` must be on a domain verified in Resend |
-| `OPENAI_API_KEY`, `OPENAI_MODEL` | optional | AI features are hidden/disabled without the key |
-| `SENTRY_DSN` | recommended | error reporting |
-| `APP_ENV` | optional | `production` / `preview`, shown in error reports |
+| Variable                                                            | Required              | Notes                                                                                                                                                                        |
+| ------------------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                                          | yes                   | public                                                                                                                                                                       |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`                              | yes                   | public. The legacy name `NEXT_PUBLIC_SUPABASE_ANON_KEY` also works                                                                                                           |
+| `SUPABASE_SERVICE_ROLE_KEY`                                         | yes                   | **secret**, server only                                                                                                                                                      |
+| `NEXT_PUBLIC_APP_URL`                                               | yes                   | `https://your-domain` with no trailing slash                                                                                                                                 |
+| `ENCRYPTION_KEY`                                                    | yes                   | **secret**. 32 random bytes, base64. Encrypts agencies' Razorpay keys. Generate once; back it up in your password manager; losing it means agencies must re-enter their keys |
+| `CRON_SECRET`                                                       | yes                   | **secret**, 16+ chars. Vercel sends it to cron routes; also guards the deep health check                                                                                     |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`                | yes in production     | without them rate limits are per-instance only                                                                                                                               |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | to sell subscriptions | the **platform's** account (subscriptions to your product). Agencies' customer payments use their own keys, entered in the app                                               |
+| `RESEND_API_KEY`, `EMAIL_FROM`                                      | for email             | `EMAIL_FROM` must be on a domain verified in Resend                                                                                                                          |
+| `OPENAI_API_KEY`, `OPENAI_MODEL`                                    | optional              | AI features are hidden/disabled without the key                                                                                                                              |
+| `SENTRY_DSN`                                                        | recommended           | error reporting                                                                                                                                                              |
+| `APP_ENV`                                                           | optional              | `production` / `preview`, shown in error reports                                                                                                                             |
 
 Generate secrets:
 
@@ -94,6 +94,7 @@ node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"      # 
 **Resend**: add and verify your domain (SPF, DKIM, DMARC), create an API key limited to sending.
 
 **Razorpay (platform account, for subscriptions)**:
+
 1. Subscriptions → Plans: create one plan per paid tier (monthly, INR).
 2. Store each plan id: `update public.plans set razorpay_plan_id = 'plan_xxx' where key = 'STARTER';` (and `PRO`).
 3. Settings → Webhooks → add `https://<domain>/api/webhooks/razorpay` with your `RAZORPAY_WEBHOOK_SECRET` and the events
@@ -143,6 +144,7 @@ webhook secret, and adds the webhook URL the page shows (`/api/webhooks/razorpay
 ## 9. Go-live checklist
 
 Security
+
 - [ ] Email confirmation on; password minimum 12; Supabase SMTP set to Resend
 - [ ] Service-role key only in Vercel server env; `.env*` never committed (CI scans for it)
 - [ ] `ENCRYPTION_KEY` backed up outside Vercel
@@ -152,6 +154,7 @@ Security
 - [ ] A penetration test or independent review done by someone other than the author
 
 Operations
+
 - [ ] Backups/PITR enabled and a restore tested once
 - [ ] Sentry alerts and an uptime monitor on `/api/health`
 - [ ] Plan prices and limits set; Razorpay plan ids stored
@@ -178,9 +181,16 @@ Operations
 
 An accountant should confirm each item; the software does not assume any rate or code.
 
-- [ ] Legal name, GSTIN, state and address in *Settings > Invoicing and GST* match the registration certificate.
+- [ ] Legal name, GSTIN, state and address in _Settings > Invoicing and GST_ match the registration certificate.
 - [ ] Every tax code (name, SAC, rate, treatment) was entered from current official notifications or the accountant's advice, then verified.
 - [ ] Place-of-supply rule (intra vs inter-state) and any exempt/zero-rated cases match how the agency actually supplies services (e.g. tour operator, agent, or pure-agent expenses).
 - [ ] Invoice number prefix and series follow the agency's policy; credit notes are used for corrections.
 - [ ] A sample invoice and credit note PDF were checked line by line against a manual calculation.
 - [ ] Return filing and e-invoicing/e-way thresholds were assessed separately; this app does not file returns or generate IRNs.
+
+## 13. Subscriptions (v1.3.0)
+
+- Apply migrations `033` and `034`. Plans are seeded as editable placeholders (Starter 999, Growth 2,499, Professional 4,999, Enterprise custom, per month); set the real prices, limits and each plan's Razorpay plan id under `/admin/plans`.
+- Make yourself a platform administrator once, with SQL: `update public.profiles set is_super_admin = true where email = 'you@example.com';` (turn on two-step verification for that account first).
+- In the Razorpay dashboard point the subscription webhook at `/api/webhooks/razorpay` with events `subscription.activated|charged|pending|halted|cancelled|completed|resumed` plus payment events, using `RAZORPAY_WEBHOOK_SECRET`.
+- The daily cron now also runs the billing sweep (retry, grace, suspension, reminders).

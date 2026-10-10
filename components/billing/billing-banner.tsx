@@ -7,6 +7,10 @@ const TEXT = {
     `Your free trial ends ${d === 0 ? "today" : `in ${d} day${d === 1 ? "" : "s"}`}.`,
   TRIAL_ENDED: () => "Your trial or plan has ended, so Free plan limits apply.",
   PAST_DUE: () => "Your last subscription payment didn't go through.",
+  GRACE: (d?: number) =>
+    `Payment is overdue. Paid features stop ${d === undefined ? "soon" : d === 0 ? "today" : `in ${d} day${d === 1 ? "" : "s"}`}; your data is safe.`,
+  SUSPENDED: () =>
+    "Your account is read-only until the subscription payment is made. Nothing has been deleted.",
   ENDING: () => "Your plan is set to end at the close of this billing period.",
 } as const;
 

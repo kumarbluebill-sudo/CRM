@@ -13,17 +13,17 @@ For whoever is on call. Keep it short, keep it current.
 
 ## Symptoms and fixes
 
-| Symptom | Likely cause | Action |
-|---------|--------------|--------|
-| Everyone gets "something went wrong" | Bad deploy, Supabase down | Roll back; check Supabase status |
-| Sign-in emails not arriving | Supabase SMTP / Resend domain | Check Resend dashboard, DNS records |
-| "Too many attempts" for many users | One NAT'd office sharing an IP, or Upstash misconfigured | Check `login throttled` warnings; limits are per IP and per email (8 / 10 min) |
-| Payments stay PENDING after the customer paid | Webhook not arriving or secret mismatch | Razorpay → Webhooks → recent deliveries for `/api/webhooks/razorpay/<orgId>`; 400 = wrong secret, 404 = credentials removed, 500 = our error (Razorpay retries). Re-save credentials in Settings → Online payments if the secret changed |
-| `amount_mismatch` in logs | Amount or currency in the event differs from the request | Do **not** mark paid. Compare in Razorpay; contact the agency |
-| Org cannot add members/bookings/documents | Plan limit (`P0020`) or trial ended | Settings → Billing shows usage; extend the trial or upgrade (see below) |
-| Subscription paid but plan not upgraded | `subscription.*` webhook missing, or `plans.razorpay_plan_id` not set | Check platform webhook deliveries; check the plan id matches |
-| Automation drafts not appearing | Cron not running or `CRON_SECRET` mismatch | Vercel → Cron Jobs → logs for `/api/cron/automation` |
-| Documents fail to download | Storage bucket or service-role key | Check `/api/health?deep=1`; confirm the `documents` bucket exists and is private |
+| Symptom                                       | Likely cause                                                          | Action                                                                                                                                                                                                                                   |
+| --------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Everyone gets "something went wrong"          | Bad deploy, Supabase down                                             | Roll back; check Supabase status                                                                                                                                                                                                         |
+| Sign-in emails not arriving                   | Supabase SMTP / Resend domain                                         | Check Resend dashboard, DNS records                                                                                                                                                                                                      |
+| "Too many attempts" for many users            | One NAT'd office sharing an IP, or Upstash misconfigured              | Check `login throttled` warnings; limits are per IP and per email (8 / 10 min)                                                                                                                                                           |
+| Payments stay PENDING after the customer paid | Webhook not arriving or secret mismatch                               | Razorpay → Webhooks → recent deliveries for `/api/webhooks/razorpay/<orgId>`; 400 = wrong secret, 404 = credentials removed, 500 = our error (Razorpay retries). Re-save credentials in Settings → Online payments if the secret changed |
+| `amount_mismatch` in logs                     | Amount or currency in the event differs from the request              | Do **not** mark paid. Compare in Razorpay; contact the agency                                                                                                                                                                            |
+| Org cannot add members/bookings/documents     | Plan limit (`P0020`) or trial ended                                   | Settings → Billing shows usage; extend the trial or upgrade (see below)                                                                                                                                                                  |
+| Subscription paid but plan not upgraded       | `subscription.*` webhook missing, or `plans.razorpay_plan_id` not set | Check platform webhook deliveries; check the plan id matches                                                                                                                                                                             |
+| Automation drafts not appearing               | Cron not running or `CRON_SECRET` mismatch                            | Vercel → Cron Jobs → logs for `/api/cron/automation`                                                                                                                                                                                     |
+| Documents fail to download                    | Storage bucket or service-role key                                    | Check `/api/health?deep=1`; confirm the `documents` bucket exists and is private                                                                                                                                                         |
 
 ## Useful queries (run in the Supabase SQL editor; they bypass RLS, so be careful and read-only unless stated)
 
@@ -54,14 +54,14 @@ update public.portal_links set revoked_at = now() where organization_id = '<org 
 
 ## Rotating secrets
 
-| Secret | Procedure |
-|--------|-----------|
-| `SUPABASE_SERVICE_ROLE_KEY` | Regenerate in Supabase, update Vercel, redeploy |
-| `CRON_SECRET` | Update Vercel (both cron and monitors that call deep health), redeploy |
-| `RAZORPAY_*` (platform) | Create new keys in Razorpay, update Vercel, redeploy, then revoke the old keys; update the webhook secret on both sides at the same time |
-| An agency's Razorpay keys | The agency owner re-enters them in Settings → Online payments (replaces the stored ciphertext) |
-| `ENCRYPTION_KEY` | There is no automatic re-encryption yet. Planned procedure: export nothing; set a new key, then every agency re-enters its Razorpay keys (until they do, online payments for that agency are off). If the key is **compromised**, also ask agencies to rotate their Razorpay keys, since the ciphertext may have leaked |
-| A user's session / suspected account takeover | Supabase → Authentication → Users → sign out / disable the user; review Settings → Audit log for that user |
+| Secret                                        | Procedure                                                                                                                                                                                                                                                                                                               |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_SERVICE_ROLE_KEY`                   | Regenerate in Supabase, update Vercel, redeploy                                                                                                                                                                                                                                                                         |
+| `CRON_SECRET`                                 | Update Vercel (both cron and monitors that call deep health), redeploy                                                                                                                                                                                                                                                  |
+| `RAZORPAY_*` (platform)                       | Create new keys in Razorpay, update Vercel, redeploy, then revoke the old keys; update the webhook secret on both sides at the same time                                                                                                                                                                                |
+| An agency's Razorpay keys                     | The agency owner re-enters them in Settings → Online payments (replaces the stored ciphertext)                                                                                                                                                                                                                          |
+| `ENCRYPTION_KEY`                              | There is no automatic re-encryption yet. Planned procedure: export nothing; set a new key, then every agency re-enters its Razorpay keys (until they do, online payments for that agency are off). If the key is **compromised**, also ask agencies to rotate their Razorpay keys, since the ciphertext may have leaked |
+| A user's session / suspected account takeover | Supabase → Authentication → Users → sign out / disable the user; review Settings → Audit log for that user                                                                                                                                                                                                              |
 
 ## Data requests
 
@@ -79,4 +79,4 @@ to the agency's legal retention duties, and remove the objects from the `documen
 
 ### Locked out of two-step verification
 
-If a person loses their phone: confirm their identity another way, then in Supabase Dashboard > Authentication > Users open the user, delete their TOTP factor, and ask them to sign in and set it up again. Their *authenticator removed* event appears under Settings > Security. If the only owner is locked out and the agency requires it, remove the factor the same way.
+If a person loses their phone: confirm their identity another way, then in Supabase Dashboard > Authentication > Users open the user, delete their TOTP factor, and ask them to sign in and set it up again. Their _authenticator removed_ event appears under Settings > Security. If the only owner is locked out and the agency requires it, remove the factor the same way.

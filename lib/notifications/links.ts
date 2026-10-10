@@ -12,6 +12,7 @@ export const NOTIFICATION_TYPES = [
   "JOB_OVERDUE",
   "JOB_COMPLETED",
   "SECURITY",
+  "BILLING",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -29,6 +30,7 @@ export const TYPE_LABELS: Record<NotificationType, string> = {
   JOB_OVERDUE: "A job is overdue",
   JOB_COMPLETED: "A job I assigned is completed",
   SECURITY: "Team and security changes",
+  BILLING: "Subscription, renewals and payments",
 };
 
 /**
@@ -38,6 +40,7 @@ export const TYPE_LABELS: Record<NotificationType, string> = {
 export function notificationHref(entityType: string | null, entityId: string | null): string {
   if (!entityType) return "/notifications";
   if (entityType === "TEAM") return "/settings/team";
+  if (entityType === "BILLING") return "/settings/billing";
   if (!entityId || !/^[0-9a-f-]{36}$/i.test(entityId)) return "/notifications";
   switch (entityType) {
     case "LEAD":
