@@ -72,6 +72,7 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-5">
       <PageHeader
+        breadcrumb={[{ label: "Bookings", href: "/bookings" }, { label: booking.booking_number }]}
         title={booking.title}
         description={`${booking.booking_number} · ${booking.customers?.name ?? "Customer"}${booking.destination ? ` · ${booking.destination}` : ""}`}
         actions={

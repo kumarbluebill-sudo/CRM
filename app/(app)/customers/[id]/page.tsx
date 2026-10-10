@@ -27,6 +27,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-5">
       <PageHeader
+        breadcrumb={[{ label: "Customers", href: "/customers" }, { label: customer.name }]}
         title={customer.name}
         description={[customer.city, customer.country].filter(Boolean).join(", ") || undefined}
         actions={
