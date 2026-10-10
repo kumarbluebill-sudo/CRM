@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSessionContext } from "@/lib/auth/session";
+import { isRecentlyAuthenticated } from "@/lib/auth/recent";
 import { createClient } from "@/lib/supabase/server";
 import { audit } from "@/lib/audit";
 import { rateLimit } from "@/lib/rate-limit";
@@ -100,6 +101,8 @@ export async function GET(req: NextRequest) {
   const spec = Object.hasOwn(SPECS, type) ? SPECS[type] : undefined;
   if (!spec) return json(400, "Unknown export.");
   if (!session.permissions.has(spec.permission)) return json(403, "Forbidden.");
+  if (!(await isRecentlyAuthenticated(60)))
+    return json(401, "For your security, please sign in again before exporting data.");
   if (!(await rateLimit(`report-export:${session.userId}`, 10, 60_000)).allowed)
     return json(429, "Too many exports. Please wait a moment.");
 

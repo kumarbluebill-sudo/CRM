@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
+import { requireRecentAuth } from "@/lib/auth/recent";
 import { audit } from "@/lib/audit";
 import { getPublicEnv } from "@/lib/env";
 import type { FormState } from "@/lib/auth/schemas";
@@ -93,6 +94,7 @@ export async function changeRoleAction(userId: string, role: string): Promise<Fo
     return { message: "Invalid request." };
   return runAction(async () => {
     const session = await requirePermission("users.manage");
+    await requireRecentAuth();
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("organization_members")
@@ -114,6 +116,7 @@ export async function removeMemberAction(userId: string): Promise<FormState> {
   if (!uuid.safeParse(userId).success) return { message: "Invalid request." };
   return runAction(async () => {
     await requirePermission("users.manage");
+    await requireRecentAuth();
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("organization_members")
