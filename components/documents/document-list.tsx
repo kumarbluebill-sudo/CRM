@@ -1,4 +1,5 @@
 import { Download, Lock } from "lucide-react";
+import { LocalTime } from "@/components/datetime/local-time";
 import { Button } from "@/components/ui/button";
 import { label } from "@/lib/crm/constants";
 import type { DocumentRow } from "@/lib/booking/queries";
@@ -16,7 +17,7 @@ export function DocumentList({ docs, canDownload }: { docs: DocumentRow[]; canDo
             </span>
             <span className="text-muted-foreground block text-xs">
               {label(d.category)} · {(d.size_bytes / 1024).toFixed(0)} KB ·{" "}
-              {new Date(d.created_at).toLocaleDateString("en-IN")}
+              <LocalTime value={d.created_at} dateOnly />
             </span>
           </span>
           {canDownload && (

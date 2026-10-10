@@ -7,6 +7,8 @@ import {
   Palette,
   ScrollText,
   ShieldCheck,
+  Globe,
+  UserCog,
   Users,
   Wallet,
 } from "lucide-react";
@@ -60,6 +62,20 @@ export default async function SettingsPage() {
       text: "Who did what, and when.",
       icon: ScrollText,
       show: session.permissions.has("settings.manage"),
+    },
+    {
+      href: "/settings/regional",
+      title: "Regional settings",
+      text: "Time zones, branches, date and time formats.",
+      icon: Globe,
+      show: session.permissions.has("settings.manage"),
+    },
+    {
+      href: "/settings/roles",
+      title: "Roles and access",
+      text: "Custom roles, permissions, branches and record visibility.",
+      icon: UserCog,
+      show: session.permissions.has("users.manage"),
     },
     {
       href: "/settings/security",

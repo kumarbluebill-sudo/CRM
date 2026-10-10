@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { isoDay, parseRange } from "@/lib/reports/range";
+import { todayInZone } from "@/lib/datetime/format";
 
 export type DashboardRange = "today" | "7d" | "30d" | "month" | "custom";
 export const RANGE_LABELS: Record<Exclude<DashboardRange, "custom">, string> = {
@@ -17,8 +18,11 @@ export function resolveRange(
   from?: string,
   to?: string,
   now = new Date(),
+  timeZone?: string,
 ): { key: DashboardRange; from: string; to: string } {
-  const today = isoDay(now);
+  // "today" is the calendar day in the agency time zone; every other range is counted back from it
+  const today = timeZone ? todayInZone(timeZone, now) : isoDay(now);
+  if (timeZone) now = new Date(`${today}T12:00:00Z`);
   switch (range) {
     case "today":
       return { key: "today", from: today, to: today };

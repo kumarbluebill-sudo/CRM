@@ -8,6 +8,7 @@ import type { FormState } from "@/lib/auth/schemas";
 import { AppError } from "@/lib/utils/errors";
 import { formObject, redirect, runAction, throwIfDbError } from "@/lib/crm/action-utils";
 import { uuid } from "@/lib/crm/schemas";
+import { isValidTimeZone, zonedTimeToInstant } from "@/lib/datetime/format";
 import {
   BOOKING_STATUSES,
   MAX_PASSENGERS,
@@ -285,6 +286,34 @@ export async function deletePassportAction(
 
 /* ---------------- service lines ---------------- */
 
+/**
+ * Flights, hotel stays and appointments are entered in the local time of the place where they happen. They are stored
+ * as real instants plus that place's zone, so they read correctly from any office.
+ */
+function eventTimes(v: {
+  startsLocal?: string;
+  endsLocal?: string;
+  eventTz?: string;
+  destTz?: string;
+}) {
+  if (!v.startsLocal && !v.endsLocal)
+    return { starts_at: null, ends_at: null, event_tz: null, dest_tz: null };
+  if (!isValidTimeZone(v.eventTz))
+    throw new AppError("Choose the time zone where this starts.", "INVALID_VALUE", 400);
+  if (v.destTz && !isValidTimeZone(v.destTz))
+    throw new AppError("Choose a valid arrival time zone.", "INVALID_VALUE", 400);
+  const starts = v.startsLocal ? zonedTimeToInstant(v.startsLocal, v.eventTz) : null;
+  const ends = v.endsLocal ? zonedTimeToInstant(v.endsLocal, v.destTz || v.eventTz) : null;
+  if (starts && ends && ends < starts)
+    throw new AppError("The end must be after the start.", "INVALID_VALUE", 400);
+  return {
+    starts_at: starts?.toISOString() ?? null,
+    ends_at: ends?.toISOString() ?? null,
+    event_tz: v.eventTz,
+    dest_tz: v.destTz || null,
+  };
+}
+
 export async function updateBookingItemAction(
   id: string,
   bookingId: string,
@@ -305,6 +334,7 @@ export async function updateBookingItemAction(
         description: v.description,
         supplier_id: v.supplierId ?? null,
         service_date: v.serviceDate ?? null,
+        ...eventTimes(v),
         confirmation_status: v.confirmationStatus,
         confirmation_reference: v.confirmationReference ?? null,
         notes: v.notes ?? null,
