@@ -119,6 +119,42 @@ export function RevenueArea({
   );
 }
 
+/** Segmented horizontal bar (one segment per stage) with a stage / count grid underneath. */
+export function PipelineBar({ data }: { data: { stage: string; value: number }[] }) {
+  const total = data.reduce((a, d) => a + d.value, 0);
+  if (total === 0) return <Empty />;
+  return (
+    <div className="flex h-full flex-col justify-center gap-3">
+      <div className="flex h-3 gap-[3px]" role="img" aria-label="Enquiry conversion by stage">
+        {data.map((d, i) =>
+          d.value > 0 ? (
+            <span
+              key={d.stage}
+              className="rounded-full"
+              style={{ flex: d.value, background: C[i % C.length], minWidth: 6 }}
+            />
+          ) : null,
+        )}
+      </div>
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs sm:grid-cols-4">
+        {data.map((d, i) => (
+          <div key={d.stage} className="flex min-w-0 flex-col">
+            <dt className="text-muted-foreground flex items-center gap-1.5 truncate">
+              <span
+                aria-hidden
+                className="size-2 shrink-0 rounded-full"
+                style={{ background: C[i % C.length] }}
+              />
+              {d.stage}
+            </dt>
+            <dd className="text-sm font-semibold tabular-nums">{d.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 export function FunnelBars({ data }: { data: { stage: string; value: number }[] }) {
   if (data.every((d) => d.value === 0)) return <Empty />;
   return (

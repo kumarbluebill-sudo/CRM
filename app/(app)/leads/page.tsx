@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Plus, UserPlus } from "lucide-react";
 import { PageHeader } from "@/components/crm/page-header";
 import { Pagination } from "@/components/crm/pagination";
+import { SegmentedTabs } from "@/components/crm/segmented-tabs";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { LeadStatusSelect } from "@/components/crm/lead-status-select";
 import { Button } from "@/components/ui/button";
@@ -50,22 +51,13 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
         description="Track enquiries from first contact to confirmed booking."
         actions={
           <>
-            <Button
-              variant={board ? "outline" : "secondary"}
-              size="sm"
-              nativeButton={false}
-              render={<Link href={viewLink("list")} />}
-            >
-              List
-            </Button>
-            <Button
-              variant={board ? "secondary" : "outline"}
-              size="sm"
-              nativeButton={false}
-              render={<Link href={viewLink("board")} />}
-            >
-              Board
-            </Button>
+            <SegmentedTabs
+              label="View"
+              items={[
+                { label: "List", href: viewLink("list"), active: !board },
+                { label: "Board", href: viewLink("board"), active: board },
+              ]}
+            />
             {canCreate && (
               <Button size="sm" nativeButton={false} render={<Link href="/leads/new" />}>
                 <Plus className="size-4" aria-hidden /> New lead
@@ -109,9 +101,15 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
           {LEAD_STATUSES.map((s) => {
             const items = boardLeads.filter((l) => l.status === s);
             return (
-              <div key={s} className="bg-muted/60 flex w-64 shrink-0 flex-col gap-2 rounded-xl p-2">
-                <h2 className="flex items-center justify-between px-1 text-xs font-semibold tracking-wide uppercase">
-                  {label(s)} <span className="text-muted-foreground">{items.length}</span>
+              <div key={s} className="bg-muted flex w-64 shrink-0 flex-col gap-2 rounded-xl p-2.5">
+                <h2 className="flex items-center gap-2 px-0.5 text-[13px] font-semibold">
+                  <span
+                    aria-hidden
+                    className="size-2 rounded-full"
+                    style={{ background: `var(--chart-${(LEAD_STATUSES.indexOf(s) % 5) + 1})` }}
+                  />
+                  {label(s)}{" "}
+                  <span className="text-muted-foreground font-normal">{items.length}</span>
                 </h2>
                 {items.map((l) => (
                   <BoardCard key={l.id} lead={l} canUpdate={canUpdate} />
@@ -216,7 +214,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
 
 function BoardCard({ lead, canUpdate }: { lead: LeadRow; canUpdate: boolean }) {
   return (
-    <Card size="sm">
+    <Card size="sm" className="hover:border-input rounded-[10px] shadow-xs">
       <CardContent className="flex flex-col gap-2">
         <Link
           href={`/leads/${lead.id}`}

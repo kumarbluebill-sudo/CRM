@@ -46,6 +46,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-5">
       <PageHeader
+        breadcrumb={[{ label: "Leads", href: "/leads" }, { label: lead.title }]}
         title={lead.title}
         description={
           [lead.destination, lead.customers?.name].filter(Boolean).join(" · ") || undefined

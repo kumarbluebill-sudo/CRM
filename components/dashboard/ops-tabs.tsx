@@ -2,7 +2,27 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  Activity,
+  AlarmClock,
+  ClipboardList,
+  PhoneCall,
+  Plane,
+  Stamp,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const ICONS: Record<string, { icon: LucideIcon; tone: string }> = {
+  dep: { icon: Plane, tone: "bg-tone-info-soft text-tone-info" },
+  fu: { icon: PhoneCall, tone: "bg-tone-violet-soft text-tone-violet" },
+  pay: { icon: Wallet, tone: "bg-tone-ok-soft text-tone-ok" },
+  visa: { icon: Stamp, tone: "bg-tone-warn-soft text-tone-warn" },
+  jobs: { icon: ClipboardList, tone: "bg-tone-bad-soft text-tone-bad" },
+  od: { icon: AlarmClock, tone: "bg-tone-bad-soft text-tone-bad" },
+  act: { icon: Activity, tone: "bg-tone-primary-soft text-tone-primary" },
+};
 
 export type OpsItem = { key: string; href: string; primary: string; secondary?: string };
 export type OpsTab = { id: string; label: string; items: OpsItem[]; empty: string; href?: string };
@@ -14,7 +34,7 @@ export function OpsTabs({ tabs }: { tabs: OpsTab[] }) {
   if (!tab) return null;
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div role="tablist" aria-label="Operations" className="flex flex-wrap gap-1 border-b pb-1.5">
+      <div role="tablist" aria-label="Operations" className="flex flex-wrap gap-4 border-b">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -25,10 +45,10 @@ export function OpsTabs({ tabs }: { tabs: OpsTab[] }) {
             aria-controls="ops-panel"
             onClick={() => setActive(t.id)}
             className={cn(
-              "focus-visible:ring-ring rounded-md px-2.5 py-1 text-xs font-medium focus-visible:ring-2 focus-visible:outline-none",
+              "focus-visible:ring-ring -mb-px border-b-2 px-0.5 py-1.5 text-xs font-medium focus-visible:ring-2 focus-visible:outline-none",
               t.id === tab.id
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-muted",
+                ? "border-primary text-foreground"
+                : "text-muted-foreground hover:text-foreground border-transparent",
             )}
           >
             {t.label}
@@ -51,8 +71,22 @@ export function OpsTabs({ tabs }: { tabs: OpsTab[] }) {
         ) : (
           <ul className="divide-y text-xs">
             {tab.items.map((i) => (
-              <li key={i.key} className="flex items-center justify-between gap-3 py-1.5">
-                <Link href={i.href} className="min-w-0 truncate font-medium hover:underline">
+              <li key={i.key} className="flex items-center gap-3 py-1.5">
+                {ICONS[tab.id] && (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                      ICONS[tab.id].tone,
+                    )}
+                  >
+                    {(() => {
+                      const Icon = ICONS[tab.id].icon;
+                      return <Icon className="size-4" />;
+                    })()}
+                  </span>
+                )}
+                <Link href={i.href} className="min-w-0 flex-1 truncate font-medium hover:underline">
                   {i.primary}
                 </Link>
                 {i.secondary && (

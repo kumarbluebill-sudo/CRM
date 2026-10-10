@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PAGE_SIZE } from "@/lib/crm/constants";
 
@@ -23,35 +24,40 @@ export function Pagination({
   return (
     <nav aria-label="Pagination" className="flex items-center justify-between pt-2 text-sm">
       <span className="text-muted-foreground">
-        {total} total · page {Math.min(page, pages)} of {pages}
+        {total === 0
+          ? "0"
+          : `${(Math.min(page, pages) - 1) * PAGE_SIZE + 1}–${Math.min(Math.min(page, pages) * PAGE_SIZE, total)}`}{" "}
+        of {total}
       </span>
       <div className="flex gap-2">
         {page > 1 ? (
           <Button
             variant="outline"
-            size="sm"
+            size="icon-sm"
+            aria-label="Previous page"
             nativeButton={false}
             render={<Link href={href(page - 1)} />}
           >
-            Previous
+            <ChevronLeft className="size-4" aria-hidden />
           </Button>
         ) : (
-          <Button variant="outline" size="sm" disabled>
-            Previous
+          <Button variant="outline" size="icon-sm" aria-label="Previous page" disabled>
+            <ChevronLeft className="size-4" aria-hidden />
           </Button>
         )}
         {page < pages ? (
           <Button
             variant="outline"
-            size="sm"
+            size="icon-sm"
+            aria-label="Next page"
             nativeButton={false}
             render={<Link href={href(page + 1)} />}
           >
-            Next
+            <ChevronRight className="size-4" aria-hidden />
           </Button>
         ) : (
-          <Button variant="outline" size="sm" disabled>
-            Next
+          <Button variant="outline" size="icon-sm" aria-label="Next page" disabled>
+            <ChevronRight className="size-4" aria-hidden />
           </Button>
         )}
       </div>

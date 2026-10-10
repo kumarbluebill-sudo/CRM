@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  BadgeIndianRupee,
+  CalendarCheck,
+  ClipboardList,
+  Inbox,
+  PlaneTakeoff,
+  Stamp,
+  TrendingUp,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import {
   CollectionBars,
-  FunnelBars,
+  PipelineBar,
   HorizontalBars,
   RevenueArea,
   StatusDonut,
@@ -36,7 +48,7 @@ function Delta({ now, before }: { now: number; before?: number }) {
   const Icon = up ? ArrowUpRight : ArrowDownRight;
   return (
     <span
-      className={`inline-flex items-center text-[11px] font-medium ${up ? "text-tone-ok" : "text-tone-bad"}`}
+      className={`inline-flex items-center rounded-md px-1.5 text-xs font-medium ${up ? "bg-tone-ok-soft text-tone-ok" : "bg-tone-bad-soft text-tone-bad"}`}
       title="Compared with the previous period of the same length"
     >
       <Icon className="size-3" aria-hidden />
@@ -44,6 +56,18 @@ function Delta({ now, before }: { now: number; before?: number }) {
     </span>
   );
 }
+
+const KPI_STYLE: Record<string, { icon: LucideIcon; tone: string }> = {
+  "Total Enquiries": { icon: Inbox, tone: "bg-tone-primary-soft text-tone-primary" },
+  "Confirmed Bookings": { icon: CalendarCheck, tone: "bg-tone-ok-soft text-tone-ok" },
+  "Upcoming Departures (30d)": { icon: PlaneTakeoff, tone: "bg-tone-info-soft text-tone-info" },
+  "Revenue (bookings)": { icon: BadgeIndianRupee, tone: "bg-tone-violet-soft text-tone-violet" },
+  Collected: { icon: Wallet, tone: "bg-tone-ok-soft text-tone-ok" },
+  "Outstanding Payments": { icon: Wallet, tone: "bg-tone-warn-soft text-tone-warn" },
+  "Pending Job Orders": { icon: ClipboardList, tone: "bg-tone-warn-soft text-tone-warn" },
+  "Pending Visa Applications": { icon: Stamp, tone: "bg-tone-info-soft text-tone-info" },
+  "Profit (costed bookings)": { icon: TrendingUp, tone: "bg-tone-ok-soft text-tone-ok" },
+};
 
 function Kpi({
   title,
@@ -58,14 +82,25 @@ function Kpi({
   delta?: React.ReactNode;
   note?: string;
 }) {
+  const style = KPI_STYLE[title];
   return (
     <Link
       href={href}
       className="bg-card hover:bg-muted/50 focus-visible:ring-ring flex min-w-0 flex-col rounded-xl border px-3 py-2 shadow-xs focus-visible:ring-2 focus-visible:outline-none"
     >
-      <span className="text-muted-foreground truncate text-[11px]">{title}</span>
-      <span className="flex items-baseline gap-2">
-        <span className="truncate text-lg leading-tight font-semibold tracking-tight tabular-nums">
+      <span className="flex items-start justify-between gap-2">
+        <span className="text-muted-foreground truncate text-[13px] font-medium">{title}</span>
+        {style && (
+          <span
+            aria-hidden
+            className={`flex size-9 shrink-0 items-center justify-center rounded-[10px] ${style.tone}`}
+          >
+            <style.icon className="size-5" />
+          </span>
+        )}
+      </span>
+      <span className="flex items-center gap-2">
+        <span className="truncate text-[28px] leading-tight font-semibold tracking-tight tabular-nums">
           {value}
         </span>
         {delta}
@@ -361,7 +396,7 @@ export default async function DashboardPage({
         )}
         {f && (
           <Panel title="Enquiry conversion" className={panel}>
-            <FunnelBars
+            <PipelineBar
               data={[
                 { stage: "Enquiries", value: f.enquiries },
                 { stage: "Quotes sent", value: f.quotations },
