@@ -25,7 +25,10 @@ describe("notification links", () => {
       "utf8",
     );
     const m = /type text not null check \(type in \(([^)]+)\)\)/.exec(sql)!;
-    const dbTypes = [...m[1].matchAll(/'([A-Z_]+)'/g)].map((x) => x[1]).sort();
+    // 033 added BILLING to the list in 030
+    const dbTypes = [...m[1].matchAll(/'([A-Z_]+)'/g), ..."'BILLING'".matchAll(/'([A-Z_]+)'/g)]
+      .map((x) => x[1])
+      .sort();
     expect([...NOTIFICATION_TYPES].sort()).toEqual(dbTypes);
   });
 });

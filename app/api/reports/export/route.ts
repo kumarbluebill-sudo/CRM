@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSessionContext } from "@/lib/auth/session";
+import { limitMessage } from "@/lib/billing/limits";
 import { isRecentlyAuthenticated } from "@/lib/auth/recent";
 import { createClient } from "@/lib/supabase/server";
 import { audit } from "@/lib/audit";
@@ -112,6 +113,10 @@ export async function GET(req: NextRequest) {
   );
   try {
     const supabase = await createClient();
+    // one use of the plan's monthly export allowance (402 once it is spent)
+    const allowance = await supabase.rpc("use_allowance", { p_key: "exports" });
+    if (allowance.error?.code === "P0020") return json(402, limitMessage(allowance.error.message));
+    if (allowance.error) throw allowance.error;
     const { data, error } = await supabase
       .from(spec.table)
       .select(spec.select)

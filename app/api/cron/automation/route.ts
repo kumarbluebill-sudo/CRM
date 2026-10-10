@@ -45,6 +45,12 @@ export async function GET(req: NextRequest) {
     result.ok = false;
   } else result.notified = sweeps.data;
 
+  const billing = await admin.rpc("run_billing_sweeps");
+  if (billing.error) {
+    logger.error("billing sweep failed", { code: billing.error.code });
+    result.ok = false;
+  } else result.billing = billing.data;
+
   const pruned = await admin.rpc("prune_security_events");
   if (pruned.error) logger.error("security event prune failed", { code: pruned.error.code });
 

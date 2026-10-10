@@ -143,6 +143,56 @@ export async function cancelRazorpaySubscription(input: {
   if (!res.ok) throw new RazorpayError(`Razorpay cancel failed (${res.status})`);
 }
 
+/** Refunds a captured subscription payment at the gateway (amount in paise). */
+export async function refundRazorpayPayment(input: {
+  keyId: string;
+  keySecret: string;
+  paymentId: string;
+  amountPaise: number;
+}): Promise<void> {
+  if (!/^pay_[A-Za-z0-9]+$/.test(input.paymentId)) throw new RazorpayError("Invalid payment id");
+  if (!Number.isSafeInteger(input.amountPaise) || input.amountPaise <= 0)
+    throw new RazorpayError("Invalid refund amount");
+  const res = await fetch(`https://api.razorpay.com/v1/payments/${input.paymentId}/refund`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: basicAuth(input.keyId, input.keySecret),
+    },
+    body: JSON.stringify({ amount: input.amountPaise }),
+    signal: AbortSignal.timeout(15_000),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new RazorpayError(`Razorpay refund failed (${res.status})`);
+}
+
+/**
+ * Moves a live subscription to another plan: an upgrade applies now, a downgrade at the end of the paid cycle.
+ * The plan id comes from our database, never from the browser.
+ */
+export async function changeRazorpaySubscriptionPlan(input: {
+  keyId: string;
+  keySecret: string;
+  subscriptionId: string;
+  planId: string;
+  when: "now" | "cycle_end";
+}): Promise<void> {
+  if (!/^sub_[A-Za-z0-9]+$/.test(input.subscriptionId))
+    throw new RazorpayError("Invalid subscription id");
+  if (!/^plan_[A-Za-z0-9]+$/.test(input.planId)) throw new RazorpayError("Invalid plan id");
+  const res = await fetch(`https://api.razorpay.com/v1/subscriptions/${input.subscriptionId}`, {
+    method: "PATCH",
+    headers: {
+      "content-type": "application/json",
+      authorization: basicAuth(input.keyId, input.keySecret),
+    },
+    body: JSON.stringify({ plan_id: input.planId, schedule_change_at: input.when }),
+    signal: AbortSignal.timeout(15_000),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new RazorpayError(`Razorpay plan change failed (${res.status})`);
+}
+
 /** Only https URLs are ever handed to the browser as a redirect target. */
 export function safeHttpsUrl(v: string): string | null {
   try {
@@ -158,6 +208,8 @@ export type SubscriptionEvent = {
   subscriptionId: string | null;
   planId: string | null;
   periodEnd: number | null;
+  /** From the payment object that charge and failure events carry. */
+  payment: { id: string; amount: number; currency: string; status: string } | null;
 };
 
 /** Extracts only what we use from a subscription.* webhook; null if it isn't one or is malformed. */
@@ -165,7 +217,10 @@ export function parseSubscriptionEvent(raw: string): SubscriptionEvent | null {
   try {
     const body = JSON.parse(raw) as {
       event?: unknown;
-      payload?: { subscription?: { entity?: Record<string, unknown> } };
+      payload?: {
+        subscription?: { entity?: Record<string, unknown> };
+        payment?: { entity?: Record<string, unknown> };
+      };
     };
     if (typeof body.event !== "string" || !body.event.startsWith("subscription.")) return null;
     const e = body.payload?.subscription?.entity;
@@ -178,6 +233,19 @@ export function parseSubscriptionEvent(raw: string): SubscriptionEvent | null {
         typeof e?.current_end === "number" && Number.isSafeInteger(e.current_end)
           ? e.current_end
           : null,
+      payment: (() => {
+        const pe = body.payload?.payment?.entity;
+        const id = str(pe?.id);
+        if (!pe || !id || !/^[A-Za-z0-9_]{3,60}$/.test(id)) return null;
+        const amount = pe.amount;
+        if (typeof amount !== "number" || !Number.isSafeInteger(amount) || amount < 0) return null;
+        return {
+          id,
+          amount,
+          currency: typeof pe.currency === "string" ? pe.currency.slice(0, 3).toUpperCase() : "INR",
+          status: typeof pe.status === "string" ? pe.status.slice(0, 20) : "",
+        };
+      })(),
     };
   } catch {
     return null;

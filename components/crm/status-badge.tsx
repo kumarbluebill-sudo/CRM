@@ -36,6 +36,7 @@ const GROUPS: Record<Tone, string[]> = {
     "UPCOMING",
     "ACCEPTED",
     "READY_FOR_SUBMISSION",
+    "TRIALING",
   ],
   violet: [
     "REQUIREMENT_COLLECTED",
@@ -56,6 +57,9 @@ const GROUPS: Record<Tone, string[]> = {
     "CORRECTION_REQUIRED",
     "PENDING",
     "PARTIAL",
+    "PAYMENT_PENDING",
+    "PAST_DUE",
+    "GRACE_PERIOD",
   ],
   ok: [
     "CONFIRMED",
@@ -67,8 +71,9 @@ const GROUPS: Record<Tone, string[]> = {
     "CONVERTED",
     "CAPTURED",
     "PAID",
+    "ACTIVE",
   ],
-  bad: ["URGENT", "REJECTED", "EXPIRED", "OVERDUE", "FAILED"],
+  bad: ["URGENT", "REJECTED", "EXPIRED", "OVERDUE", "FAILED", "SUSPENDED"],
 };
 
 export const STATUS_TONE: Record<string, Tone> = Object.fromEntries(

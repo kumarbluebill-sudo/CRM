@@ -108,6 +108,7 @@ describe("razorpay subscription helpers", () => {
       subscriptionId: "sub_1",
       planId: "plan_1",
       periodEnd: 1800000000,
+      payment: null,
     });
     expect(parseSubscriptionEvent(JSON.stringify({ event: "payment.captured" }))).toBeNull();
     expect(parseSubscriptionEvent("garbage")).toBeNull();
@@ -118,7 +119,13 @@ describe("razorpay subscription helpers", () => {
           payload: { subscription: { entity: { id: 5, current_end: "soon" } } },
         }),
       ),
-    ).toEqual({ type: "subscription.halted", subscriptionId: null, planId: null, periodEnd: null });
+    ).toEqual({
+      type: "subscription.halted",
+      subscriptionId: null,
+      planId: null,
+      periodEnd: null,
+      payment: null,
+    });
   });
   it("only allows https redirect URLs", () => {
     expect(safeHttpsUrl("https://rzp.io/i/abc")).toBe("https://rzp.io/i/abc");
