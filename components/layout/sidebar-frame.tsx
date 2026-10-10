@@ -41,7 +41,7 @@ export function SidebarFrame({
       data-collapsed={collapsed}
       className={cn(
         "group bg-card hidden shrink-0 flex-col border-r transition-[width] duration-150 lg:flex print:hidden",
-        collapsed ? "w-[4.25rem]" : "w-64",
+        collapsed ? "w-[4.25rem]" : "w-[232px]",
       )}
     >
       <div className="flex h-14 items-center justify-between gap-2 border-b px-3 group-data-[collapsed=true]:justify-center">
