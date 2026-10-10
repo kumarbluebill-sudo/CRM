@@ -17,6 +17,7 @@
     "verify": "npm run lint && npm run typecheck && npm test && npm run build",
     "test:e2e": "playwright test",
     "db:bundle": "node scripts/bundle-sql.mjs",
+    "scan:secrets": "node scripts/scan-secrets.mjs",
     "test:live": "node --env-file=.env.local node_modules/vitest/vitest.mjs run tests/live && node --env-file=.env.local node_modules/@playwright/test/cli.js test -c playwright.live.config.ts"
   },
   "dependencies": {

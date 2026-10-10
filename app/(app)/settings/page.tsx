@@ -6,6 +6,7 @@ import {
   FileText,
   Palette,
   ScrollText,
+  ShieldCheck,
   Users,
   Wallet,
 } from "lucide-react";
@@ -58,6 +59,13 @@ export default async function SettingsPage() {
       title: "Audit log",
       text: "Who did what, and when.",
       icon: ScrollText,
+      show: session.permissions.has("settings.manage"),
+    },
+    {
+      href: "/settings/security",
+      title: "Security",
+      text: "Failed sign-ins, two-step verification coverage and recent security events.",
+      icon: ShieldCheck,
       show: session.permissions.has("settings.manage"),
     },
     {

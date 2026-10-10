@@ -45,6 +45,9 @@ export async function GET(req: NextRequest) {
     result.ok = false;
   } else result.notified = sweeps.data;
 
+  const pruned = await admin.rpc("prune_security_events");
+  if (pruned.error) logger.error("security event prune failed", { code: pruned.error.code });
+
   try {
     const { data: pending } = await admin.rpc("pending_notification_emails", { p_limit: 100 });
     const base = getPublicEnv().NEXT_PUBLIC_APP_URL.replace(/\/$/, "");

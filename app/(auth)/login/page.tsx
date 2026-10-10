@@ -8,15 +8,20 @@ export const metadata: Metadata = { title: "Sign in" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; reason?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, reason } = await searchParams;
   return (
     <>
       <h1 className="text-xl font-semibold">Sign in</h1>
       <p className="text-muted-foreground mt-1 mb-5 text-sm">
         Welcome back to your agency workspace.
       </p>
+      {reason === "timeout" && (
+        <p role="status" className="text-muted-foreground mb-4 text-sm">
+          You were signed out after a period of inactivity. Please sign in again.
+        </p>
+      )}
       {error === "link" && (
         <p role="alert" className="text-destructive mb-4 text-sm">
           That link is invalid or has expired. Please try again.

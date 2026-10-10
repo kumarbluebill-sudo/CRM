@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
+import { requireRecentAuth } from "@/lib/auth/recent";
 import type { FormState } from "@/lib/auth/schemas";
 import { AppError } from "@/lib/utils/errors";
 import { rateLimit } from "@/lib/rate-limit";
@@ -28,6 +29,7 @@ export async function saveTaxProfileAction(
     return { fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]> };
   return runAction(async () => {
     await guard("tax-profile", 20);
+    await requireRecentAuth();
     const supabase = await createClient();
     const { error } = await supabase.rpc("save_tax_profile", { p: parsed.data });
     throwInvoicingError(error, "save tax profile");
@@ -106,6 +108,7 @@ export async function verifyTaxCodeAction(id: string): Promise<FormState> {
   if (!uuid.safeParse(id).success) return { message: "Tax code not found." };
   return runAction(async () => {
     await guard("tax-code");
+    await requireRecentAuth();
     const supabase = await createClient();
     const { error } = await supabase.rpc("verify_tax_code", { p_id: id });
     throwInvoicingError(error, "verify tax code");
