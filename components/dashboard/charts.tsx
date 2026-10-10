@@ -24,6 +24,16 @@ const C = [
   "var(--chart-5)",
   "var(--muted-foreground)",
 ];
+const TIP = {
+  contentStyle: {
+    background: "var(--card)",
+    border: "1px solid var(--border)",
+    borderRadius: 12,
+    fontSize: 12,
+    boxShadow: "0 4px 12px oklch(0.2 0.02 255 / .08)",
+  },
+  labelStyle: { color: "var(--muted-foreground)" },
+};
 const TICK = { fontSize: 11, fill: "var(--muted-foreground)" };
 
 const compact = (n: number, currency: string) => {
@@ -77,7 +87,7 @@ export function RevenueArea({
       <AreaChart data={rows} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
         <defs>
           <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.35} />
+            <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.14} />
             <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0} />
           </linearGradient>
         </defs>
@@ -90,7 +100,11 @@ export function RevenueArea({
           width={48}
           tickFormatter={(v) => compact(v, currency)}
         />
-        <Tooltip formatter={(v) => full(Number(v), currency)} labelFormatter={(l) => String(l)} />
+        <Tooltip
+          {...TIP}
+          formatter={(v) => full(Number(v), currency)}
+          labelFormatter={(l) => String(l)}
+        />
         <Area
           isAnimationActive={false}
           type="monotone"
@@ -119,7 +133,7 @@ export function FunnelBars({ data }: { data: { stage: string; value: number }[] 
           axisLine={false}
           width={78}
         />
-        <Tooltip />
+        <Tooltip {...TIP} />
         <Bar
           isAnimationActive={false}
           dataKey="value"
@@ -157,7 +171,7 @@ export function StatusDonut({ data }: { data: { name: string; value: number }[] 
             <Cell key={i} fill={C[i % C.length]} />
           ))}
         </Pie>
-        <Tooltip />
+        <Tooltip {...TIP} />
         <Legend verticalAlign="bottom" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
       </PieChart>
     </ResponsiveContainer>
@@ -189,7 +203,7 @@ export function HorizontalBars({
           axisLine={false}
           width={86}
         />
-        <Tooltip formatter={(v) => (money ? full(Number(v), currency) : String(v))} />
+        <Tooltip {...TIP} formatter={(v) => (money ? full(Number(v), currency) : String(v))} />
         <Bar
           isAnimationActive={false}
           dataKey="value"
@@ -227,7 +241,7 @@ export function CollectionBars({
           width={48}
           tickFormatter={(v) => compact(v, currency)}
         />
-        <Tooltip formatter={(v) => full(Number(v), currency)} />
+        <Tooltip {...TIP} formatter={(v) => full(Number(v), currency)} />
         <Legend iconSize={8} wrapperStyle={{ fontSize: 11 }} />
         <Bar
           isAnimationActive={false}

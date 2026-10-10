@@ -91,7 +91,7 @@ export function PayNow({
       {note && (
         <p
           role={note.ok ? "status" : "alert"}
-          className={note.ok ? "text-sm text-green-700" : "text-destructive text-sm"}
+          className={note.ok ? "text-tone-ok text-sm" : "text-destructive text-sm"}
         >
           {note.text}
         </p>
@@ -117,7 +117,7 @@ export function RequestForm({ token }: { token: string }) {
       {state.message && (
         <p
           role={state.ok ? "status" : "alert"}
-          className={state.ok ? "text-sm text-green-700" : "text-destructive text-sm"}
+          className={state.ok ? "text-tone-ok text-sm" : "text-destructive text-sm"}
         >
           {state.message}
         </p>

@@ -179,9 +179,7 @@ export function VisaMessageForm({ applicationId }: { applicationId: string }) {
       {state.message && (
         <p
           role={state.ok ? "status" : "alert"}
-          className={
-            state.ok ? "text-sm text-green-700 dark:text-green-400" : "text-destructive text-sm"
-          }
+          className={state.ok ? "text-tone-ok text-sm" : "text-destructive text-sm"}
         >
           {state.message}
         </p>
