@@ -26,6 +26,7 @@ import { requireOrgSession } from "@/lib/auth/session";
 import { label } from "@/lib/crm/constants";
 import { listTeamMembers } from "@/lib/crm/queries";
 import { getJobsDashboard } from "@/lib/jobs/queries";
+import { getDisplayPrefs } from "@/lib/datetime/prefs";
 import { getDashboard, RANGE_LABELS, resolveRange, type Dashboard } from "@/lib/dashboard/queries";
 import { formatMoney } from "@/lib/quotation/pricing";
 
@@ -134,7 +135,8 @@ export default async function DashboardPage({
 }) {
   const session = await requireOrgSession();
   const sp = await searchParams;
-  const range = resolveRange(sp.range, sp.from, sp.to);
+  const prefs = await getDisplayPrefs();
+  const range = resolveRange(sp.range, sp.from, sp.to, new Date(), prefs.timeZone);
   const [d, team, jobs]: [
     Dashboard | null,
     { userId: string; name: string }[],
@@ -150,7 +152,10 @@ export default async function DashboardPage({
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const firstName = session.fullName.split(" ")[0] || "there";
-  const today = new Intl.DateTimeFormat("en-IN", { dateStyle: "full" }).format(new Date());
+  const today = new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "full",
+    timeZone: prefs.timeZone,
+  }).format(new Date());
 
   if (!d) {
     return (

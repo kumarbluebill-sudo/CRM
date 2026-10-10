@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LocalTime } from "@/components/datetime/local-time";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
@@ -103,7 +104,7 @@ export default async function QuotationPage({ params }: { params: Promise<{ id: 
                   v{v.version_number} · {v.label ?? "Snapshot"}
                 </span>
                 <span className="text-muted-foreground">
-                  {new Date(v.created_at).toLocaleString("en-IN")}
+                  <LocalTime value={v.created_at} />
                 </span>
               </li>
             ))}

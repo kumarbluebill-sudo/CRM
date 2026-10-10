@@ -7,6 +7,9 @@ import { label } from "@/lib/crm/constants";
 import { CONFIRMATION_STATUSES } from "@/lib/booking/schema";
 import type { BookingItemRow } from "@/lib/booking/queries";
 import { updateBookingItemAction } from "@/app/(app)/bookings/actions";
+import { EventTime } from "@/components/datetime/local-time";
+import { toLocalInput } from "@/lib/datetime/format";
+import { timeZoneOptions } from "@/lib/datetime/zones";
 
 const STATUS_TONE: Record<string, string> = {
   PENDING: "TODO",
@@ -42,6 +45,18 @@ export function BookingItemEditor({
             {supplierName ? ` · ${supplierName}` : " · no supplier yet"}
             {item.confirmation_reference ? ` · ref ${item.confirmation_reference}` : ""}
           </p>
+          {item.starts_at && (
+            <p className="text-xs">
+              <span className="text-muted-foreground">Starts: </span>
+              <EventTime instant={item.starts_at} tz={item.event_tz} />
+              {item.ends_at && (
+                <>
+                  <span className="text-muted-foreground"> · Ends: </span>
+                  <EventTime instant={item.ends_at} tz={item.dest_tz ?? item.event_tz} />
+                </>
+              )}
+            </p>
+          )}
           {item.unit_price !== null && (
             <p className="text-muted-foreground text-xs">
               Sold at {currency} {Number(item.unit_price).toLocaleString("en-IN")} each
@@ -97,6 +112,32 @@ export function BookingItemEditor({
                   label: "Service date",
                   type: "date",
                   defaultValue: item.service_date,
+                },
+                {
+                  name: "startsLocal",
+                  label: "Starts (local time at the place)",
+                  type: "datetime-local",
+                  defaultValue: toLocalInput(item.starts_at, item.event_tz),
+                },
+                {
+                  name: "eventTz",
+                  label: "Time zone where it starts",
+                  type: "select",
+                  options: [{ value: "", label: "Not set" }, ...timeZoneOptions()],
+                  defaultValue: item.event_tz ?? "",
+                },
+                {
+                  name: "endsLocal",
+                  label: "Ends (local time at the place)",
+                  type: "datetime-local",
+                  defaultValue: toLocalInput(item.ends_at, item.dest_tz ?? item.event_tz),
+                },
+                {
+                  name: "destTz",
+                  label: "Time zone where it ends (if different)",
+                  type: "select",
+                  options: [{ value: "", label: "Same as start" }, ...timeZoneOptions()],
+                  defaultValue: item.dest_tz ?? "",
                 },
                 {
                   name: "confirmationStatus",

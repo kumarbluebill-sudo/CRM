@@ -1,6 +1,8 @@
 import { BillingBanner } from "@/components/billing/billing-banner";
 import { AppShell } from "@/components/layout/app-shell";
 import type { QuickAction } from "@/components/layout/header-actions";
+import { PrefsProvider } from "@/components/datetime/local-time";
+import { getDisplayPrefs } from "@/lib/datetime/prefs";
 import { requireOrgSession } from "@/lib/auth/session";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -14,6 +16,7 @@ import { latestNotifications, unreadCount } from "@/lib/notifications/queries";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await requireOrgSession();
   const brand = await getOrgBrand(session.organization.name);
+  const prefs = await getDisplayPrefs();
 
   // Agencies can require two-step verification for owners and admins. Until they set it up, only the page that
   // does it (and sign-out) is available; everything else shows a short explanation.
@@ -43,34 +46,36 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     can("tasks.manage") && { label: "Tasks and follow-ups", href: "/tasks" },
   ].filter((a): a is QuickAction => Boolean(a));
   return (
-    <AppShell
-      user={{ name: session.fullName || session.email, email: session.email }}
-      organizationName={session.organization.name}
-      brand={brand}
-      quickActions={quickActions}
-      canSettings={can("settings.manage")}
-      banner={<BillingBanner />}
-      headerSlot={<NotificationBell initialUnread={unread} initialItems={latest} />}
-    >
-      {blockedForMfa ? (
-        <div
-          role="alert"
-          className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn mx-auto max-w-lg rounded-xl border p-6 text-sm"
-        >
-          <h1 className="text-lg font-semibold">Set up two-step verification to continue</h1>
-          <p className="mt-2">
-            Your agency requires owners and admins to use an authenticator app. It takes about a
-            minute.
-          </p>
-          <p className="mt-4">
-            <Link href="/profile/security?required=1" className="font-medium underline">
-              Set it up now
-            </Link>
-          </p>
-        </div>
-      ) : (
-        children
-      )}
-    </AppShell>
+    <PrefsProvider prefs={prefs}>
+      <AppShell
+        user={{ name: session.fullName || session.email, email: session.email }}
+        organizationName={session.organization.name}
+        brand={brand}
+        quickActions={quickActions}
+        canSettings={can("settings.manage")}
+        banner={<BillingBanner />}
+        headerSlot={<NotificationBell initialUnread={unread} initialItems={latest} />}
+      >
+        {blockedForMfa ? (
+          <div
+            role="alert"
+            className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn mx-auto max-w-lg rounded-xl border p-6 text-sm"
+          >
+            <h1 className="text-lg font-semibold">Set up two-step verification to continue</h1>
+            <p className="mt-2">
+              Your agency requires owners and admins to use an authenticator app. It takes about a
+              minute.
+            </p>
+            <p className="mt-4">
+              <Link href="/profile/security?required=1" className="font-medium underline">
+                Set it up now
+              </Link>
+            </p>
+          </div>
+        ) : (
+          children
+        )}
+      </AppShell>
+    </PrefsProvider>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { LocalTime } from "@/components/datetime/local-time";
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import {
@@ -611,7 +612,7 @@ function HistoryDialog({
                 v{v.version_number}
                 {v.label ? ` · ${v.label}` : ""}
                 <span className="text-muted-foreground block text-xs">
-                  {new Date(v.created_at).toLocaleString("en-IN")}
+                  <LocalTime value={v.created_at} />
                 </span>
               </span>
               <Button

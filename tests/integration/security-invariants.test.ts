@@ -105,7 +105,7 @@ describe("schema-wide security invariants (local Postgres)", () => {
   it("every function a signed-in user can call checks who they are before doing anything", async () => {
     // SECURITY DEFINER bypasses row security, so each one must consult the caller (organization, permission or user id).
     const guards =
-      /(current_org_id|has_permission|visa_require|job_require|auth.uid()|is_super_admin|current_user_role|mfa_satisfied)/;
+      /(current_org_id|has_permission|visa_require|job_require|role_guard|auth.uid()|is_super_admin|current_user_role|mfa_satisfied)/;
     const fns = await rows<{ proname: string; prosrc: string }>(
       `select p.proname, p.prosrc from pg_proc p join pg_namespace n on n.oid = p.pronamespace
         where n.nspname = 'public' and p.prosecdef and p.prorettype <> 'trigger'::regtype
@@ -140,6 +140,7 @@ describe("schema-wide security invariants (local Postgres)", () => {
       "recalc_invoice",
       "next_doc_number",
       "job_log",
+      "role_guard",
       "job_check_assignee",
       "visa_log",
       "truncate_ip",

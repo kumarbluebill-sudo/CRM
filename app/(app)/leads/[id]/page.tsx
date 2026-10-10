@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LocalTime } from "@/components/datetime/local-time";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -158,7 +159,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                 <div key={n.id} className="border-t pt-2 text-sm">
                   <p className="whitespace-pre-wrap">{n.body}</p>
                   <p className="text-muted-foreground text-xs">
-                    {new Date(n.created_at).toLocaleString("en-IN")}
+                    <LocalTime value={n.created_at} />
                   </p>
                 </div>
               ))}
@@ -175,7 +176,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
                   <li key={a.id}>
                     {a.summary}
                     <span className="text-muted-foreground block text-xs">
-                      {new Date(a.created_at).toLocaleString("en-IN")}
+                      <LocalTime value={a.created_at} />
                     </span>
                   </li>
                 ))}

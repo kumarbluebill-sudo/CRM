@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LocalTime } from "@/components/datetime/local-time";
 import Link from "next/link";
 import { PageHeader } from "@/components/crm/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,7 +104,7 @@ export default async function SecuritySettingsPage() {
                   {events.map((e) => (
                     <tr key={e.id}>
                       <td className="py-2 pr-4 whitespace-nowrap">
-                        {new Date(e.created_at).toLocaleString("en-IN")}
+                        <LocalTime value={e.created_at} />
                       </td>
                       <td className="py-2 pr-4">{label(e.kind)}</td>
                       <td className="py-2 pr-4">{e.detail ?? ""}</td>

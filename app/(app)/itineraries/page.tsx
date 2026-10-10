@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { LocalTime } from "@/components/datetime/local-time";
 import Link from "next/link";
 import { MapPinned, Plus } from "lucide-react";
 import { PageHeader } from "@/components/crm/page-header";
@@ -119,7 +120,7 @@ export default async function ItinerariesPage({
                     <div className="flex items-center justify-between">
                       <StatusBadge value={r.is_template ? "TEMPLATE" : r.status} />
                       <span className="text-muted-foreground text-xs">
-                        Updated {new Date(r.updated_at).toLocaleDateString("en-IN")}
+                        Updated <LocalTime value={r.updated_at} dateOnly />
                       </span>
                     </div>
                   </CardContent>
