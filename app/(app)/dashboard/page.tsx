@@ -86,21 +86,21 @@ function Kpi({
   return (
     <Link
       href={href}
-      className="bg-card hover:bg-muted/50 focus-visible:ring-ring flex min-w-0 flex-col rounded-xl border px-3 py-2 shadow-xs focus-visible:ring-2 focus-visible:outline-none"
+      className="bg-card hover:bg-muted/50 focus-visible:ring-ring flex min-w-0 flex-col gap-0.5 rounded-xl border px-3 py-2.5 shadow-xs focus-visible:ring-2 focus-visible:outline-none"
     >
       <span className="flex items-start justify-between gap-2">
-        <span className="text-muted-foreground truncate text-[13px] font-medium">{title}</span>
+        <span className="text-muted-foreground text-xs leading-tight font-medium">{title}</span>
         {style && (
           <span
             aria-hidden
-            className={`flex size-9 shrink-0 items-center justify-center rounded-[10px] ${style.tone}`}
+            className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${style.tone}`}
           >
-            <style.icon className="size-5" />
+            <style.icon className="size-4" />
           </span>
         )}
       </span>
       <span className="flex items-center gap-2">
-        <span className="truncate text-[28px] leading-tight font-semibold tracking-tight tabular-nums">
+        <span className="truncate text-xl leading-tight font-semibold tracking-tight tabular-nums">
           {value}
         </span>
         {delta}
@@ -121,7 +121,7 @@ function Panel({
 }) {
   return (
     <Card size="sm" className={`min-h-0 gap-1 ${className ?? ""}`}>
-      <h2 className="px-3 text-xs font-semibold">{title}</h2>
+      <h2 className="px-3 pt-0.5 text-[13px] font-semibold">{title}</h2>
       <div className="min-h-0 flex-1 px-1">{children}</div>
     </Card>
   );
@@ -161,7 +161,14 @@ export default async function DashboardPage({
     );
   }
   const k = d.kpi;
-  const money = (n: number | undefined) => (n === undefined ? "—" : formatMoney(n, d.currency));
+  const money = (n: number | undefined) =>
+    n === undefined
+      ? "—"
+      : new Intl.NumberFormat("en-IN", {
+          style: "currency",
+          currency: d.currency,
+          maximumFractionDigits: 0,
+        }).format(n);
   const count = (n: number | undefined) => (n === undefined ? "—" : String(n));
 
   const kpis: {
@@ -320,13 +327,13 @@ export default async function DashboardPage({
 
   const f = d.funnel;
   const presets = Object.entries(RANGE_LABELS) as [keyof typeof RANGE_LABELS, string][];
-  const panel = "h-48 lg:h-auto";
+  const panel = "h-52 [@media(min-width:1024px)_and_(min-height:760px)]:h-auto";
 
   return (
-    <div className="mx-auto flex max-w-[1600px] flex-col gap-2.5 lg:h-full">
+    <div className="mx-auto flex max-w-[1600px] flex-col gap-2.5 [@media(min-width:1024px)_and_(min-height:760px)]:h-full">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="text-xl leading-tight font-semibold tracking-tight">
+          <h1 className="text-lg leading-tight font-semibold tracking-tight">
             {greeting}, {firstName}
           </h1>
           <p className="text-muted-foreground text-xs">
@@ -376,7 +383,7 @@ export default async function DashboardPage({
 
       <section
         aria-label="Key metrics"
-        className="grid grid-cols-2 gap-2 md:grid-cols-5 2xl:grid-cols-9"
+        className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5 lg:[&>a:last-child:nth-child(5n+4)]:col-span-2"
       >
         {kpis
           .filter((x) => x.show)
@@ -387,7 +394,7 @@ export default async function DashboardPage({
 
       <section
         aria-label="Charts"
-        className="grid min-h-0 gap-2.5 sm:grid-cols-2 lg:flex-[5] lg:grid-cols-3 lg:grid-rows-2"
+        className="grid min-h-0 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 [@media(min-width:1024px)_and_(min-height:760px)]:flex-[5] [@media(min-width:1024px)_and_(min-height:760px)]:grid-rows-2"
       >
         {d.revenueByMonth && (
           <Panel title="Monthly revenue" className={panel}>
@@ -445,7 +452,10 @@ export default async function DashboardPage({
       </section>
 
       {ops.length > 0 ? (
-        <Card size="sm" className="h-56 gap-1 px-3 lg:h-auto lg:min-h-36 lg:flex-[2]">
+        <Card
+          size="sm"
+          className="h-64 gap-1 px-3 [@media(min-width:1024px)_and_(min-height:760px)]:h-auto [@media(min-width:1024px)_and_(min-height:760px)]:min-h-36 [@media(min-width:1024px)_and_(min-height:760px)]:flex-[2]"
+        >
           <OpsTabs tabs={ops} />
         </Card>
       ) : (

@@ -227,6 +227,7 @@ test("a logo uploaded in settings appears in the sidebar, and removing it restor
   await expect(page.getByText(/not allowed/i)).toBeVisible();
 
   await page.getByRole("button", { name: "Remove" }).click();
+  await expect(page.getByRole("button", { name: "Remove" })).toHaveCount(0);
   await page.goto("/dashboard");
   await expect(page.locator("aside img")).toHaveCount(0);
 });

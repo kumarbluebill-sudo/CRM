@@ -136,7 +136,7 @@ export function PipelineBar({ data }: { data: { stage: string; value: number }[]
           ) : null,
         )}
       </div>
-      <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
         {data.map((d, i) => (
           <div key={d.stage} className="flex min-w-0 flex-col">
             <dt className="text-muted-foreground flex items-center gap-1.5 truncate">
