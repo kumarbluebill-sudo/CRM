@@ -69,7 +69,7 @@ export default async function NotificationsPage({
               {rows.map((n) => (
                 <li key={n.id} className="flex flex-wrap items-start gap-3 py-2.5">
                   <span
-                    className={`mt-1.5 size-2 shrink-0 rounded-full ${n.read ? "bg-transparent" : "bg-blue-600"}`}
+                    className={`mt-1.5 size-2 shrink-0 rounded-full ${n.read ? "bg-transparent" : "bg-tone-primary"}`}
                     aria-hidden
                   />
                   <div className="min-w-0 flex-1">

@@ -157,7 +157,7 @@ export default async function ApplicationsPage({
                   </span>
                   <span className="ml-auto flex items-center gap-2">
                     {isTravelUrgent(a.travel_date, a.status) && (
-                      <span className="text-xs font-medium text-red-600">Travel soon</span>
+                      <span className="text-tone-bad text-xs font-medium">Travel soon</span>
                     )}
                     {a.priority !== "NORMAL" && <StatusBadge value={a.priority} />}
                     <StatusBadge value={a.status} />

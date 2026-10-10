@@ -31,7 +31,7 @@ function Section({
         <CardTitle className="flex items-center gap-2 text-base">
           {title}
           <span
-            className={`rounded-full px-2 py-0.5 text-xs ${tone === "warn" && count > 0 ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200" : "bg-muted"}`}
+            className={`rounded-full px-2 py-0.5 text-xs ${tone === "warn" && count > 0 ? "bg-tone-bad-soft text-tone-bad" : "bg-muted"}`}
           >
             {count}
           </span>

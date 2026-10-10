@@ -110,7 +110,7 @@ export function Combobox({
             setOpen(false);
           }
         }}
-        className="border-input bg-background focus-visible:ring-ring/50 focus-visible:border-ring h-8 w-full rounded-lg border px-2.5 pr-8 text-sm outline-none focus-visible:ring-3 aria-invalid:border-red-500"
+        className="border-input bg-background focus-visible:ring-ring/50 focus-visible:border-ring aria-invalid:border-tone-bad/30 h-8 w-full rounded-lg border px-2.5 pr-8 text-sm outline-none focus-visible:ring-3"
       />
       <ChevronsUpDown
         className="text-muted-foreground pointer-events-none absolute top-2 right-2.5 size-4"

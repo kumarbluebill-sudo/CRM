@@ -1,68 +1,92 @@
-import { Badge } from "@/components/ui/badge";
 import { label } from "@/lib/crm/constants";
 import { cn } from "@/lib/utils";
 
-const TONES: Record<string, string> = {
-  NEW: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
-  CONTACTED: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200",
-  REQUIREMENT_COLLECTED: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200",
-  QUOTE_PREPARED: "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200",
-  QUOTE_SENT: "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200",
-  FOLLOW_UP: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
-  NEGOTIATION: "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-200",
-  CONFIRMED: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
-  LOST: "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-  DRAFT: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-  PUBLISHED: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
-  TEMPLATE: "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200",
-  LOW: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-  MEDIUM: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200",
-  HIGH: "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-200",
-  URGENT: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
-  ASSIGNED: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200",
-  ACCEPTED: "bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-200",
-  WAITING_INFO: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
-  ON_HOLD: "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-  TODO: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-  IN_PROGRESS: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
-  COMPLETED: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
-  DOCUMENTS_PENDING: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
-  DOCUMENTS_RECEIVED: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200",
-  DOCUMENT_REVIEW: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200",
-  CORRECTION_REQUIRED: "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-200",
-  READY_FOR_SUBMISSION: "bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-200",
-  SUBMITTED: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
-  PROCESSING: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
-  EMBASSY_REVIEW: "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200",
-  APPROVED: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
-  VISA_RECEIVED: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
-  DELIVERED: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200",
-  CLOSED: "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
-  REJECTED: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
-  CONVERTED: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
-  QUOTATION_SENT: "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200",
-  REQUESTED: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200",
-  UPLOADED: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
-  UNDER_REVIEW: "bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200",
-  NORMAL: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200",
-  NOT_REQUIRED: "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
-  EXPIRED: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
-  CAPTURED: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
-  PAID: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200",
-  ISSUED: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
-  PENDING: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
-  PARTIAL: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
-  UPCOMING: "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200",
-  OVERDUE: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
-  FAILED: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
-  VOID: "bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
-  CANCELLED: "bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+type Tone = "neutral" | "primary" | "info" | "violet" | "warn" | "ok" | "bad";
+
+const TONE_CLASS: Record<Tone, string> = {
+  neutral: "bg-tone-neutral-soft text-tone-neutral",
+  primary: "bg-tone-primary-soft text-tone-primary",
+  info: "bg-tone-info-soft text-tone-info",
+  violet: "bg-tone-violet-soft text-tone-violet",
+  warn: "bg-tone-warn-soft text-tone-warn",
+  ok: "bg-tone-ok-soft text-tone-ok",
+  bad: "bg-tone-bad-soft text-tone-bad",
 };
 
+const GROUPS: Record<Tone, string[]> = {
+  neutral: [
+    "LOST",
+    "DRAFT",
+    "LOW",
+    "ON_HOLD",
+    "TODO",
+    "CLOSED",
+    "NOT_REQUIRED",
+    "VOID",
+    "CANCELLED",
+  ],
+  primary: ["NEW", "IN_PROGRESS", "SUBMITTED", "PROCESSING", "UPLOADED", "ISSUED"],
+  info: [
+    "CONTACTED",
+    "MEDIUM",
+    "ASSIGNED",
+    "DOCUMENTS_RECEIVED",
+    "REQUESTED",
+    "NORMAL",
+    "UPCOMING",
+    "ACCEPTED",
+    "READY_FOR_SUBMISSION",
+  ],
+  violet: [
+    "REQUIREMENT_COLLECTED",
+    "QUOTE_PREPARED",
+    "QUOTE_SENT",
+    "QUOTATION_SENT",
+    "TEMPLATE",
+    "DOCUMENT_REVIEW",
+    "EMBASSY_REVIEW",
+    "UNDER_REVIEW",
+  ],
+  warn: [
+    "FOLLOW_UP",
+    "NEGOTIATION",
+    "HIGH",
+    "WAITING_INFO",
+    "DOCUMENTS_PENDING",
+    "CORRECTION_REQUIRED",
+    "PENDING",
+    "PARTIAL",
+  ],
+  ok: [
+    "CONFIRMED",
+    "PUBLISHED",
+    "COMPLETED",
+    "APPROVED",
+    "VISA_RECEIVED",
+    "DELIVERED",
+    "CONVERTED",
+    "CAPTURED",
+    "PAID",
+  ],
+  bad: ["URGENT", "REJECTED", "EXPIRED", "OVERDUE", "FAILED"],
+};
+
+export const STATUS_TONE: Record<string, Tone> = Object.fromEntries(
+  (Object.entries(GROUPS) as [Tone, string[]][]).flatMap(([tone, values]) =>
+    values.map((v) => [v, tone]),
+  ),
+);
+
 export function StatusBadge({ value }: { value: string }) {
+  const tone = STATUS_TONE[value] ?? "neutral";
   return (
-    <Badge variant="secondary" className={cn("font-medium", TONES[value])}>
+    <span
+      className={cn(
+        "inline-flex h-[22px] w-fit items-center rounded-full px-2.5 text-xs font-medium whitespace-nowrap",
+        TONE_CLASS[tone],
+      )}
+    >
       {label(value)}
-    </Badge>
+    </span>
   );
 }

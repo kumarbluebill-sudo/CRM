@@ -22,7 +22,7 @@ export function SearchBox() {
     <form
       role="search"
       aria-label="Search the CRM"
-      className="relative hidden w-full max-w-sm md:block"
+      className="relative hidden w-full max-w-80 md:block"
       onSubmit={(e) => {
         e.preventDefault();
         const v = q.trim();
@@ -30,7 +30,7 @@ export function SearchBox() {
       }}
     >
       <Search
-        className="text-muted-foreground pointer-events-none absolute top-2 left-2.5 size-4"
+        className="text-muted-foreground pointer-events-none absolute top-[9px] left-2.5 size-4"
         aria-hidden
       />
       <input
@@ -40,8 +40,11 @@ export function SearchBox() {
         maxLength={60}
         placeholder="Search customers, bookings, visas…"
         aria-label="Search"
-        className="border-input bg-background focus-visible:ring-ring/50 focus-visible:border-ring h-8 w-full rounded-lg border pr-2.5 pl-8 text-sm outline-none focus-visible:ring-3"
+        className="border-input bg-muted focus-visible:ring-ring/20 focus-visible:border-primary h-[34px] w-full rounded-lg border pr-12 pl-8 text-sm outline-none focus-visible:ring-3"
       />
+      <kbd className="text-muted-foreground pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 rounded border px-1 font-mono text-[10px]">
+        ⌘K
+      </kbd>
     </form>
   );
 }
@@ -52,7 +55,7 @@ export function QuickActions({ actions }: { actions: QuickAction[] }) {
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button size="sm" aria-label="Quick actions" />}>
         <Plus className="size-4" aria-hidden />
-        <span className="hidden sm:inline">New</span>
+        <span className="hidden sm:inline">Quick add</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         {actions.map((a) => (

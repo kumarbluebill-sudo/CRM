@@ -109,7 +109,7 @@ export function NotificationBell({
         {unread > 0 && (
           <span
             aria-hidden
-            className="absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] leading-4 font-semibold text-white"
+            className="bg-destructive text-primary-foreground absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-4 font-semibold"
           >
             {unread > 99 ? "99+" : unread}
           </span>
@@ -137,7 +137,7 @@ export function NotificationBell({
                   <span className="flex w-full items-start gap-2">
                     {!n.read && (
                       <span
-                        className="mt-1.5 size-2 shrink-0 rounded-full bg-blue-600"
+                        className="bg-tone-primary mt-1.5 size-2 shrink-0 rounded-full"
                         aria-label="Unread"
                       />
                     )}

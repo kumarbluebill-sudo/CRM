@@ -36,7 +36,7 @@ function Delta({ now, before }: { now: number; before?: number }) {
   const Icon = up ? ArrowUpRight : ArrowDownRight;
   return (
     <span
-      className={`inline-flex items-center text-[11px] font-medium ${up ? "text-green-700 dark:text-green-400" : "text-red-600"}`}
+      className={`inline-flex items-center text-[11px] font-medium ${up ? "text-tone-ok" : "text-tone-bad"}`}
       title="Compared with the previous period of the same length"
     >
       <Icon className="size-3" aria-hidden />
@@ -61,11 +61,13 @@ function Kpi({
   return (
     <Link
       href={href}
-      className="bg-card hover:bg-muted/50 focus-visible:ring-ring ring-foreground/10 flex min-w-0 flex-col rounded-xl px-3 py-2 ring-1 focus-visible:ring-2 focus-visible:outline-none"
+      className="bg-card hover:bg-muted/50 focus-visible:ring-ring flex min-w-0 flex-col rounded-xl border px-3 py-2 shadow-xs focus-visible:ring-2 focus-visible:outline-none"
     >
       <span className="text-muted-foreground truncate text-[11px]">{title}</span>
       <span className="flex items-baseline gap-2">
-        <span className="truncate text-lg leading-tight font-semibold">{value}</span>
+        <span className="truncate text-lg leading-tight font-semibold tracking-tight tabular-nums">
+          {value}
+        </span>
         {delta}
       </span>
       {note && <span className="text-muted-foreground truncate text-[10px]">{note}</span>}

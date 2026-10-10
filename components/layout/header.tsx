@@ -1,10 +1,18 @@
-import { LogOut, Settings, UserRound } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { QuickActions, SearchBox, type QuickAction } from "@/components/layout/header-actions";
 import { Button } from "@/components/ui/button";
 import { logoutAction } from "@/app/(auth)/actions";
 import type { ShellUser } from "@/components/layout/app-shell";
+
+const initials = (name: string) =>
+  name
+    .split(/s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]!.toUpperCase())
+    .join("") || "?";
 
 export function Header({
   user,
@@ -41,11 +49,18 @@ export function Header({
       )}
       <Link
         href="/profile"
-        className="text-muted-foreground hover:text-foreground flex items-center gap-2 text-sm"
+        className="text-muted-foreground hover:text-foreground flex items-center gap-2 border-l pl-3 text-sm"
         aria-label="Your profile"
       >
-        <UserRound className="size-4" aria-hidden />
-        <span className="hidden max-w-32 truncate md:inline">{user.name}</span>
+        <span
+          aria-hidden
+          className="bg-tone-violet-soft text-tone-violet flex size-[30px] items-center justify-center rounded-full text-xs font-semibold"
+        >
+          {initials(user.name)}
+        </span>
+        <span className="text-foreground hidden max-w-32 truncate font-medium md:inline">
+          {user.name}
+        </span>
       </Link>
       <form action={logoutAction}>
         <Button type="submit" variant="ghost" size="sm">
