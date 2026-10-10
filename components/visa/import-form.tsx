@@ -13,10 +13,10 @@ import {
 import { MAX_IMPORT_BYTES } from "@/lib/visa/csv-parse";
 
 const tone: Record<string, string> = {
-  VALID: "text-green-700 dark:text-green-400",
-  IMPORTED: "text-green-700 dark:text-green-400",
-  DUPLICATE: "text-amber-700 dark:text-amber-400",
-  INVALID: "text-red-600",
+  VALID: "text-tone-ok",
+  IMPORTED: "text-tone-ok",
+  DUPLICATE: "text-tone-warn",
+  INVALID: "text-tone-bad",
 };
 
 export function ImportForm({

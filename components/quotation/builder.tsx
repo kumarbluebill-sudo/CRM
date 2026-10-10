@@ -123,7 +123,7 @@ export function QuotationBuilder({
         <div className="bg-card sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-xl border p-3">
           <span className="text-sm font-medium">
             v{version}
-            {dirty && <span className="text-amber-600"> · unsaved changes</span>}
+            {dirty && <span className="text-tone-warn"> · unsaved changes</span>}
           </span>
           <div className="flex-1" />
           <Button

@@ -178,12 +178,12 @@ export default async function InvoicingSettingsPage() {
                     </span>
                     <span className="ml-auto flex items-center gap-2">
                       {c.verified_at ? (
-                        <span className="text-xs text-green-700 dark:text-green-400">
+                        <span className="text-xs text-tone-ok">
                           Verified {c.verified_at.slice(0, 10)}
                         </span>
                       ) : (
                         <>
-                          <span className="text-xs text-amber-700 dark:text-amber-400">
+                          <span className="text-xs text-tone-warn">
                             Not verified
                           </span>
                           <VerifyTaxCodeButton id={c.id} />

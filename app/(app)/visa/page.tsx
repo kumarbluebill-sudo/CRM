@@ -35,7 +35,7 @@ function Stat({
       <CardContent>
         <p className="text-muted-foreground text-xs">{title}</p>
         <p
-          className={`text-2xl font-semibold ${tone === "warn" && value > 0 ? "text-red-600" : ""}`}
+          className={`text-2xl font-semibold ${tone === "warn" && value > 0 ? "text-tone-bad" : ""}`}
         >
           {value}
         </p>
@@ -149,7 +149,7 @@ export default async function VisaDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="size-4 text-red-600" aria-hidden /> Alerts
+              <AlertTriangle className="size-4 text-tone-bad" aria-hidden /> Alerts
               <span className="bg-muted rounded-full px-2 py-0.5 text-xs">{alerts.length}</span>
             </CardTitle>
           </CardHeader>
@@ -161,7 +161,7 @@ export default async function VisaDashboardPage() {
                   className="flex flex-wrap items-center gap-3 py-2"
                 >
                   <span
-                    className={`rounded px-1.5 py-0.5 text-xs font-medium ${al.severity === "URGENT" ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200" : "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200"}`}
+                    className={`rounded px-1.5 py-0.5 text-xs font-medium ${al.severity === "URGENT" ? "bg-tone-bad-soft text-tone-bad" : "bg-tone-warn-soft text-tone-warn"}`}
                   >
                     {al.severity === "URGENT" ? "Urgent" : "Warning"}
                   </span>
@@ -213,7 +213,7 @@ export default async function VisaDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="size-4 text-red-600" aria-hidden /> Needs attention
+              <AlertTriangle className="size-4 text-tone-bad" aria-hidden /> Needs attention
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -232,7 +232,7 @@ export default async function VisaDashboardPage() {
                   )}
                   <span className="ml-auto flex gap-2">
                     {isTravelUrgent(a.travel_date, a.status) && (
-                      <span className="text-xs text-red-600">Travel date approaching</span>
+                      <span className="text-xs text-tone-bad">Travel date approaching</span>
                     )}
                     <StatusBadge value={a.status} />
                   </span>

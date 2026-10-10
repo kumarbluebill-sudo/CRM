@@ -36,7 +36,7 @@ function Delta({ now, before }: { now: number; before?: number }) {
   const Icon = up ? ArrowUpRight : ArrowDownRight;
   return (
     <span
-      className={`inline-flex items-center text-[11px] font-medium ${up ? "text-green-700 dark:text-green-400" : "text-red-600"}`}
+      className={`inline-flex items-center text-[11px] font-medium ${up ? "text-tone-ok" : "text-tone-bad"}`}
       title="Compared with the previous period of the same length"
     >
       <Icon className="size-3" aria-hidden />

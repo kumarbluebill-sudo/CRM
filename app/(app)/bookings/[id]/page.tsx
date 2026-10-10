@@ -99,7 +99,7 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
       {booking.status === "CANCELLED" && booking.cancellation_reason && (
         <p
           role="note"
-          className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100"
+          className="rounded-lg border border-tone-bad/30 bg-tone-bad-soft p-3 text-sm text-tone-bad"
         >
           Cancelled: {booking.cancellation_reason}
         </p>

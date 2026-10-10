@@ -139,7 +139,7 @@ export function EntityForm({ action, fields, submitLabel, hidden }: Props) {
         <p
           role={state.ok ? "status" : "alert"}
           className={
-            state.ok ? "text-sm text-green-700 dark:text-green-400" : "text-destructive text-sm"
+            state.ok ? "text-sm text-tone-ok" : "text-destructive text-sm"
           }
         >
           {state.message}

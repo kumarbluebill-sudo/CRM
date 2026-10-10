@@ -67,7 +67,7 @@ export default async function AiAssistantPage({
       />
       <div
         role="note"
-        className="flex gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
+        className="flex gap-3 rounded-lg border border-tone-warn/30 bg-tone-warn-soft p-4 text-sm text-tone-warn"
       >
         <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
         <p>

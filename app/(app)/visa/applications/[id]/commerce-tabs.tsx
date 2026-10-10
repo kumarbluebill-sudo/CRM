@@ -214,7 +214,7 @@ export async function PaymentsTab({ app, p }: { app: ApplicationRow; p: Perms })
                   <strong
                     key="b"
                     className={
-                      Number(booking.balance_amount) > 0 ? "text-red-600" : "text-green-700"
+                      Number(booking.balance_amount) > 0 ? "text-tone-bad" : "text-tone-ok"
                     }
                   >
                     {formatMoney(Number(booking.balance_amount), booking.currency)}
@@ -266,7 +266,7 @@ export async function SupplierTab({ app, p }: { app: ApplicationRow; p: Perms })
               <>
                 {app.expected_completion}
                 {overdue && (
-                  <span className="ml-2 text-red-600">Overdue by {Math.abs(left!)} day(s)</span>
+                  <span className="ml-2 text-tone-bad">Overdue by {Math.abs(left!)} day(s)</span>
                 )}
                 {submitted && left !== null && left >= 0 && (
                   <span className="text-muted-foreground ml-2">in {left} day(s)</span>

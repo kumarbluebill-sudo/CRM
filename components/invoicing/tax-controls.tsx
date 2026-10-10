@@ -81,7 +81,7 @@ export function SignatureUploader({ signature }: { signature: string | null }) {
       {state.message && (
         <p
           role={state.ok ? "status" : "alert"}
-          className={state.ok ? "text-sm text-green-700" : "text-destructive text-sm"}
+          className={state.ok ? "text-sm text-tone-ok" : "text-destructive text-sm"}
         >
           {state.message}
         </p>
