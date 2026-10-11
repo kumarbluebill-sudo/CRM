@@ -37,6 +37,7 @@ const GROUPS: Record<Tone, string[]> = {
     "ACCEPTED",
     "READY_FOR_SUBMISSION",
     "TRIALING",
+    "PLANNED",
   ],
   violet: [
     "REQUIREMENT_COLLECTED",

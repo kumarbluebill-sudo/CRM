@@ -48,6 +48,57 @@ update public.portal_links set revoked_at = now() where organization_id = '<org 
 
 ## Backups and restore
 
+Two layers exist and they cover different things:
+
+| Layer                                    | Covers                                               | Granularity   | Who runs it                                                           |
+| ---------------------------------------- | ---------------------------------------------------- | ------------- | --------------------------------------------------------------------- |
+| Supabase backups / PITR                  | the whole database instance                          | whole project | Supabase (turn PITR on for production)                                |
+| Application backups (Settings > Backups) | one agency's records, as an encrypted, portable file | one agency    | the daily cron `/api/cron/backup` or a manager pressing "Back up now" |
+
+Application backups contain the agency's database rows only. They do **not** contain files in document storage, gateway
+credentials, customer-portal links or platform billing state (these are deliberately excluded so a restore cannot bring back
+stale payment secrets or subscription status).
+
+**Recovery targets (goals, not demonstrated):** RPO 24 hours (daily schedule), RTO 4 hours for one agency. These are
+targets only. They are not claimed as achieved until a restore drill (below) has been run and its date and duration written
+down in the drills log.
+
+### Setting up application backups
+
+1. Create a private bucket in any S3-compatible provider and a key pair limited to that bucket. Turn on versioning or object lock if the provider has it, so a backup cannot be silently overwritten.
+2. Set `BACKUP_ENCRYPTION_KEY` and the four `BACKUP_S3_*` variables in the production environment, and keep a copy of the key in your password manager (separate from the bucket).
+3. As an owner, open Settings > Backups, switch on automatic backups, choose the frequency and retention, and press "Back up now". A run is only recorded as good after the stored file is read back and verified (checksum, decryption, completeness, row counts).
+4. A failure creates a notification for people who hold the backup permission and a security event, and is retried in 6 hours.
+
+### Before applying migrations to a real database
+
+```bash
+DATABASE_URL=... node scripts/pre-migration-backup.mjs      # pg_dump if installed, otherwise an encrypted NDJSON export
+```
+
+Move the file off the machine, then run `npm run db:migrate`. The script only reads the database.
+
+### Restoring one agency (always a supervised, manual procedure)
+
+The application never restores data by itself. The "Restore plan" button only takes a safety copy of today's data and records a plan.
+
+1. Pick the backup in Settings > Backups and press Verify, then Download (needs a recent password check).
+2. Prove it restores: `BACKUP_ENCRYPTION_KEY=... node scripts/restore-check.mjs backup.crmbk <organization-id>` builds a scratch database from the migrations, loads every row and compares the counts. Exit code 0 only if everything matches. No real database is touched.
+3. Put the agency in maintenance (tell users; if needed set the subscription to read-only from the platform admin).
+4. Take (or confirm) the safety copy the plan produced.
+5. Load the verified rows into the production database in one transaction, for that agency only, with `set session_replication_role = replica` so foreign keys are not checked mid-load, and compare counts per table with the History table before committing. `scripts/restore-check.mjs` shows the exact `jsonb_populate_recordset` statements.
+6. Run `npm run db:status` and the smoke tests, reopen, and mark the plan as done.
+
+If anything differs from the recorded counts, stop and roll back the transaction. Never restore over production without a safety copy you have verified.
+
+### Restore drills log
+
+| Date                | Backup used | Time taken | Result / notes |
+| ------------------- | ----------- | ---------- | -------------- |
+| _none recorded yet_ |             |            |                |
+
+### Supabase layer
+
 - Production uses Supabase PITR/daily backups. **Test a restore into a scratch project before you need it.**
 - Storage objects (documents) are not part of the database backup; enable bucket replication/backup if the documents matter.
 - After any restore: run `npm run db:status` against the restored database, then run the smoke tests.
