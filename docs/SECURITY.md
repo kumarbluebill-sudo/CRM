@@ -198,3 +198,12 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - **Platform administrators** (`profiles.is_super_admin`, set only by SQL) use `/admin` (404 for everyone else) and definer functions that re-check the flag, with password re-confirmation for edits and refunds. A refund is made at the gateway first and recorded only if that succeeds. Agency owners can neither read other agencies nor edit plans.
 - **Receipts** are payment receipts, not GST tax invoices; the operator's accountant must confirm tax invoicing before they are described otherwise. No card data is ever stored.
 - **Not tested against the live gateway:** checkout, plan change and refund calls need real Razorpay keys and plan ids; everything around them (webhook, history, states) is tested without them.
+
+## Backups and restore (v1.3.0-rc.3)
+
+- **Per-agency and encrypted.** A backup holds one agency's rows (exported by service-role functions that take the agency id and a table allow-list), is compressed, then sealed with AES-256-GCM using `BACKUP_ENCRYPTION_KEY`. The agency id is bound in as authenticated data, so a file cannot be opened as another agency's, and a flipped byte, truncation or wrong key fails closed. The storage provider only ever sees ciphertext.
+- **Never exported:** gateway credentials, customer-portal link hashes, webhook payloads and platform billing state. `profiles.is_super_admin` is always exported as false, so a restore can never grant platform access.
+- **Verified, not assumed.** A run is recorded OK only after the stored object is read back from the destination and passes checksum, decryption, completeness and row-count checks. Anything else is FAILED and notifies the people with `backup.manage`, plus a security event.
+- **Access.** Settings, history, restore plans and the download route need `backup.manage` in the owning agency (enforced by the database). Downloads and restore plans need a recent password check and are audited. The tables are read-only to clients; all writes go through definer functions, and the export, begin and finish functions are service-role only.
+- **Restore never runs automatically.** The restore request takes and verifies a safety snapshot first, records a plan, and changes nothing. The restore itself is a documented, supervised, manual step (docs/RUNBOOK.md).
+- **Limits.** Document files in storage, and anything outside the allow-listed tables, are not in these backups. Recovery objectives are targets, not demonstrated figures, until a drill is recorded.

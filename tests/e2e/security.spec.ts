@@ -74,9 +74,14 @@ test.describe("API surface without credentials", () => {
       headers: { authorization: "Bearer x" },
     });
     expect(withToken.status()).toBe(503);
+    expect((await request.get("/api/cron/backup")).status()).toBe(503);
+    expect(
+      (await request.get("/api/cron/backup", { headers: { authorization: "Bearer x" } })).status(),
+    ).toBe(503);
     for (const p of [
       "/api/reports/export?type=bookings",
       `/api/documents/${UUID}/download`,
+      `/api/backups/${UUID}/download`,
       `/api/invoices/${UUID}/pdf`,
       `/api/payments/${UUID}/receipt`,
       `/api/quotations/${UUID}/pdf`,

@@ -21,6 +21,14 @@ const serverSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
   SENTRY_DSN: z.string().url().optional(),
+  // backups: an encryption key (base64, 32 bytes) and one destination (S3-compatible bucket, or a local folder for development)
+  BACKUP_ENCRYPTION_KEY: z.string().min(40).optional(),
+  BACKUP_S3_ENDPOINT: z.string().url().optional(),
+  BACKUP_S3_BUCKET: z.string().min(3).optional(),
+  BACKUP_S3_REGION: z.string().min(1).optional(),
+  BACKUP_S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+  BACKUP_S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  BACKUP_LOCAL_DIR: z.string().min(1).optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;

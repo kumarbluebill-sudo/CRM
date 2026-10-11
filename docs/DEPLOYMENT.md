@@ -194,3 +194,12 @@ An accountant should confirm each item; the software does not assume any rate or
 - Make yourself a platform administrator once, with SQL: `update public.profiles set is_super_admin = true where email = 'you@example.com';` (turn on two-step verification for that account first).
 - In the Razorpay dashboard point the subscription webhook at `/api/webhooks/razorpay` with events `subscription.activated|charged|pending|halted|cancelled|completed|resumed` plus payment events, using `RAZORPAY_WEBHOOK_SECRET`.
 - The daily cron now also runs the billing sweep (retry, grace, suspension, reminders).
+
+## 14. Backups (v1.3.0-rc.3)
+
+- Apply migrations `035` and `036`. A new permission, `backup.manage`, belongs to owners by default; give it to other roles under Settings > Roles.
+- Set `BACKUP_ENCRYPTION_KEY` and the `BACKUP_S3_*` variables (see `.env.example`). Without a destination and key the Backups page says so and nothing runs. `BACKUP_LOCAL_DIR` is for development only and is ignored when `APP_ENV=production`.
+- `vercel.json` now schedules `/api/cron/backup` daily at 02:00 UTC (the existing `CRON_SECRET` authorises it). Vercel's free plan allows daily crons only.
+- A single serverless run builds the archive in memory and stops starting new backups after about 45 seconds. Very large agencies (hundreds of thousands of rows) need a longer-running worker; this is a known limit.
+- Keep a copy of `BACKUP_ENCRYPTION_KEY` outside the bucket. Losing it makes every backup unreadable; rotating it means new backups use the new key while old files still need the old one.
+- Run one restore drill (docs/RUNBOOK.md) before relying on backups, and write the result in the drills log.

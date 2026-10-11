@@ -179,3 +179,9 @@ Functions: `notify_user`, `notify_permission` (internal helpers that never raise
 ## Migration 032: time zones, roles, branches, scope
 
 New: `branches`, `org_roles`, `org_role_permissions`; columns `profiles.timezone/date_format/time_format/week_start`, `organization_settings.time_format/week_start`, `organization_members.branch_id/org_role_id`, `staff_profiles.max_active_assignments`, `booking_items.starts_at/ends_at/event_tz/dest_tz`, `itinerary_items.event_tz`. New functions: `valid_timezone`, `save_regional_settings`, `save_display_prefs`, `save_branch`, `set_member_branch`, `save_org_role`, `delete_org_role`, `assign_org_role`, `my_permissions`, `my_data_scope`, `record_in_scope`, `save_assignment_limit`. `has_permission` and `job_check_assignee` were redefined; `dashboard_summary` and `report_summary` became thin wrappers (originals are `*_core`).
+
+## Migrations 035 and 036: backups
+
+New: `backup_settings` (schedule, retention, last and next run), `backup_runs` (one row per attempt: kind, status, size, sha256, per-table row counts, storage key, verification result; at most one RUNNING per agency), `backup_restores` (plans only). Permission `backup.manage`. Notification entity `BACKUP`; security event kinds `BACKUP_FAILED` and `RESTORE_PLANNED`.
+
+Functions for signed-in managers: `save_backup_settings`, `request_restore_plan` (needs a verified backup and a verified PRE_RESTORE snapshot from the last 30 minutes), `close_restore_plan`, `backup_run_for_download`. Service-role only: `backup_table_list`, `backup_export_rows`, `backup_begin`, `backup_finish`, `backup_due`, `backup_expired`, `backup_mark_deleted`, `backup_record_verification`. Migration 036 makes `backup_run_for_download` volatile (it writes an audit row).

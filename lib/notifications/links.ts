@@ -41,6 +41,7 @@ export function notificationHref(entityType: string | null, entityId: string | n
   if (!entityType) return "/notifications";
   if (entityType === "TEAM") return "/settings/team";
   if (entityType === "BILLING") return "/settings/billing";
+  if (entityType === "BACKUP") return "/settings/backups";
   if (!entityId || !/^[0-9a-f-]{36}$/i.test(entityId)) return "/notifications";
   switch (entityType) {
     case "LEAD":
