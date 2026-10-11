@@ -87,6 +87,8 @@ test("protected pages send signed-out visitors to sign in", async ({ page }) => 
     "/visa/applications",
     "/visa/enquiries/new",
     "/visa/products",
+    "/help",
+    "/help/getting-started",
   ]) {
     await page.goto(p);
     await expect(page, p).toHaveURL(/\/login/);

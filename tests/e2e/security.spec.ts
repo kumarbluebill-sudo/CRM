@@ -82,6 +82,7 @@ test.describe("API surface without credentials", () => {
       "/api/reports/export?type=bookings",
       `/api/documents/${UUID}/download`,
       `/api/backups/${UUID}/download`,
+      "/help/manual.pdf",
       `/api/invoices/${UUID}/pdf`,
       `/api/payments/${UUID}/receipt`,
       `/api/quotations/${UUID}/pdf`,

@@ -203,3 +203,11 @@ An accountant should confirm each item; the software does not assume any rate or
 - A single serverless run builds the archive in memory and stops starting new backups after about 45 seconds. Very large agencies (hundreds of thousands of rows) need a longer-running worker; this is a known limit.
 - Keep a copy of `BACKUP_ENCRYPTION_KEY` outside the bucket. Losing it makes every backup unreadable; rotating it means new backups use the new key while old files still need the old one.
 - Run one restore drill (docs/RUNBOOK.md) before relying on backups, and write the result in the drills log.
+
+## 15. Help center (v1.3.0-rc.4)
+
+- No migration and no new environment variable. The guides are Markdown files in `content/help/` and the screenshots are in `public/guide-img/`; both ship with the build (`outputFileTracingIncludes` in `next.config.ts`). After a build, `.next/server/app/(app)/help/**/*.nft.json` should list them.
+- Screenshots must not live under `public/help/`: that path is also a page route, and the route wins, so the images would be served as HTML.
+- Writing a guide: copy an existing file, keep the front matter (title, summary, category, keywords, requires, version, updated, status, related, author), and use `:::requires <permission>` / `:::admin` blocks for passages only some roles should see. `npm test` fails on a missing screenshot, a link to a page that does not exist, an unknown permission or an unresolved related guide. `content/` is excluded from Prettier because a custom parser reads it.
+- Re-capturing screenshots after a UI change: start the app (`npm run build && npx next start -p 3000`, with `BACKUP_LOCAL_DIR` and `BACKUP_ENCRYPTION_KEY` set so the Backups page shows a finished backup), then run `node --env-file=.env.local scripts/capture-help-screenshots.mjs`. It creates and removes a throwaway agency and fails if a numbered marker cannot be found, so captions stay true. Update the captions in `content/help/*.md` if the markers change.
+- The manual is generated on request at `/help/manual.pdf` from the same guides, limited to what the reader's role may see.

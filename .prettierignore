@@ -2,3 +2,6 @@
 node_modules
 package-lock.json
 public
+
+# help guides are hand-written Markdown that a custom parser reads: formatters must not rewrite them
+/content/
