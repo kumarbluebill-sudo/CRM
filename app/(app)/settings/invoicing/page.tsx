@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { requireOrgSession } from "@/lib/auth/session";
 import { GST_STATES } from "@/lib/gst/states";
 import { getTaxProfile, listTaxCodes } from "@/lib/invoicing/queries";
+import { INVOICE_LAYOUTS, toInvoiceLayout } from "@/lib/invoicing/layouts";
 import { saveTaxCodeAction, saveTaxProfileAction } from "@/app/(app)/settings/invoicing/actions";
 
 export const metadata: Metadata = { title: "Invoicing and GST" };
@@ -96,6 +97,17 @@ export default async function InvoicingSettingsPage() {
                 defaultValue: p?.invoice_prefix ?? "INV",
               },
               {
+                name: "invoiceLayout",
+                label: "Invoice layout",
+                type: "select",
+                options: INVOICE_LAYOUTS.map((l) => ({
+                  value: l.key,
+                  label: `${l.label}: ${l.description}`,
+                })),
+                defaultValue: toInvoiceLayout(p?.invoice_layout),
+                wide: true,
+              },
+              {
                 name: "pricesIncludeTax",
                 label: "Prices normally include tax",
                 type: "checkbox",
@@ -140,6 +152,35 @@ export default async function InvoicingSettingsPage() {
             financial year (April to March). If you are not GST-registered, invoices are issued
             without tax.
           </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Preview invoice layouts</CardTitle>
+          <p className="text-muted-foreground text-xs">
+            Opens a sample invoice with your name, logo and colour, using made-up customer details
+            and amounts. Choose the layout you want above and save. On any invoice you can still
+            pick another layout for that one download.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {INVOICE_LAYOUTS.map((l) => (
+              <li key={l.key} className="rounded-lg border p-3 text-sm">
+                <p className="font-medium">{l.label}</p>
+                <p className="text-muted-foreground mb-2 text-xs">{l.description}</p>
+                <a
+                  href={`/api/invoicing/layout-preview?layout=${l.key}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary text-xs underline underline-offset-2"
+                >
+                  Preview {l.label} sample
+                </a>
+              </li>
+            ))}
+          </ul>
         </CardContent>
       </Card>
 

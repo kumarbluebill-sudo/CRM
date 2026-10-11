@@ -214,3 +214,8 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - **Role-aware, enforced on the server.** A guide can require a permission, and passages inside `:::requires` blocks are removed before rendering, in the page and in the manual PDF. Typing a restricted address shows a plain "different role" message; search and the manual only include guides the reader may see. This is a convenience, not a security boundary: the real rules are in the database.
 - **Onboarding checklist** counts records through the reader's own row-level security, so it can only reveal what they can already see.
 - **Manual PDF** needs a signed-in agency member, is rate-limited, and is never cached.
+
+## Invoice layouts (v1.3.0-rc.5)
+
+- The layout is a database-validated setting (check constraint plus `save_tax_profile`, which needs `invoicing.manage`). A `layout` query parameter on the PDF routes is matched against a fixed list and anything else silently falls back to the agency default, so it cannot reach code or the file system.
+- The sample preview route (`/api/invoicing/layout-preview`) needs `invoicing.manage`, is rate-limited and reads only the agency's own profile and branding, never a customer, booking or invoice.

@@ -33,6 +33,12 @@ export const taxProfileSchema = z
       (v) => blank(upper(v)) ?? "INV",
       z.string().regex(/^[A-Z0-9]{1,5}$/, "Use 1-5 letters or digits."),
     ),
+    invoiceLayout: z.preprocess(
+      (v) => (v === "" || v == null ? "classic" : v),
+      z.enum(["classic", "modern", "compact", "detailed"], {
+        message: "Choose a layout from the list.",
+      }),
+    ),
     pricesIncludeTax: checkbox,
     roundOff: checkbox,
     bankName: text(100),

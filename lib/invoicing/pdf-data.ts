@@ -7,6 +7,7 @@ import {
   type InvoiceLine,
 } from "@/lib/invoicing/queries";
 import type { GstDocProps, GstLine, PartyBlock } from "@/lib/pdf/gst-pdf";
+import { toInvoiceLayout, type InvoiceLayout } from "@/lib/invoicing/layouts";
 
 const num = (v: unknown) => Number(v ?? 0);
 
@@ -73,11 +74,19 @@ async function supplierFor(
   };
 }
 
+/** The layout a person asked for, else the agency default. Anything unrecognised falls back to the default. */
+export async function resolveLayout(requested?: string | null): Promise<InvoiceLayout> {
+  if (requested) return toInvoiceLayout(requested);
+  return toInvoiceLayout((await getTaxProfile())?.invoice_layout);
+}
+
 export async function buildInvoicePdfProps(
   inv: InvoiceFull,
   lines: InvoiceLine[],
+  layoutRequest?: string | null,
 ): Promise<GstDocProps> {
   const branding = await getBranding();
+  const layout = await resolveLayout(layoutRequest);
   const { supplier, bank, signature } = await supplierFor(inv);
   const registered = inv.tax_snapshot
     ? Boolean(inv.tax_snapshot.registered)
@@ -100,6 +109,7 @@ export async function buildInvoicePdfProps(
     dueDate: inv.due_date,
     watermark,
     primary: branding?.primary_color,
+    layout,
     currency: inv.currency,
     supplier,
     billTo: {
@@ -133,6 +143,7 @@ export async function buildInvoicePdfProps(
 
 export async function buildCreditNotePdfProps(
   creditNoteId: string,
+  layoutRequest?: string | null,
 ): Promise<{ props: GstDocProps; number: string } | null> {
   const supabase = await createClient();
   const { data: cn } = await supabase
@@ -181,6 +192,7 @@ export async function buildCreditNotePdfProps(
       number: cn.credit_note_number as string,
       date: cn.issue_date as string,
       primary: branding?.primary_color,
+      layout: await resolveLayout(layoutRequest),
       currency: inv.currency,
       supplier,
       billTo: {

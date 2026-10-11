@@ -17,7 +17,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 const json = (status: number, error: string) => NextResponse.json({ error }, { status });
 
-export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   if (!uuid.safeParse(id).success) return json(404, "Not found.");
 
@@ -36,7 +36,11 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
     if (inv.status === "DRAFT" || inv.status === "CANCELLED" || inv.tax_snapshot) {
       const full = await getInvoiceFull(id);
       if (!full) return json(404, "Not found.");
-      const gstProps = await buildInvoicePdfProps(full.invoice, full.lines);
+      const gstProps = await buildInvoicePdfProps(
+        full.invoice,
+        full.lines,
+        req.nextUrl.searchParams.get("layout"),
+      );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const gstPdf = await renderToBuffer(createElement(GstDocumentPdf, gstProps) as any);
       const label = full.invoice.invoice_number ?? `draft-${id.slice(0, 8)}`;
