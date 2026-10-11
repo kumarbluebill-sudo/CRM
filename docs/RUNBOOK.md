@@ -131,3 +131,9 @@ to the agency's legal retention duties, and remove the objects from the `documen
 ### Locked out of two-step verification
 
 If a person loses their phone: confirm their identity another way, then in Supabase Dashboard > Authentication > Users open the user, delete their TOTP factor, and ask them to sign in and set it up again. Their _authenticator removed_ event appears under Settings > Security. If the only owner is locked out and the agency requires it, remove the factor the same way.
+
+## Help center content
+
+- Guides live in `content/help/*.md`; screenshots in `public/guide-img/` (never `public/help/`, which collides with the page route).
+- When a screen changes: re-run `scripts/capture-help-screenshots.mjs`, check the images and captions, bump `updated` and `version` in the affected guides.
+- If a guide page returns 404 in production but works locally, the server bundle is missing the files: confirm `outputFileTracingIncludes` in `next.config.ts` and the `.nft.json` traces after a build.

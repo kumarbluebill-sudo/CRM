@@ -31,6 +31,12 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // the help guides are read from disk at run time, so they must be shipped with the server bundles that read them
+  outputFileTracingIncludes: {
+    "/help": ["./content/help/**/*"],
+    "/help/[slug]": ["./content/help/**/*"],
+    "/help/manual.pdf": ["./content/help/**/*", "./public/guide-img/**/*"],
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

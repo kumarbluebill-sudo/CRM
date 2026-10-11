@@ -16,7 +16,12 @@ export const PATTERNS = [
   ],
 ];
 
-export function scanText(text) {
+// AWS publishes this exact key pair in its documentation; tests use it to check request signing against AWS test vectors.
+const PUBLISHED_EXAMPLE_KEYS = ["AKIAIOSFODNN7EXAMPLE"];
+
+export function scanText(input) {
+  let text = input;
+  for (const k of PUBLISHED_EXAMPLE_KEYS) text = text.split(k).join("");
   const hits = [];
   for (const [name, re] of PATTERNS) if (re.test(text)) hits.push(name);
   return hits;

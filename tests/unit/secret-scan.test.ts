@@ -15,6 +15,9 @@ function walk(dir: string, out: string[] = []): string[] {
 describe("secret scan", () => {
   it("flags credential-looking text and ignores placeholders", () => {
     expect(scanText("-----BEGIN PRIVATE KEY-----")).toContain("private key block");
+    // only AWS's published documentation key is exempt (used to check request signing); any other key is still caught
+    expect(scanText("key AKIAIOSFODNN7EXAMPLE")).toEqual([]);
+    expect(scanText("key AKIAABCDEFGHIJKLMNOP")).toContain("AWS access key");
     expect(scanText("OPENAI=sk-" + "a".repeat(40))).toContain("OpenAI-style key");
     expect(scanText("postgresql://postgres:Hunter2Hunter2@db.example.com:5432/x")).toContain(
       "Postgres URL with password",

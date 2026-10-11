@@ -5,6 +5,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   Bell,
+  CircleHelp,
   ListChecks,
   Upload,
   MessageSquareText,
@@ -99,6 +100,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: "Reports", href: "/reports", icon: BarChart3 },
       { label: "AI Assistant", href: "/ai-assistant", icon: Bot },
       { label: "Settings", href: "/settings", icon: Settings },
+      { label: "Help center", href: "/help", icon: CircleHelp },
     ],
   },
 ];
