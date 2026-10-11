@@ -118,3 +118,30 @@ test("a form keeps what you typed when the server reports an error", async ({ pa
   ).toBeVisible();
   await expect(page.getByLabel(/email/i)).toHaveValue("someone@example.com");
 });
+
+test("sign-in shows the travel panel beside the form on wide screens and only the form on phones", async ({
+  page,
+}, info) => {
+  await page.goto("/login");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  const panel = page.getByRole("complementary", { name: "About Smart Travel CRM" });
+  if (info.project.name === "desktop") {
+    await expect(panel).toBeVisible();
+    await expect(panel.getByText("Plan, quote and book every trip from one place.")).toBeVisible();
+    const art = panel.locator("img");
+    await expect
+      .poll(() => art.evaluate((e: HTMLImageElement) => e.naturalWidth), { timeout: 10_000 })
+      .toBeGreaterThan(100);
+    // the form is still the main landmark and is not covered by the artwork
+    const box = await page.locator("#main").boundingBox();
+    expect(box!.x).toBeGreaterThan(300);
+    await expect(page.getByRole("button", { name: /sign in/i })).toBeInViewport();
+  } else {
+    await expect(panel).toBeHidden();
+    await expect(page.getByRole("button", { name: /sign in/i })).toBeVisible();
+    // no horizontal scrolling on a phone
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  }
+});
