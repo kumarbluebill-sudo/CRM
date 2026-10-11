@@ -185,3 +185,7 @@ New: `branches`, `org_roles`, `org_role_permissions`; columns `profiles.timezone
 New: `backup_settings` (schedule, retention, last and next run), `backup_runs` (one row per attempt: kind, status, size, sha256, per-table row counts, storage key, verification result; at most one RUNNING per agency), `backup_restores` (plans only). Permission `backup.manage`. Notification entity `BACKUP`; security event kinds `BACKUP_FAILED` and `RESTORE_PLANNED`.
 
 Functions for signed-in managers: `save_backup_settings`, `request_restore_plan` (needs a verified backup and a verified PRE_RESTORE snapshot from the last 30 minutes), `close_restore_plan`, `backup_run_for_download`. Service-role only: `backup_table_list`, `backup_export_rows`, `backup_begin`, `backup_finish`, `backup_due`, `backup_expired`, `backup_mark_deleted`, `backup_record_verification`. Migration 036 makes `backup_run_for_download` volatile (it writes an audit row).
+
+## Migration 037: invoice layouts
+
+`organization_tax_profile.invoice_layout` (check: classic, modern, compact, detailed; default classic). `save_tax_profile` was redefined to read `invoiceLayout` (missing or empty means classic); grants are unchanged.

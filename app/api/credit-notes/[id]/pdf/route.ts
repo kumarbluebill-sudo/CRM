@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 const json = (status: number, error: string) => NextResponse.json({ error }, { status });
 
-export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   if (!uuid.safeParse(id).success) return json(404, "Not found.");
   const session = await getSessionContext();
@@ -24,7 +24,7 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ id: string
   if (!(await rateLimit(`credit-pdf:${session.userId}`, 30, 60_000)).allowed)
     return json(429, "Too many requests.");
   try {
-    const built = await buildCreditNotePdfProps(id);
+    const built = await buildCreditNotePdfProps(id, req.nextUrl.searchParams.get("layout"));
     if (!built) return json(404, "Not found."); // missing or another organization (RLS)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdf = await renderToBuffer(createElement(GstDocumentPdf, built.props) as any);

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Download } from "lucide-react";
 import { InvoiceEditor } from "@/components/invoicing/invoice-editor";
+import { PdfLayoutPicker } from "@/components/invoicing/pdf-layout-picker";
+import { toInvoiceLayout } from "@/lib/invoicing/layouts";
 import { PageHeader } from "@/components/crm/page-header";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { EntityForm } from "@/components/forms/entity-form";
@@ -76,16 +78,11 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         actions={
           <>
             <StatusBadge value={inv.status} />
-            <Button
-              size="sm"
-              variant="outline"
-              nativeButton={false}
-              render={
-                <a href={`/api/invoices/${inv.id}/pdf`} target="_blank" rel="noopener noreferrer" />
-              }
-            >
-              <Download className="size-4" aria-hidden /> {isDraft ? "Preview PDF" : "PDF"}
-            </Button>
+            <PdfLayoutPicker
+              invoiceId={inv.id}
+              defaultLayout={toInvoiceLayout(profile?.invoice_layout)}
+              label={isDraft ? "Preview PDF" : "PDF"}
+            />
           </>
         }
       />

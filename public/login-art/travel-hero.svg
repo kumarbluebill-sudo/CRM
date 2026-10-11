@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1600" preserveAspectRatio="xMidYMid slice" role="img" aria-label="">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a2a5e"/>
+      <stop offset="0.38" stop-color="#1e5a9c"/>
+      <stop offset="0.62" stop-color="#3f9bb8"/>
+      <stop offset="0.78" stop-color="#f4b36b"/>
+      <stop offset="0.9" stop-color="#f08a5d"/>
+      <stop offset="1" stop-color="#d86a5c"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff6d8"/>
+      <stop offset="0.35" stop-color="#ffd98a" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#ffb867" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a7b9b"/>
+      <stop offset="1" stop-color="#0f3f66"/>
+    </linearGradient>
+    <linearGradient id="m1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4b6f9a"/>
+      <stop offset="1" stop-color="#2e4f7c"/>
+    </linearGradient>
+    <linearGradient id="m2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f5282"/>
+      <stop offset="1" stop-color="#1c3a63"/>
+    </linearGradient>
+    <linearGradient id="m3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d3a63"/>
+      <stop offset="1" stop-color="#0d2445"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="1600" fill="url(#sky)"/>
+
+  <!-- stars -->
+  <g fill="#ffffff" opacity="0.7">
+    <circle cx="140" cy="120" r="2"/><circle cx="330" cy="80" r="1.6"/><circle cx="520" cy="170" r="2.2"/>
+    <circle cx="760" cy="90" r="1.8"/><circle cx="960" cy="150" r="2"/><circle cx="1090" cy="60" r="1.6"/>
+    <circle cx="230" cy="260" r="1.5"/><circle cx="880" cy="290" r="1.7"/><circle cx="640" cy="40" r="1.4"/>
+  </g>
+
+  <!-- sun and glow -->
+  <circle cx="780" cy="1080" r="330" fill="url(#sun)"/>
+  <circle cx="780" cy="1080" r="92" fill="#fff0c4"/>
+
+  <!-- clouds -->
+  <g fill="#ffffff" opacity="0.16">
+    <ellipse cx="260" cy="520" rx="170" ry="26"/><ellipse cx="350" cy="498" rx="110" ry="24"/>
+    <ellipse cx="930" cy="420" rx="190" ry="28"/><ellipse cx="1010" cy="396" rx="110" ry="22"/>
+    <ellipse cx="520" cy="760" rx="150" ry="20"/>
+  </g>
+
+  <!-- the route: a dashed arc with a small plane -->
+  <path d="M120 940 C 380 560, 760 420, 1060 300" fill="none" stroke="#ffffff" stroke-opacity="0.75" stroke-width="3" stroke-dasharray="4 14" stroke-linecap="round"/>
+  <circle cx="120" cy="940" r="9" fill="#ffffff"/>
+  <circle cx="120" cy="940" r="18" fill="none" stroke="#ffffff" stroke-opacity="0.5" stroke-width="2"/>
+  <g transform="translate(838 395) rotate(-24)" fill="#ffffff">
+    <path d="M0 0 L58 -6 L84 -2 L58 6 Z"/>
+    <path d="M30 -2 L8 -34 L22 -34 L52 -4 Z"/>
+    <path d="M30 2 L8 34 L22 34 L52 4 Z"/>
+    <path d="M70 -3 L82 -16 L88 -16 L82 -2 Z"/>
+  </g>
+
+  <!-- distant to near mountains -->
+  <path d="M0 1130 L120 1040 L230 1100 L360 990 L500 1090 L610 1030 L760 1130 L900 1060 L1040 1120 L1200 1040 L1200 1260 L0 1260 Z" fill="url(#m1)" opacity="0.85"/>
+  <path d="M0 1200 L150 1100 L270 1180 L420 1060 L560 1170 L700 1090 L850 1200 L1010 1120 L1200 1210 L1200 1330 L0 1330 Z" fill="url(#m2)"/>
+  <path d="M0 1270 L170 1180 L300 1250 L460 1150 L620 1260 L780 1190 L940 1275 L1090 1215 L1200 1270 L1200 1400 L0 1400 Z" fill="url(#m3)"/>
+
+  <!-- sea -->
+  <rect y="1330" width="1200" height="270" fill="url(#sea)"/>
+  <g stroke="#ffe3b0" stroke-opacity="0.55" stroke-width="3" stroke-linecap="round">
+    <path d="M700 1362 H860"/><path d="M730 1388 H830"/><path d="M752 1414 H808"/>
+    <path d="M690 1440 H870" stroke-opacity="0.3"/><path d="M730 1472 H830" stroke-opacity="0.25"/>
+  </g>
+  <g stroke="#ffffff" stroke-opacity="0.12" stroke-width="2" stroke-linecap="round">
+    <path d="M80 1380 H260"/><path d="M180 1430 H380"/><path d="M40 1490 H220"/><path d="M900 1500 H1120"/>
+    <path d="M980 1400 H1140"/><path d="M420 1520 H620"/>
+  </g>
+
+  <!-- a small sailing boat -->
+  <g transform="translate(960 1350)" fill="#ffffff">
+    <path d="M0 0 L60 0 L48 14 L12 14 Z" fill="#0d2445"/>
+    <path d="M30 -4 L30 -70 L62 -8 Z" opacity="0.95"/>
+    <path d="M26 -4 L26 -56 L2 -8 Z" opacity="0.8"/>
+  </g>
+</svg>

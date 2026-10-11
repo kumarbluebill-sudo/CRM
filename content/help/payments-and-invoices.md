@@ -29,6 +29,16 @@ Before issuing your first invoice, complete **Settings > Invoicing** (your legal
 2. **Issue** it. Tax is calculated in one place, and an issued invoice and its lines can no longer be changed.
 3. If something was wrong, issue a **credit note** instead of editing. A credit note needs a recent password check.
 
+## Invoice layouts
+
+Four layouts are available: **Classic**, **Modern**, **Compact** and **Detailed** (which adds a tax summary by GST rate). A layout only changes how the PDF looks; every amount is identical.
+
+:::requires invoicing.manage
+Choose your agency's default under **Settings > Invoicing and GST**, where you can also open a sample of each layout using your own name, logo and colour. Changing the default does not alter invoices already issued; they simply print in the new look.
+:::
+
+On any invoice, the layout menu next to the PDF button lets you pick a different layout for that one download.
+
 > This software helps you prepare tax documents. It does not file returns or generate e-invoice numbers, and your accountant should confirm your setup before real invoices go out.
 
 ## Online payments

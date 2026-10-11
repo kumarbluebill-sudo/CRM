@@ -9,6 +9,7 @@ export type TaxProfile = {
   state_code: string | null;
   pan: string | null;
   invoice_prefix: string;
+  invoice_layout: string;
   prices_include_tax: boolean;
   round_off: boolean;
   bank_name: string | null;

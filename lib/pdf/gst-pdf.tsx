@@ -3,6 +3,7 @@ import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/render
 import { amountInWords } from "@/lib/gst/words";
 import { stateName } from "@/lib/gst/states";
 import { pdfMoney } from "@/lib/pdf/quotation-pdf";
+import type { InvoiceLayout } from "@/lib/invoicing/layouts";
 
 export type PartyBlock = {
   legalName: string;
@@ -37,6 +38,8 @@ export type GstDocProps = {
   dueDate?: string | null;
   watermark?: string | null;
   primary?: string | null;
+  /** How the document looks. Never changes an amount. */
+  layout?: InvoiceLayout;
   currency: string;
   supplier: PartyBlock;
   billTo: {
@@ -83,23 +86,41 @@ const TITLES = {
 
 export function GstDocumentPdf(p: GstDocProps) {
   const primary = hexOr(p.primary, "#1d4f91");
+  const layout = p.layout ?? "classic";
+  const modern = layout === "modern";
+  const compact = layout === "compact";
+  const detailed = layout === "detailed";
   const s = StyleSheet.create({
     page: {
-      padding: 32,
-      paddingBottom: 56,
-      fontSize: 9,
+      padding: compact ? 24 : 32,
+      paddingBottom: compact ? 44 : 56,
+      fontSize: compact ? 8 : 9,
       fontFamily: "Helvetica",
       color: "#1f2937",
     },
-    head: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      borderBottomWidth: 2,
-      borderBottomColor: primary,
-      paddingBottom: 8,
-      marginBottom: 10,
+    head: modern
+      ? {
+          flexDirection: "row",
+          justifyContent: "space-between",
+          backgroundColor: primary,
+          color: "#ffffff",
+          padding: 12,
+          borderRadius: 4,
+          marginBottom: 12,
+        }
+      : {
+          flexDirection: "row",
+          justifyContent: "space-between",
+          borderBottomWidth: 2,
+          borderBottomColor: primary,
+          paddingBottom: compact ? 5 : 8,
+          marginBottom: compact ? 6 : 10,
+        },
+    h1: {
+      fontSize: modern ? 20 : compact ? 14 : 17,
+      fontFamily: "Helvetica-Bold",
+      color: modern ? "#ffffff" : primary,
     },
-    h1: { fontSize: 17, fontFamily: "Helvetica-Bold", color: primary },
     label: { color: "#6b7280", fontSize: 7, textTransform: "uppercase", marginBottom: 2 },
     box: {
       borderWidth: 0.5,
@@ -112,14 +133,15 @@ export function GstDocumentPdf(p: GstDocProps) {
     row: { flexDirection: "row", gap: 8, marginBottom: 8 },
     th: {
       flexDirection: "row",
-      backgroundColor: "#f3f4f6",
+      backgroundColor: modern ? primary : "#f3f4f6",
+      color: modern ? "#ffffff" : "#1f2937",
       fontFamily: "Helvetica-Bold",
-      paddingVertical: 3,
+      paddingVertical: compact ? 2 : 3,
       fontSize: 8,
     },
     tr: {
       flexDirection: "row",
-      paddingVertical: 3,
+      paddingVertical: compact ? 2 : 3,
       borderBottomWidth: 0.5,
       borderBottomColor: "#e5e7eb",
     },
@@ -324,7 +346,11 @@ export function GstDocumentPdf(p: GstDocProps) {
           ))}
         </View>
         {p.lines.map((l, i) => (
-          <View key={i} style={s.tr} wrap={false}>
+          <View
+            key={i}
+            style={modern && i % 2 === 1 ? [s.tr, { backgroundColor: "#f3f4f6" }] : s.tr}
+            wrap={false}
+          >
             {cols.map((c) => (
               <Text
                 key={c.k}
@@ -335,6 +361,56 @@ export function GstDocumentPdf(p: GstDocProps) {
             ))}
           </View>
         ))}
+
+        {detailed && tax ? (
+          <View style={{ marginTop: 10 }} wrap={false}>
+            <Text style={s.label}>Tax summary by GST rate</Text>
+            <View style={s.th}>
+              {["Rate", "Taxable value", "CGST", "SGST", "IGST", "Total tax"].map((h, i) => (
+                <Text
+                  key={h}
+                  style={{
+                    width: i === 0 ? "14%" : "17.2%",
+                    textAlign: i === 0 ? "left" : "right",
+                    paddingHorizontal: 3,
+                  }}
+                >
+                  {h}
+                </Text>
+              ))}
+            </View>
+            {[...new Set(p.lines.map((l) => l.rate))]
+              .sort((a, b) => a - b)
+              .map((rate) => {
+                const g = p.lines.filter((l) => l.rate === rate);
+                const sum = (f: (l: GstLine) => number) => g.reduce((t, l) => t + f(l), 0);
+                const cells = [
+                  `${rate}%`,
+                  fmt(sum((l) => l.taxable)),
+                  fmt(sum((l) => l.cgst)),
+                  fmt(sum((l) => l.sgst)),
+                  fmt(sum((l) => l.igst)),
+                  fmt(sum((l) => l.cgst + l.sgst + l.igst)),
+                ];
+                return (
+                  <View key={rate} style={s.tr}>
+                    {cells.map((c, i) => (
+                      <Text
+                        key={i}
+                        style={{
+                          width: i === 0 ? "14%" : "17.2%",
+                          textAlign: i === 0 ? "left" : "right",
+                          paddingHorizontal: 3,
+                        }}
+                      >
+                        {c}
+                      </Text>
+                    ))}
+                  </View>
+                );
+              })}
+          </View>
+        ) : null}
 
         <View style={{ alignItems: "flex-end", marginTop: 8 }} wrap={false}>
           <View style={{ width: 230 }}>
