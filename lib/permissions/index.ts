@@ -69,6 +69,7 @@ export const PERMISSIONS = [
   "visa.report.view",
   "visa.discount",
   "billing.manage",
+  "backup.manage",
   "invoicing.manage",
   "jobs.view",
   "jobs.create",

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   CreditCard,
+  DatabaseBackup,
   FileSpreadsheet,
   FileText,
   Palette,
@@ -90,6 +91,13 @@ export default async function SettingsPage() {
       text: "Your plan, usage against limits and subscription.",
       icon: CreditCard,
       show: session.permissions.has("settings.manage") || session.permissions.has("billing.manage"),
+    },
+    {
+      href: "/settings/backups",
+      title: "Backups",
+      text: "Encrypted backups, retention and restore plans.",
+      icon: DatabaseBackup,
+      show: session.permissions.has("backup.manage"),
     },
     {
       href: "/quotations/templates",

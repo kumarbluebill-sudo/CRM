@@ -148,6 +148,14 @@ describe("schema-wide security invariants (local Postgres)", () => {
       "job_check_assignee",
       "visa_log",
       "truncate_ip",
+      "backup_table_list",
+      "backup_export_rows",
+      "backup_begin",
+      "backup_finish",
+      "backup_due",
+      "backup_expired",
+      "backup_mark_deleted",
+      "backup_record_verification",
     ];
     const r = await rows<{ proname: string; who: string }>(
       `select p.proname, r.rolname as who

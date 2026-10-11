@@ -15,3 +15,8 @@ Thumbs.db
 test-results/
 playwright-report/
 database/bundle.sql
+
+# local backup output (encrypted, but never commit them)
+/backups/
+*.crmbk
+*.dump

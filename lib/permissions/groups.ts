@@ -18,6 +18,7 @@ const GROUP_LABEL: Record<string, string> = {
   ai: "AI assistant",
   visa: "Visa management",
   billing: "Subscription and billing",
+  backup: "Backups and restore",
   invoicing: "Invoices and GST",
   jobs: "Job orders",
   users: "Staff and roles",
