@@ -1,4 +1,4 @@
-import { LogOut, Settings } from "lucide-react";
+import { CircleHelp, LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { QuickActions, SearchBox, type QuickAction } from "@/components/layout/header-actions";
@@ -36,6 +36,15 @@ export function Header({
       <div className="flex-1" />
       <QuickActions actions={quickActions} />
       {slot}
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Help center"
+        nativeButton={false}
+        render={<Link href="/help" />}
+      >
+        <CircleHelp className="size-4" aria-hidden />
+      </Button>
       {canSettings && (
         <Button
           variant="ghost"

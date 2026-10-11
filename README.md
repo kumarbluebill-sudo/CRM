@@ -8,12 +8,16 @@ Multi-tenant SaaS on Next.js (App Router), TypeScript, Tailwind, shadcn/ui, Supa
 Leads and customers, itinerary builder and document import, quotations with branded PDFs, bookings and operations
 (passengers, suppliers, vouchers, private documents), payments (manual and Razorpay) with invoices and receipts,
 email and WhatsApp messaging with draft automation, a customer portal, an AI assistant, reports with CSV export,
-subscription plans with limits, team management, and an audit log.
+subscription plans with limits and a platform admin area, custom roles, branches and record scope, time zones, encrypted
+per-agency backups with restore planning, a built-in Help center with a user manual, team management, and an audit log.
 
 ## Status
 
-All 15 phases are implemented and tested locally (unit tests, plus row-level-security integration tests on an embedded
-Postgres). It has **not** been run against live Supabase, Razorpay, Resend or OpenAI accounts or in a real browser.
+Version 1.3.0-rc.4. Everything above is implemented and covered by unit tests, row-level-security integration tests on an
+embedded Postgres, browser tests in real Chromium, and live tests against the project's Supabase database (throwaway
+data, cleaned up). It has **not** been run against live Razorpay, Resend, OpenAI or an off-site backup bucket: those
+need your own accounts and keys. Recovery objectives for backups are targets, not demonstrated figures, until a restore
+drill is recorded in docs/RUNBOOK.md.
 Follow [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), including the smoke tests, before taking real customers.
 
 ## Local setup
@@ -36,6 +40,9 @@ npm run dev                    # http://localhost:3000
 | `npm run verify` | lint + typecheck + test + build (what CI runs) |
 | `npm run db:status` / `db:migrate` | Show / apply database migrations (needs `DATABASE_URL`) |
 | `npm run check-env` | Validate production environment variables (prints names only) |
+| `node --env-file=.env.local scripts/capture-help-screenshots.mjs` | Re-capture the annotated screenshots used by the Help center (needs the app running and `.env.local`; uses a throwaway agency) |
+| `node scripts/restore-check.mjs <file> <org-id>` | Prove a backup file restores, in a scratch database (see docs/RUNBOOK.md) |
+| `node scripts/pre-migration-backup.mjs` | Safety copy of the whole database before migrating |
 
 ## Documentation
 

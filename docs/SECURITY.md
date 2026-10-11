@@ -207,3 +207,10 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - **Access.** Settings, history, restore plans and the download route need `backup.manage` in the owning agency (enforced by the database). Downloads and restore plans need a recent password check and are audited. The tables are read-only to clients; all writes go through definer functions, and the export, begin and finish functions are service-role only.
 - **Restore never runs automatically.** The restore request takes and verifies a safety snapshot first, records a plan, and changes nothing. The restore itself is a documented, supervised, manual step (docs/RUNBOOK.md).
 - **Limits.** Document files in storage, and anything outside the allow-listed tables, are not in these backups. Recovery objectives are targets, not demonstrated figures, until a drill is recorded.
+
+## Help center (v1.3.0-rc.4)
+
+- **No raw HTML, ever.** Guides are parsed into typed nodes and rendered by ordinary components (and by the PDF renderer). Links are limited to same-site paths and https; images to `/guide-img/<file>`. A `<script>` or `javascript:` link in a guide stays inert text (unit-tested).
+- **Role-aware, enforced on the server.** A guide can require a permission, and passages inside `:::requires` blocks are removed before rendering, in the page and in the manual PDF. Typing a restricted address shows a plain "different role" message; search and the manual only include guides the reader may see. This is a convenience, not a security boundary: the real rules are in the database.
+- **Onboarding checklist** counts records through the reader's own row-level security, so it can only reveal what they can already see.
+- **Manual PDF** needs a signed-in agency member, is rate-limited, and is never cached.
