@@ -1,4 +1,5 @@
 import type { FormField } from "@/components/forms/entity-form";
+import { nationalityOptions } from "@/lib/geo/nationalities";
 import type { CustomerRow } from "@/lib/crm/types";
 
 export function customerFields(c?: CustomerRow | null): FormField[] {
@@ -12,7 +13,14 @@ export function customerFields(c?: CustomerRow | null): FormField[] {
     { name: "city", label: "City", defaultValue: c?.city },
     { name: "state", label: "State", defaultValue: c?.state },
     { name: "country", label: "Country", defaultValue: c?.country },
-    { name: "nationality", label: "Nationality", defaultValue: c?.nationality },
+    {
+      name: "nationality",
+      label: "Nationality",
+      type: "select",
+      options: nationalityOptions(c?.nationality),
+      defaultValue: c?.nationality,
+      placeholder: "Search nationality…",
+    },
     {
       name: "gstin",
       label: "GSTIN (business customers)",

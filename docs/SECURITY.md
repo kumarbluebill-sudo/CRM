@@ -226,3 +226,10 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - The customer GSTIN is validated by a check constraint (format, state and check character) and is read only through the normal customer row-level security.
 - A missing recipient GSTIN only warns. The invoice is then printed as issued to an unregistered customer.
 - Not supported, and stated in the Help guide: reverse charge, SEZ and export supplies, and e-invoice IRN/QR. Subscription receipts remain "not a GST tax invoice". An accountant must review the setup before real use.
+
+## Leads, enquiries and navigation (v1.3.0-rc.7)
+
+- Reference numbers (`LD-`, `ENQ-`) are assigned by database triggers through a function no API role can execute; the browser cannot choose or change them, and numbers are unique per organization by constraint.
+- Leads and enquiries use the standard tenant row-level-security policies. The History tabs query each table under the user's own session and are skipped for a member without the matching permission (quotes, bookings, payments, documents, tasks), so a tab never reveals more than that member could already open. The timeline excludes sensitive documents (passports, visas) and failed payments.
+- The sidebar hides items the member lacks permission for. This is convenience only; every page and every database policy still enforce access.
+- The Booking workflow page is static reference text with links shown only where the member has the permission. It contains no customer data and does not change any status.

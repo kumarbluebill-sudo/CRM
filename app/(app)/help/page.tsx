@@ -39,12 +39,20 @@ export default async function HelpPage({
         title="Help center"
         description="Guides for every part of the CRM. You only see guides that match what your role allows."
         actions={
-          <a
-            href="/help/manual.pdf"
-            className="border-input hover:bg-muted inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-sm font-medium"
-          >
-            <Download className="size-4" aria-hidden /> User manual (PDF)
-          </a>
+          <>
+            <Link
+              href="/help/booking-workflow"
+              className="border-input hover:bg-muted inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-sm font-medium"
+            >
+              <BookOpen className="size-4" aria-hidden /> Booking workflow
+            </Link>
+            <a
+              href="/help/manual.pdf"
+              className="border-input hover:bg-muted inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-sm font-medium"
+            >
+              <Download className="size-4" aria-hidden /> User manual (PDF)
+            </a>
+          </>
         }
       />
       <form role="search" aria-label="Search the help center" className="relative">

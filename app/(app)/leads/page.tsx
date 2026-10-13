@@ -12,12 +12,30 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { requireOrgSession } from "@/lib/auth/session";
 import { LEAD_STATUSES, label } from "@/lib/crm/constants";
-import { listBoardLeads, listLeads } from "@/lib/crm/queries";
+import {
+  listBoardLeads,
+  listLeadSourceOptions,
+  listLeads,
+  listTeamMembers,
+} from "@/lib/crm/queries";
+import { LocalTime } from "@/components/datetime/local-time";
 import type { LeadRow } from "@/lib/crm/types";
 
 export const metadata: Metadata = { title: "Leads" };
 
-type SearchParams = Promise<{ q?: string; status?: string; page?: string; view?: string }>;
+type SearchParams = Promise<{
+  q?: string;
+  status?: string;
+  page?: string;
+  view?: string;
+  destination?: string;
+  source?: string;
+  assignee?: string;
+  from?: string;
+  to?: string;
+}>;
+
+const selectClass = "border-input bg-background h-8 rounded-lg border px-2.5 text-sm";
 
 export default async function LeadsPage({ searchParams }: { searchParams: SearchParams }) {
   const session = await requireOrgSession();
@@ -38,8 +56,26 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
 
   const status = LEAD_STATUSES.find((s) => s === sp.status);
   const page = Number.parseInt(sp.page ?? "1", 10) || 1;
-  const list = board ? null : await listLeads({ q: sp.q, status, page });
+  const list = board
+    ? null
+    : await listLeads({
+        q: sp.q,
+        status,
+        page,
+        destination: sp.destination,
+        source: sp.source,
+        assignee: sp.assignee,
+        from: sp.from,
+        to: sp.to,
+      });
   const boardLeads = board ? await listBoardLeads(sp.q) : [];
+  const [sources, team] = board
+    ? [[], []]
+    : await Promise.all([listLeadSourceOptions(), listTeamMembers()]);
+  const filtered = Boolean(
+    sp.q || status || sp.destination || sp.source || sp.assignee || sp.from || sp.to,
+  );
+  const nameOf = (id: string | null) => team.find((m) => m.userId === id)?.name ?? "—";
 
   const viewLink = (view: string) =>
     `/leads?view=${view}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}`;
@@ -72,24 +108,67 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
         <Input
           name="q"
           defaultValue={sp.q}
-          placeholder="Search title or destination…"
+          placeholder="Search name, reference, mobile, email…"
           className="max-w-xs"
           aria-label="Search leads"
         />
         {!board && (
-          <select
-            name="status"
-            defaultValue={status ?? ""}
-            aria-label="Filter by stage"
-            className="border-input bg-background h-8 rounded-lg border px-2.5 text-sm"
-          >
-            <option value="">All stages</option>
-            {LEAD_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {label(s)}
-              </option>
-            ))}
-          </select>
+          <>
+            <select
+              name="status"
+              defaultValue={status ?? ""}
+              aria-label="Filter by status"
+              className={selectClass}
+            >
+              <option value="">All statuses</option>
+              {LEAD_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {label(s)}
+                </option>
+              ))}
+            </select>
+            <Input
+              name="destination"
+              defaultValue={sp.destination}
+              placeholder="Destination"
+              className="w-36"
+              aria-label="Filter by destination"
+            />
+            <select
+              name="source"
+              defaultValue={sp.source ?? ""}
+              aria-label="Filter by lead source"
+              className={selectClass}
+            >
+              <option value="">All sources</option>
+              {sources.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+            <select
+              name="assignee"
+              defaultValue={sp.assignee ?? ""}
+              aria-label="Filter by assigned staff"
+              className={selectClass}
+            >
+              <option value="">All staff</option>
+              {team.map((m) => (
+                <option key={m.userId} value={m.userId}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+            <label className="text-muted-foreground flex items-center gap-1 text-xs">
+              Created from
+              <Input name="from" type="date" defaultValue={sp.from} className="w-36" />
+            </label>
+            <label className="text-muted-foreground flex items-center gap-1 text-xs">
+              to
+              <Input name="to" type="date" defaultValue={sp.to} className="w-36" />
+            </label>
+          </>
         )}
         <Button type="submit" variant="outline" size="sm">
           Search
@@ -124,36 +203,79 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
       ) : list && list.rows.length > 0 ? (
         <>
           <Card className="hidden md:block">
-            <CardContent className="p-0">
+            <CardContent className="overflow-x-auto p-0">
               <table className="w-full text-sm">
                 <thead className="text-muted-foreground border-b text-left text-xs uppercase">
                   <tr>
-                    <th className="px-4 py-3">Lead</th>
-                    <th className="px-4 py-3">Customer</th>
-                    <th className="px-4 py-3">Travel</th>
-                    <th className="px-4 py-3">Priority</th>
-                    <th className="px-4 py-3">Stage</th>
+                    <th className="px-3 py-3">Reference</th>
+                    <th className="px-3 py-3">Lead</th>
+                    <th className="px-3 py-3">Mobile</th>
+                    <th className="px-3 py-3">Email</th>
+                    <th className="px-3 py-3">Destination</th>
+                    <th className="px-3 py-3">Assigned</th>
+                    <th className="px-3 py-3">Status</th>
+                    <th className="px-3 py-3">Last contact</th>
+                    <th className="px-3 py-3">Next follow-up</th>
+                    <th className="px-3 py-3">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {list.rows.map((l) => (
-                    <tr key={l.id} className="hover:bg-muted/50 border-b last:border-0">
-                      <td className="px-4 py-3">
-                        <Link href={`/leads/${l.id}`} className="font-medium hover:underline">
-                          {l.title}
-                        </Link>
-                        <p className="text-muted-foreground text-xs">{l.destination ?? "—"}</p>
-                      </td>
-                      <td className="px-4 py-3">{l.customers?.name ?? "—"}</td>
-                      <td className="px-4 py-3">{l.departure_date ?? "—"}</td>
-                      <td className="px-4 py-3">
-                        <StatusBadge value={l.priority} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge value={l.status} />
-                      </td>
-                    </tr>
-                  ))}
+                  {list.rows.map((l) => {
+                    const mobile = l.contact_phone ?? l.customers?.phone ?? null;
+                    const email = l.contact_email ?? l.customers?.email ?? null;
+                    return (
+                      <tr key={l.id} className="hover:bg-muted/50 border-b last:border-0">
+                        <td className="px-3 py-3 font-mono text-xs whitespace-nowrap">
+                          {l.reference_number}
+                        </td>
+                        <td className="px-3 py-3">
+                          <Link href={`/leads/${l.id}`} className="font-medium hover:underline">
+                            {l.contact_name ?? l.customers?.name ?? l.title}
+                          </Link>
+                          {l.contact_name && l.title !== l.contact_name && (
+                            <p className="text-muted-foreground text-xs">{l.title}</p>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          {mobile ? (
+                            <a
+                              href={`tel:${mobile.replace(/[^+\d]/g, "")}`}
+                              className="hover:underline"
+                            >
+                              {mobile}
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="px-3 py-3">
+                          {email ? (
+                            <a href={`mailto:${email}`} className="break-all hover:underline">
+                              {email}
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="px-3 py-3">{l.destination ?? "—"}</td>
+                        <td className="px-3 py-3">{nameOf(l.assigned_user_id)}</td>
+                        <td className="px-3 py-3">
+                          <StatusBadge value={l.status} />
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          {l.last_contact_at ? <LocalTime value={l.last_contact_at} /> : "—"}
+                        </td>
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          {l.next_follow_up_date ?? "—"}
+                        </td>
+                        <td className="px-3 py-3">
+                          <Link href={`/leads/${l.id}`} className="text-primary underline">
+                            Open
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </CardContent>
@@ -164,21 +286,32 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
                 <Card size="sm">
                   <CardContent className="flex flex-col gap-2">
                     <Link href={`/leads/${l.id}`} className="font-medium">
-                      {l.title}
+                      {l.contact_name ?? l.customers?.name ?? l.title}
                     </Link>
+                    <p className="text-muted-foreground font-mono text-xs">{l.reference_number}</p>
                     <p className="text-muted-foreground text-xs">
-                      {l.destination ?? "—"} · {l.customers?.name ?? "No customer"}
+                      {l.destination ?? "—"} · {nameOf(l.assigned_user_id)}
                     </p>
+                    {(l.contact_email ?? l.customers?.email) && (
+                      <p className="text-muted-foreground text-xs break-all">
+                        {l.contact_email ?? l.customers?.email}
+                      </p>
+                    )}
+                    {l.next_follow_up_date && (
+                      <p className="text-muted-foreground text-xs">
+                        Follow-up {l.next_follow_up_date}
+                      </p>
+                    )}
                     <div className="flex gap-2">
                       <StatusBadge value={l.status} />
                       <StatusBadge value={l.priority} />
                     </div>
-                    {l.customers?.phone && (
+                    {(l.contact_phone ?? l.customers?.phone) && (
                       <a
-                        href={`tel:${l.customers.phone}`}
+                        href={`tel:${(l.contact_phone ?? l.customers?.phone ?? "").replace(/[^+\d]/g, "")}`}
                         className="text-primary text-sm underline"
                       >
-                        Call {l.customers.phone}
+                        Call {l.contact_phone ?? l.customers?.phone}
                       </a>
                     )}
                   </CardContent>
@@ -190,7 +323,16 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
             page={list.page}
             total={list.total}
             basePath="/leads"
-            params={{ q: sp.q, status, view: "list" }}
+            params={{
+              q: sp.q,
+              status,
+              view: "list",
+              destination: sp.destination,
+              source: sp.source,
+              assignee: sp.assignee,
+              from: sp.from,
+              to: sp.to,
+            }}
           />
         </>
       ) : (
@@ -199,7 +341,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
             <CardContent>
               <EmptyState
                 icon={UserPlus}
-                title={sp.q || status ? "No leads match your filters" : "No leads yet"}
+                title={filtered ? "No leads match your filters" : "No leads yet"}
                 description={
                   canCreate ? "Create your first lead to start the pipeline." : undefined
                 }
@@ -220,8 +362,9 @@ function BoardCard({ lead, canUpdate }: { lead: LeadRow; canUpdate: boolean }) {
           href={`/leads/${lead.id}`}
           className="text-sm leading-snug font-medium hover:underline"
         >
-          {lead.title}
+          {lead.contact_name ?? lead.title}
         </Link>
+        <p className="text-muted-foreground font-mono text-[11px]">{lead.reference_number}</p>
         <p className="text-muted-foreground text-xs">
           {lead.destination ?? "—"}
           {lead.customers?.name ? ` · ${lead.customers.name}` : ""}

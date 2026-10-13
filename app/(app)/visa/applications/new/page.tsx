@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { requireOrgSession } from "@/lib/auth/session";
 import { label, options } from "@/lib/crm/constants";
 import { listCustomerOptions, listTeamMembers } from "@/lib/crm/queries";
+import { nationalityOptions } from "@/lib/geo/nationalities";
 import { formatMoney } from "@/lib/quotation/pricing";
 import { PRIORITIES } from "@/lib/visa/constants";
 import { findCustomerDuplicates, listProducts } from "@/lib/visa/queries";
@@ -164,8 +165,10 @@ export default async function NewApplicationPage({
               {
                 name: "nationality",
                 label: "Nationality",
+                type: "select",
+                options: nationalityOptions(),
                 required: true,
-                placeholder: "e.g. Indian",
+                placeholder: "Search nationality…",
               },
               { name: "travelDate", label: "Travel date", type: "date" },
               {

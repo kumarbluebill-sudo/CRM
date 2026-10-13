@@ -6,7 +6,7 @@ keywords:
   [booking, traveller, passenger, supplier, voucher, document, passport, departure, operations]
 requires: bookings.view
 version: 1.3.0
-updated: 2026-10-11
+updated: 2026-10-13
 status: published
 related: [payments-and-invoices, notifications-and-jobs, time-zones-and-formats]
 author: Smart Travel CRM team
@@ -25,6 +25,10 @@ Create it from an accepted quotation so prices carry over, or start from **Booki
 ## Services and time zones
 
 A flight or check-in has its own local time and zone. The page shows the event's local time first and your own time next when they differ, so nobody has to calculate.
+
+## The booking process
+
+For the whole journey from first enquiry to a completed trip, with the decisions and what to do when a customer declines or a supplier cannot confirm, see the [Booking workflow](/help/booking-workflow) chart. It is a reference guide and can be printed or saved as a PDF. It does not change a booking's status by itself.
 
 ## Suppliers and vouchers
 
