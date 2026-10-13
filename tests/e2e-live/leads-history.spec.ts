@@ -173,8 +173,12 @@ test("a viewer's menu leaves out pages they cannot open", async ({ page }) => {
 
 test("another agency cannot open the lead", async ({ page }) => {
   await signIn(page, OTHER, PASSWORD);
-  const res = await page.goto(leadUrl);
-  expect(res?.status()).toBe(404);
+  await page.goto(leadUrl);
+  // Next streams its not-found page, so the status can be 200; what matters is that nothing of the lead is shown
+  await expect(page.getByText("LIVE-TEST Asha Rao")).toHaveCount(0);
+  await expect(page.getByText(/LD-d{4}-d{6}/)).toHaveCount(0);
+  await expect(page.getByText("asha.live@example.invalid")).toHaveCount(0);
+  await expect(page.getByText(/not found|could not be found|404/i).first()).toBeVisible();
   await page.goto("/leads");
   await expect(page.getByText("LIVE-TEST Asha Rao")).toHaveCount(0);
   await page.goto("/enquiries");

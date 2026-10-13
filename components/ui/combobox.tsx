@@ -83,6 +83,15 @@ export function Combobox({
           // let a click on an option register first
           setTimeout(() => {
             setOpen(false);
+            // typing a whole option name (for example "Indian") counts as choosing it
+            const typed = text.trim().toLowerCase();
+            const exact = typed ? options.find((o) => o.label.toLowerCase() === typed) : undefined;
+            if (exact && exact.value !== value) {
+              setValue(exact.value);
+              setText(exact.label);
+              onChange?.(exact.value);
+              return;
+            }
             setText(options.find((o) => o.value === value)?.label ?? "");
           }, 120);
         }}
@@ -93,6 +102,14 @@ export function Combobox({
           if (e.target.value === "" && !required) {
             setValue("");
             onChange?.("");
+            return;
+          }
+          // a whole option name typed out counts as chosen straight away, before any click elsewhere
+          const typed = e.target.value.trim().toLowerCase();
+          const exact = typed ? options.find((o) => o.label.toLowerCase() === typed) : undefined;
+          if (exact && exact.value !== value) {
+            setValue(exact.value);
+            onChange?.(exact.value);
           }
         }}
         onKeyDown={(e) => {
