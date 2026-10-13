@@ -1,30 +1,32 @@
 import {
   BarChart3,
+  Bell,
   Bot,
   Briefcase,
-  ClipboardCheck,
-  ClipboardList,
-  Bell,
-  CircleHelp,
-  ListChecks,
-  Upload,
-  MessageSquareText,
-  SlidersHorizontal,
-  Stamp,
-  Tags,
   CalendarCheck,
   CheckSquare,
+  CircleHelp,
+  ClipboardCheck,
+  ClipboardList,
   CreditCard,
+  Crown,
   FileText,
   FolderLock,
   LayoutDashboard,
+  ListChecks,
   Mail,
   MapPinned,
   MessageCircle,
+  MessageSquareText,
   Receipt,
   ScrollText,
   Settings,
+  SlidersHorizontal,
+  Stamp,
+  Tags,
   Truck,
+  Upload,
+  UserCog,
   UserPlus,
   Users,
   type LucideIcon,
@@ -38,21 +40,29 @@ export type NavItem = {
   icon: LucideIcon;
   /** Module not built yet; rendered disabled until its phase ships. */
   soon?: boolean;
-  /** Permission needed to see the item. Omitted = every member. The page and the database enforce it again. */
+  /** Permission needed to see the item (any one of a list). Omitted = every member. Pages and the database enforce it again. */
   permission?: string | string[];
   /** Small count shown next to the label. */
   badge?: NavBadge;
+  /** Other pages that belong to this item, so it stays highlighted there (the longest matching address wins). */
+  activeFor?: string[];
 };
 
 export type NavGroup = { title?: string; items: NavItem[] };
 
 export const NAV_GROUPS: NavGroup[] = [
   {
+    title: "Main menu",
     items: [
       { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { label: "Leads", href: "/leads", icon: UserPlus, permission: "leads.view" },
       { label: "Customers", href: "/customers", icon: Users, permission: "customers.view" },
       { label: "Enquiries", href: "/enquiries", icon: MessageSquareText, permission: "leads.view" },
+    ],
+  },
+  {
+    title: "Sales & travel",
+    items: [
       {
         label: "Itineraries",
         href: "/itineraries",
@@ -61,7 +71,20 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       { label: "Quotations", href: "/quotations", icon: FileText, permission: "quotes.view" },
       { label: "Bookings", href: "/bookings", icon: Briefcase, permission: "bookings.view" },
-      { label: "Job orders", href: "/jobs", icon: ClipboardList, permission: "jobs.view" },
+      { label: "Job Orders", href: "/jobs", icon: ClipboardList, permission: "jobs.view" },
+    ],
+  },
+  {
+    title: "Operations",
+    items: [
+      { label: "Suppliers", href: "/suppliers", icon: Truck, permission: "suppliers.view" },
+      {
+        label: "Payments & Billing",
+        href: "/payments",
+        icon: CreditCard,
+        permission: "payments.view",
+      },
+      { label: "Documents", href: "/documents", icon: FolderLock, permission: "documents.view" },
       {
         label: "Follow-ups",
         href: "/followups",
@@ -70,14 +93,25 @@ export const NAV_GROUPS: NavGroup[] = [
         badge: "followups",
       },
       { label: "Notifications", href: "/notifications", icon: Bell, badge: "notifications" },
-      { label: "Suppliers", href: "/suppliers", icon: Truck, permission: "suppliers.view" },
-      {
-        label: "Payments & billing",
-        href: "/payments",
-        icon: CreditCard,
-        permission: "payments.view",
-      },
+    ],
+  },
+  {
+    title: "Management",
+    items: [
       { label: "Reports", href: "/reports", icon: BarChart3, permission: "reports.view" },
+      {
+        label: "Staff & Permissions",
+        href: "/settings/team",
+        icon: UserCog,
+        permission: "users.manage",
+        activeFor: ["/settings/roles", "/settings/staff"],
+      },
+      {
+        label: "Subscription & Plans",
+        href: "/settings/billing",
+        icon: Crown,
+        permission: ["billing.manage", "settings.manage"],
+      },
       {
         label: "Settings",
         href: "/settings",
@@ -91,22 +125,6 @@ export const NAV_GROUPS: NavGroup[] = [
           "backup.manage",
         ],
       },
-    ],
-  },
-  {
-    title: "More",
-    items: [
-      { label: "Tasks", href: "/tasks", icon: CheckSquare, permission: "tasks.view" },
-      {
-        label: "Invoices",
-        href: "/payments/invoices",
-        icon: ScrollText,
-        permission: "payments.view",
-      },
-      { label: "Receipts", href: "/payments/receipts", icon: Receipt, permission: "payments.view" },
-      { label: "Documents", href: "/documents", icon: FolderLock, permission: "documents.view" },
-      { label: "AI Assistant", href: "/ai-assistant", icon: Bot, permission: "ai.use" },
-      { label: "Help center", href: "/help", icon: CircleHelp },
     ],
   },
   {
@@ -165,6 +183,26 @@ export const NAV_GROUPS: NavGroup[] = [
       },
     ],
   },
+  {
+    title: "More",
+    items: [
+      { label: "Tasks", href: "/tasks", icon: CheckSquare, permission: "tasks.view" },
+      {
+        label: "Invoices",
+        href: "/payments/invoices",
+        icon: ScrollText,
+        permission: "payments.view",
+      },
+      {
+        label: "Receipts",
+        href: "/payments/receipts",
+        icon: Receipt,
+        permission: "payments.view",
+      },
+      { label: "AI Assistant", href: "/ai-assistant", icon: Bot, permission: "ai.use" },
+      { label: "Help center", href: "/help", icon: CircleHelp },
+    ],
+  },
 ];
 
 /** The nav a member may see: items they lack the permission for are dropped, and empty groups disappear. */
@@ -173,4 +211,20 @@ export function visibleNav(groups: NavGroup[], can: (permission: string) => bool
   return groups
     .map((g) => ({ ...g, items: g.items.filter(allowed) }))
     .filter((g) => g.items.length > 0);
+}
+
+/**
+ * Which item is highlighted for a path: the one with the longest matching address (its own, or one listed in
+ * `activeFor`). Returns the item's href, or undefined when nothing matches.
+ */
+export function activeHrefFor(items: NavItem[], pathname: string): string | undefined {
+  let best: { href: string; len: number } | undefined;
+  for (const item of items) {
+    for (const prefix of [item.href, ...(item.activeFor ?? [])]) {
+      if (pathname === prefix || pathname.startsWith(`${prefix}/`)) {
+        if (!best || prefix.length > best.len) best = { href: item.href, len: prefix.length };
+      }
+    }
+  }
+  return best?.href;
 }

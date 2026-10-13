@@ -30,6 +30,13 @@ export default async function SettingsPage() {
       show: session.permissions.has("settings.manage"),
     },
     {
+      href: "/settings/appearance",
+      title: "Appearance",
+      text: "Theme colours, light or dark mode and the default look for your agency.",
+      icon: Palette,
+      show: session.permissions.has("settings.manage"),
+    },
+    {
       href: "/settings/invoicing",
       title: "Invoicing and GST",
       text: "Registered details, numbering, tax codes and bank details for invoices.",

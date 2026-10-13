@@ -119,11 +119,11 @@ test("an owner previews, chooses and downloads each invoice layout; others canno
   await expect(page.getByText("Preview invoice layouts")).toBeVisible();
   for (const name of ["Classic", "Modern", "Compact", "Detailed"])
     await expect(page.getByRole("link", { name: `Preview ${name} sample` })).toBeVisible();
-  await page.getByLabel("Invoice layout").selectOption("modern");
+  await page.getByLabel("Invoice layout", { exact: true }).selectOption("modern");
   await page.getByRole("button", { name: "Save profile" }).click();
   await expect(page.getByText("Invoicing profile saved.")).toBeVisible({ timeout: 20_000 });
   await page.reload();
-  await expect(page.getByLabel("Invoice layout")).toHaveValue("modern");
+  await expect(page.getByLabel("Invoice layout", { exact: true })).toHaveValue("modern");
   const axe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
   expect(axe.violations.filter((v) => v.impact === "serious" || v.impact === "critical")).toEqual(
     [],
