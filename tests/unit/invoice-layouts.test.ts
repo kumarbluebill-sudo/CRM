@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { describe, expect, it } from "vitest";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { extractText, getDocumentProxy } from "unpdf";
-import { GstDocumentPdf, type GstDocProps } from "@/lib/pdf/gst-pdf";
+import { GstDocumentPdf, rateLabel, type GstDocProps } from "@/lib/pdf/gst-pdf";
 import {
   DEFAULT_INVOICE_LAYOUT,
   INVOICE_LAYOUTS,
@@ -79,6 +79,53 @@ function doc(over: Partial<GstDocProps> = {}, supply: "INTRA" | "INTER" | "NONE"
 
 const render = async (p: GstDocProps) =>
   renderToBuffer(createElement(GstDocumentPdf, p) as never) as Promise<Buffer>;
+
+describe("a GST tax invoice shows every required field, in every layout", () => {
+  const withRecipient = { name: "Kavya Iyer", address: "Bengaluru", gstin: "29AAGCB7383J1Z4" };
+
+  it("prints supplier and recipient GSTIN, number, date, SAC, tax split and reverse charge", async () => {
+    for (const l of INVOICE_LAYOUTS)
+      for (const supply of ["INTRA", "INTER"] as const) {
+        const t = await text(await render(doc({ layout: l.key, billTo: withRecipient }, supply)));
+        const tag = `${l.key} ${supply}`;
+        for (const must of [
+          "30AAPFU0939F1ZV", // supplier GSTIN
+          "29AAGCB7383J1Z4", // recipient GSTIN
+          "INV/26-27/0042", // number
+          "2026-10-11", // issue date
+          "998555", // SAC
+          "reverse charge: No",
+          supply === "INTRA" ? "CGST" : "IGST",
+        ])
+          expect(t, `${tag}: ${must}`).toContain(must);
+        if (supply === "INTRA") expect(t, tag).toContain("SGST");
+      }
+  });
+
+  it("says so when the recipient has no GSTIN, and prints nothing about GSTIN when no tax is charged", async () => {
+    for (const l of INVOICE_LAYOUTS) {
+      const taxed = await text(await render(doc({ layout: l.key })));
+      expect(taxed, l.key).toContain("Unregistered / not provided");
+      const plain = await text(await render(doc({ layout: l.key }, "NONE")));
+      expect(plain, l.key).not.toContain("Unregistered / not provided");
+      expect(plain, l.key).not.toMatch(/reverse charge/i);
+    }
+  });
+
+  it("names exempt, nil-rated and zero-rated lines instead of showing 0%", async () => {
+    const lines = [
+      { ...line("Taxed", 1000, 5, false) },
+      { ...line("Exempt thing", 500, 0, false), treatment: "EXEMPT" },
+      { ...line("Nil thing", 500, 0, false), treatment: "NIL_RATED" },
+      { ...line("Zero thing", 500, 0, false), treatment: "ZERO_RATED" },
+    ];
+    const t = await text(await render(doc({ lines })));
+    for (const w of ["Exempt", "Nil-rated", "Zero-rated"]) expect(t).toContain(w);
+    expect(t).not.toContain("0%");
+    expect(rateLabel({ rate: 5, treatment: "TAXABLE" })).toBe("5%");
+    expect(rateLabel({ rate: 0, treatment: null })).toBe("0%");
+  });
+});
 
 describe("invoice layouts", () => {
   it("offers four named layouts and falls back safely", () => {

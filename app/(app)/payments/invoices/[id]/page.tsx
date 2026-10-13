@@ -56,14 +56,18 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   );
 
   let defaultPlace = inv.place_of_supply ?? "";
-  if (isDraft && !defaultPlace) {
+  let defaultGstin = inv.customer_gstin ?? "";
+  if (isDraft && (!defaultPlace || !defaultGstin)) {
     const supabase = await createClient();
     const { data: c } = await supabase
       .from("customers")
-      .select("state")
+      .select("state, gstin")
       .eq("id", inv.customer_id)
       .maybeSingle();
-    defaultPlace = stateCodeFromName(c?.state as string | null) ?? profile?.state_code ?? "";
+    if (!defaultPlace)
+      defaultPlace = stateCodeFromName(c?.state as string | null) ?? profile?.state_code ?? "";
+    // a GSTIN saved on the customer is offered here; it can still be changed or cleared for this invoice
+    if (!defaultGstin) defaultGstin = (c?.gstin as string | null) ?? "";
   }
   const title = inv.invoice_number ?? "Draft invoice";
   const diff = inv.bookings
@@ -115,7 +119,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                   notes: inv.notes ?? "",
                   terms: inv.terms ?? "",
                   placeOfSupply: defaultPlace,
-                  customerGstin: inv.customer_gstin ?? "",
+                  customerGstin: defaultGstin,
                   billName: inv.bill_to.name ?? "",
                   billAddress: inv.bill_to.address ?? "",
                   priceIncludesTax: inv.price_includes_tax,

@@ -23,6 +23,8 @@ export type GstLine = {
   quantity: number;
   unitPrice: number;
   rate: number;
+  /** TAXABLE, EXEMPT, ZERO_RATED or NIL_RATED. Absent on older invoices, which then show the rate. */
+  treatment?: string | null;
   discount: number;
   taxable: number;
   cgst: number;
@@ -30,6 +32,15 @@ export type GstLine = {
   igst: number;
   total: number;
 };
+
+const NON_TAXABLE_LABEL: Record<string, string> = {
+  EXEMPT: "Exempt",
+  NIL_RATED: "Nil-rated",
+  ZERO_RATED: "Zero-rated",
+};
+/** The GST column: the rate, or the wording the law uses when a line carries no tax. */
+export const rateLabel = (l: Pick<GstLine, "rate" | "treatment">) =>
+  (l.treatment && NON_TAXABLE_LABEL[l.treatment]) || `${l.rate}%`;
 
 export type GstDocProps = {
   kind: "TAX_INVOICE" | "INVOICE" | "CREDIT_NOTE";
@@ -160,11 +171,11 @@ export function GstDocumentPdf(p: GstDocProps) {
   const sup = p.supplier;
   const w = {
     INTRA: {
-      desc: "24%",
+      desc: "20%",
       sac: "8%",
       qty: "5%",
       price: "10%",
-      gst: "6%",
+      gst: "10%",
       taxable: "11%",
       cgst: "9%",
       sgst: "9%",
@@ -172,11 +183,11 @@ export function GstDocumentPdf(p: GstDocProps) {
       total: "12%",
     },
     INTER: {
-      desc: "28%",
+      desc: "24%",
       sac: "9%",
       qty: "6%",
       price: "11%",
-      gst: "6%",
+      gst: "10%",
       taxable: "12%",
       cgst: "0%",
       sgst: "0%",
@@ -225,7 +236,7 @@ export function GstDocumentPdf(p: GstDocProps) {
       case "price":
         return fmt(l.unitPrice);
       case "gst":
-        return `${l.rate}%`;
+        return rateLabel(l);
       case "taxable":
         return fmt(l.taxable);
       case "cgst":
@@ -308,7 +319,11 @@ export function GstDocumentPdf(p: GstDocProps) {
             <Text style={s.label}>{p.kind === "CREDIT_NOTE" ? "Credited to" : "Billed to"}</Text>
             <Text style={s.bold}>{p.billTo.name}</Text>
             {p.billTo.address ? <Text>{p.billTo.address}</Text> : null}
-            {p.billTo.gstin ? <Text>GSTIN: {p.billTo.gstin}</Text> : null}
+            {p.billTo.gstin ? (
+              <Text>GSTIN: {p.billTo.gstin}</Text>
+            ) : tax ? (
+              <Text>GSTIN: Unregistered / not provided</Text>
+            ) : null}
             {p.billTo.email ? <Text>{p.billTo.email}</Text> : null}
             {p.billTo.phone ? <Text>{p.billTo.phone}</Text> : null}
           </View>
@@ -330,6 +345,7 @@ export function GstDocumentPdf(p: GstDocProps) {
             ) : (
               <Text>No tax charged</Text>
             )}
+            {tax ? <Text>Tax payable on reverse charge: No</Text> : null}
             {p.pricesIncludeTax && tax ? <Text>Line prices include tax</Text> : null}
             {p.reason ? <Text>Reason: {p.reason}</Text> : null}
           </View>

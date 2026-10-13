@@ -19,6 +19,7 @@ function toColumns(v: CustomerInput) {
     state: v.state ?? null,
     country: v.country ?? null,
     nationality: v.nationality ?? null,
+    gstin: v.gstin ?? null,
     notes: v.notes ?? null,
   };
 }
