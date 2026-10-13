@@ -1,5 +1,7 @@
 import { BillingBanner } from "@/components/billing/billing-banner";
 import { AppShell } from "@/components/layout/app-shell";
+import { NavStateProvider } from "@/components/layout/nav-state";
+import { followupBadgeCount } from "@/lib/crm/followups";
 import type { QuickAction } from "@/components/layout/header-actions";
 import { PrefsProvider } from "@/components/datetime/local-time";
 import { getDisplayPrefs } from "@/lib/datetime/prefs";
@@ -32,9 +34,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       Boolean(settings?.require_admin_mfa) && !enrolled && !path.startsWith("/profile/security");
   }
   const can = (p: string) => session.permissions.has(p);
-  const [unread, latest] = await Promise.all([
+  const [unread, latest, followups] = await Promise.all([
     unreadCount().catch(() => 0),
     latestNotifications(8).catch(() => []),
+    followupBadgeCount({ tasks: can("tasks.view"), leads: can("leads.view") }).catch(() => 0),
   ]);
   const quickActions: QuickAction[] = [
     can("leads.create") && { label: "New enquiry", href: "/leads/new" },
@@ -47,35 +50,40 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   ].filter((a): a is QuickAction => Boolean(a));
   return (
     <PrefsProvider prefs={prefs}>
-      <AppShell
-        user={{ name: session.fullName || session.email, email: session.email }}
-        organizationName={session.organization.name}
-        brand={brand}
-        quickActions={quickActions}
-        canSettings={can("settings.manage")}
-        banner={<BillingBanner />}
-        headerSlot={<NotificationBell initialUnread={unread} initialItems={latest} />}
+      <NavStateProvider
+        permissions={[...session.permissions]}
+        badges={{ notifications: unread, followups }}
       >
-        {blockedForMfa ? (
-          <div
-            role="alert"
-            className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn mx-auto max-w-lg rounded-xl border p-6 text-sm"
-          >
-            <h1 className="text-lg font-semibold">Set up two-step verification to continue</h1>
-            <p className="mt-2">
-              Your agency requires owners and admins to use an authenticator app. It takes about a
-              minute.
-            </p>
-            <p className="mt-4">
-              <Link href="/profile/security?required=1" className="font-medium underline">
-                Set it up now
-              </Link>
-            </p>
-          </div>
-        ) : (
-          children
-        )}
-      </AppShell>
+        <AppShell
+          user={{ name: session.fullName || session.email, email: session.email }}
+          organizationName={session.organization.name}
+          brand={brand}
+          quickActions={quickActions}
+          canSettings={can("settings.manage")}
+          banner={<BillingBanner />}
+          headerSlot={<NotificationBell initialUnread={unread} initialItems={latest} />}
+        >
+          {blockedForMfa ? (
+            <div
+              role="alert"
+              className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn mx-auto max-w-lg rounded-xl border p-6 text-sm"
+            >
+              <h1 className="text-lg font-semibold">Set up two-step verification to continue</h1>
+              <p className="mt-2">
+                Your agency requires owners and admins to use an authenticator app. It takes about a
+                minute.
+              </p>
+              <p className="mt-4">
+                <Link href="/profile/security?required=1" className="font-medium underline">
+                  Set it up now
+                </Link>
+              </p>
+            </div>
+          ) : (
+            children
+          )}
+        </AppShell>
+      </NavStateProvider>
     </PrefsProvider>
   );
 }

@@ -6,6 +6,7 @@ import {
   TRIP_TYPES,
   options,
 } from "@/lib/crm/constants";
+import { nationalityOptions } from "@/lib/geo/nationalities";
 import type { LeadRow, Option, TeamMember } from "@/lib/crm/types";
 
 export function leadFields(args: {
@@ -18,12 +19,38 @@ export function leadFields(args: {
   const { lead, customers, sources, team } = args;
   return [
     {
+      name: "contactName",
+      label: "Full name",
+      defaultValue: lead?.contact_name,
+      placeholder: "e.g. Asha Sharma",
+    },
+    {
+      name: "contactPhone",
+      label: "Mobile number (with country code)",
+      type: "tel",
+      defaultValue: lead?.contact_phone,
+      placeholder: "+91 98765 43210",
+    },
+    {
+      name: "contactEmail",
+      label: "Email address",
+      type: "email",
+      defaultValue: lead?.contact_email,
+    },
+    {
+      name: "nationality",
+      label: "Nationality",
+      type: "select",
+      options: nationalityOptions(lead?.nationality),
+      defaultValue: lead?.nationality,
+      placeholder: "Search nationality…",
+    },
+    {
       name: "title",
-      label: "Title",
-      required: true,
+      label: "Lead title (optional)",
       wide: true,
       defaultValue: lead?.title,
-      placeholder: "e.g. Sharma family – Dubai",
+      placeholder: "Defaults to name and destination, e.g. Sharma family – Dubai",
     },
     {
       name: "customerId",
@@ -32,9 +59,20 @@ export function leadFields(args: {
       options: customers,
       defaultValue: lead?.customer_id ?? args.defaultCustomerId,
     },
-    { name: "destination", label: "Destination", defaultValue: lead?.destination },
-    { name: "departureDate", label: "Departure", type: "date", defaultValue: lead?.departure_date },
-    { name: "returnDate", label: "Return", type: "date", defaultValue: lead?.return_date },
+    { name: "destination", label: "Travel destination", defaultValue: lead?.destination },
+    {
+      name: "departureDate",
+      label: "Travel start date",
+      type: "date",
+      defaultValue: lead?.departure_date,
+    },
+    { name: "returnDate", label: "Travel end date", type: "date", defaultValue: lead?.return_date },
+    {
+      name: "nextFollowUpDate",
+      label: "Next follow-up date",
+      type: "date",
+      defaultValue: lead?.next_follow_up_date,
+    },
     { name: "adults", label: "Adults", type: "number", min: 0, defaultValue: lead?.adults ?? 1 },
     {
       name: "children",
@@ -116,6 +154,11 @@ export function leadFields(args: {
       type: "checkbox",
       defaultValue: lead?.insurance_required,
     },
-    { name: "notes", label: "Notes / requirements", type: "textarea", defaultValue: lead?.notes },
+    {
+      name: "notes",
+      label: "Enquiry details / requirements",
+      type: "textarea",
+      defaultValue: lead?.notes,
+    },
   ];
 }

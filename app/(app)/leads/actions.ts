@@ -10,7 +10,12 @@ import { leadSchema, noteSchema, uuid, type LeadInput } from "@/lib/crm/schemas"
 
 function toColumns(v: LeadInput) {
   return {
-    title: v.title,
+    title: v.title ?? ([v.contactName, v.destination].filter(Boolean).join(" – ") || "New lead"),
+    contact_name: v.contactName ?? null,
+    contact_phone: v.contactPhone ?? null,
+    contact_email: v.contactEmail ?? null,
+    nationality: v.nationality ?? null,
+    next_follow_up_date: v.nextFollowUpDate ?? null,
     customer_id: v.customerId ?? null,
     destination: v.destination ?? null,
     departure_date: v.departureDate ?? null,
@@ -42,9 +47,24 @@ export async function createLeadAction(_prev: FormState, formData: FormData): Pr
   const result = await runAction(async () => {
     await requirePermission("leads.create");
     const supabase = await createClient();
+    const input = parsed.data;
+    // a lead picked from an existing customer starts with that customer's contact details
+    if (input.customerId && !(input.contactName && input.contactPhone && input.contactEmail)) {
+      const { data: c } = await supabase
+        .from("customers")
+        .select("name, phone, email, nationality")
+        .eq("id", input.customerId)
+        .maybeSingle();
+      if (c) {
+        input.contactName ??= c.name ?? undefined;
+        input.contactPhone ??= c.phone ?? undefined;
+        input.contactEmail ??= c.email ?? undefined;
+        input.nationality ??= c.nationality ?? undefined;
+      }
+    }
     const { data, error } = await supabase
       .from("leads")
-      .insert(toColumns(parsed.data))
+      .insert(toColumns(input))
       .select("id")
       .single();
     throwIfDbError(error, "create lead");

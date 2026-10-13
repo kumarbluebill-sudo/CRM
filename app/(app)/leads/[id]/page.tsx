@@ -11,6 +11,9 @@ import { StatusBadge } from "@/components/crm/status-badge";
 import { TaskCompleteButton } from "@/components/crm/task-complete-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireOrgSession } from "@/lib/auth/session";
+import { SegmentedTabs } from "@/components/crm/segmented-tabs";
+import { HISTORY_TABS, LeadHistoryTab, type HistoryTab } from "@/components/crm/lead-history-tabs";
+import { getLeadHistory } from "@/lib/crm/lead-history";
 import {
   getLead,
   listCustomerOptions,
@@ -26,8 +29,16 @@ import { taskFields } from "@/components/crm/task-fields";
 
 export const metadata: Metadata = { title: "Lead" };
 
-export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function LeadDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const { id } = await params;
+  const { tab: tabParam } = await searchParams;
+  const tab: HistoryTab = HISTORY_TABS.find((t) => t.key === tabParam)?.key ?? "overview";
   if (!uuid.safeParse(id).success) notFound();
   const session = await requireOrgSession();
   const lead = await getLead(id); // RLS: null if missing OR belongs to another organization
@@ -40,6 +51,8 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     listLeadTimeline(id),
     listTasks({ scope: "open", relatedId: id }),
   ]);
+  const history =
+    tab === "overview" ? null : await getLeadHistory(lead, (p) => session.permissions.has(p));
   const canUpdate = session.permissions.has("leads.update");
   const canDelete = session.permissions.has("leads.delete");
   const canTask = session.permissions.has("tasks.manage");
@@ -50,7 +63,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         breadcrumb={[{ label: "Leads", href: "/leads" }, { label: lead.title }]}
         title={lead.title}
         description={
-          [lead.destination, lead.customers?.name].filter(Boolean).join(" · ") || undefined
+          [lead.reference_number, lead.destination, lead.customers?.name]
+            .filter(Boolean)
+            .join(" · ") || undefined
         }
         actions={
           <>
@@ -101,90 +116,114 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="bg-card rounded-xl border p-5 lg:col-span-2">
-          {canUpdate ? (
-            <EntityForm
-              action={updateLeadAction.bind(null, id)}
-              submitLabel="Save changes"
-              fields={leadFields({ lead, customers, sources, team })}
-            />
-          ) : (
-            <p className="text-muted-foreground text-sm">You have read-only access to this lead.</p>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-5">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Follow-ups & tasks</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              {tasks.rows.length === 0 && (
-                <p className="text-muted-foreground text-sm">No open tasks.</p>
-              )}
-              {tasks.rows.map((t) => (
-                <div key={t.id} className="flex items-center justify-between gap-2 text-sm">
-                  <div>
-                    <p className="font-medium">{t.title}</p>
-                    <p className="text-muted-foreground text-xs">{t.due_date ?? "No due date"}</p>
-                  </div>
-                  {canTask && <TaskCompleteButton id={t.id} done={false} />}
-                </div>
-              ))}
-              {canTask && (
-                <EntityForm
-                  action={createTaskAction}
-                  submitLabel="Add follow-up"
-                  hidden={{ relatedType: "LEAD", relatedId: id }}
-                  fields={taskFields({ team, relatedId: id, compact: true })}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Notes</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              {canUpdate && (
-                <EntityForm
-                  action={addLeadNoteAction.bind(null, id)}
-                  submitLabel="Add note"
-                  fields={[{ name: "body", label: "New note", type: "textarea", required: true }]}
-                />
-              )}
-              {timeline.notes.map((n) => (
-                <div key={n.id} className="border-t pt-2 text-sm">
-                  <p className="whitespace-pre-wrap">{n.body}</p>
-                  <p className="text-muted-foreground text-xs">
-                    <LocalTime value={n.created_at} />
-                  </p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="flex flex-col gap-2 text-sm">
-                {timeline.activities.map((a) => (
-                  <li key={a.id}>
-                    {a.summary}
-                    <span className="text-muted-foreground block text-xs">
-                      <LocalTime value={a.created_at} />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="overflow-x-auto">
+        <SegmentedTabs
+          label="Lead sections"
+          items={HISTORY_TABS.map((t) => ({
+            label: t.label,
+            href: t.key === "overview" ? `/leads/${id}` : `/leads/${id}?tab=${t.key}`,
+            active: t.key === tab,
+          }))}
+        />
       </div>
+
+      {history && tab !== "overview" ? (
+        <LeadHistoryTab
+          tab={tab}
+          lead={lead}
+          history={history}
+          team={team}
+          sources={sources}
+          canUpdate={canUpdate}
+        />
+      ) : (
+        <div className="grid gap-5 lg:grid-cols-3">
+          <div className="bg-card rounded-xl border p-5 lg:col-span-2">
+            {canUpdate ? (
+              <EntityForm
+                action={updateLeadAction.bind(null, id)}
+                submitLabel="Save changes"
+                fields={leadFields({ lead, customers, sources, team })}
+              />
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                You have read-only access to this lead.
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-5">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Follow-ups & tasks</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                {tasks.rows.length === 0 && (
+                  <p className="text-muted-foreground text-sm">No open tasks.</p>
+                )}
+                {tasks.rows.map((t) => (
+                  <div key={t.id} className="flex items-center justify-between gap-2 text-sm">
+                    <div>
+                      <p className="font-medium">{t.title}</p>
+                      <p className="text-muted-foreground text-xs">{t.due_date ?? "No due date"}</p>
+                    </div>
+                    {canTask && <TaskCompleteButton id={t.id} done={false} />}
+                  </div>
+                ))}
+                {canTask && (
+                  <EntityForm
+                    action={createTaskAction}
+                    submitLabel="Add follow-up"
+                    hidden={{ relatedType: "LEAD", relatedId: id }}
+                    fields={taskFields({ team, relatedId: id, compact: true })}
+                  />
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Notes</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                {canUpdate && (
+                  <EntityForm
+                    action={addLeadNoteAction.bind(null, id)}
+                    submitLabel="Add note"
+                    fields={[{ name: "body", label: "New note", type: "textarea", required: true }]}
+                  />
+                )}
+                {timeline.notes.map((n) => (
+                  <div key={n.id} className="border-t pt-2 text-sm">
+                    <p className="whitespace-pre-wrap">{n.body}</p>
+                    <p className="text-muted-foreground text-xs">
+                      <LocalTime value={n.created_at} />
+                    </p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="flex flex-col gap-2 text-sm">
+                  {timeline.activities.map((a) => (
+                    <li key={a.id}>
+                      {a.summary}
+                      <span className="text-muted-foreground block text-xs">
+                        <LocalTime value={a.created_at} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

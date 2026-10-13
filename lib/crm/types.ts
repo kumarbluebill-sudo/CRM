@@ -2,6 +2,13 @@ import type { LeadStatus } from "@/lib/crm/constants";
 
 export type LeadRow = {
   id: string;
+  reference_number: string;
+  contact_name: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
+  nationality: string | null;
+  next_follow_up_date: string | null;
+  last_contact_at: string | null;
   customer_id: string | null;
   title: string;
   destination: string | null;
@@ -23,7 +30,7 @@ export type LeadRow = {
   status: LeadStatus;
   notes: string | null;
   created_at: string;
-  customers?: { id: string; name: string; phone: string | null } | null;
+  customers?: { id: string; name: string; phone: string | null; email?: string | null } | null;
 };
 
 export type CustomerRow = {

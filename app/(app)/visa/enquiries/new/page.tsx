@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { requireOrgSession } from "@/lib/auth/session";
 import { label, options } from "@/lib/crm/constants";
 import { listCustomerOptions, listTeamMembers } from "@/lib/crm/queries";
+import { nationalityOptions } from "@/lib/geo/nationalities";
 import { formatMoney } from "@/lib/quotation/pricing";
 import { PRIORITIES } from "@/lib/visa/constants";
 import { findCustomerDuplicates, listProducts } from "@/lib/visa/queries";
@@ -144,7 +145,13 @@ export default async function NewEnquiryPage({
                   label: `${p.visa_countries?.name ?? ""} · ${label(p.visa_type)} · ${label(p.entry_type)}${p.unit_price != null ? ` · ${formatMoney(p.unit_price, p.currency)}` : ""}`,
                 })),
               },
-              { name: "nationality", label: "Nationality", placeholder: "e.g. Indian" },
+              {
+                name: "nationality",
+                label: "Nationality",
+                type: "select",
+                options: nationalityOptions(),
+                placeholder: "Search nationality…",
+              },
               { name: "travelDate", label: "Travel date", type: "date" },
               {
                 name: "travellers",
