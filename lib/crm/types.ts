@@ -38,6 +38,7 @@ export type CustomerRow = {
   state: string | null;
   country: string | null;
   nationality: string | null;
+  gstin?: string | null;
   notes: string | null;
   created_at: string;
 };

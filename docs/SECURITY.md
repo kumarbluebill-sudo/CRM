@@ -219,3 +219,10 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 
 - The layout is a database-validated setting (check constraint plus `save_tax_profile`, which needs `invoicing.manage`). A `layout` query parameter on the PDF routes is matched against a fixed list and anything else silently falls back to the agency default, so it cannot reach code or the file system.
 - The sample preview route (`/api/invoicing/layout-preview`) needs `invoicing.manage`, is rate-limited and reads only the agency's own profile and branding, never a customer, booking or invoice.
+
+## GST invoice compliance (v1.3.0-rc.6)
+
+- A tax code needs a SAC before it can be verified or used on an issued invoice; the database enforces it, so the browser cannot skip it.
+- The customer GSTIN is validated by a check constraint (format, state and check character) and is read only through the normal customer row-level security.
+- A missing recipient GSTIN only warns. The invoice is then printed as issued to an unregistered customer.
+- Not supported, and stated in the Help guide: reverse charge, SEZ and export supplies, and e-invoice IRN/QR. Subscription receipts remain "not a GST tax invoice". An accountant must review the setup before real use.

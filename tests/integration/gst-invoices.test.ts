@@ -177,7 +177,7 @@ describe("GST invoices, credit notes and tax profile (local Postgres)", () => {
       expect(await fails(() => save(acc, null, "Exempt with rate", null, 5, "EXEMPT"))).toBe(true);
       code18 = (await save(acc, null, "Tour services 18%", "998555", 18)).id;
       code5 = (await save(acc, null, "Tour services 5%", "998555", 5)).id;
-      exempt = (await save(acc, null, "Exempt service", null, 0, "EXEMPT")).id;
+      exempt = (await save(acc, null, "Exempt service", "999799", 0, "EXEMPT")).id;
       expect(
         (await one(acc, "select verified_at from tax_codes where id = $1", [code18])).verified_at,
       ).toBeNull();

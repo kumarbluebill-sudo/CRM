@@ -5,7 +5,7 @@ category: Finance
 keywords: [payment, invoice, gst, receipt, credit note, refund, tax, razorpay, due, overdue]
 requires: payments.view
 version: 1.3.0
-updated: 2026-10-11
+updated: 2026-10-13
 status: published
 related: [bookings, subscription-and-billing, faq]
 author: Smart Travel CRM team
@@ -28,6 +28,17 @@ Before issuing your first invoice, complete **Settings > Invoicing** (your legal
 1. Create a **draft** invoice from the booking's Payments section, edit it and check every line.
 2. **Issue** it. Tax is calculated in one place, and an issued invoice and its lines can no longer be changed.
 3. If something was wrong, issue a **credit note** instead of editing. A credit note needs a recent password check.
+
+## What a GST tax invoice must contain
+
+A tax invoice from a GST-registered agency normally needs these, and the software handles them as follows:
+
+- **Your GSTIN and the customer's GSTIN.** Your GSTIN comes from Settings > Invoicing and is checked for a valid format and state. For the customer, enter the GSTIN on the customer record once and it is offered on every new invoice. If a customer has no GSTIN you are warned, but you can still issue; the invoice then says "Unregistered / not provided". For a GST-registered business customer, always add their GSTIN so they can claim input tax credit.
+- **A unique, sequential number and the issue date.** Numbers are assigned only when you issue, never repeat, and restart each financial year (April to March) in Indian time. A number can be at most 16 characters, so use a short prefix; if a number would be longer, issuing stops with a message instead of producing an invalid number.
+- **The tax split.** Supply within your state shows CGST and SGST; supply to another state shows IGST. Exempt, nil-rated and zero-rated lines are named as such. The invoice states that tax is not payable on reverse charge.
+- **A SAC code on every line.** Each tax code needs a SAC before it can be verified, and an invoice cannot be issued with a line whose tax code has none.
+
+Reverse charge, supplies to SEZ units, exports and e-invoice numbers (IRN and QR code) are not supported. Ask your accountant whether any of these apply to you.
 
 ## Invoice layouts
 

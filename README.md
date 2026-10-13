@@ -13,7 +13,7 @@ per-agency backups with restore planning, a built-in Help center with a user man
 
 ## Status
 
-Version 1.3.0-rc.4. Everything above is implemented and covered by unit tests, row-level-security integration tests on an
+Version 1.3.0-rc.6. Everything above is implemented and covered by unit tests, row-level-security integration tests on an
 embedded Postgres, browser tests in real Chromium, and live tests against the project's Supabase database (throwaway
 data, cleaned up). It has **not** been run against live Razorpay, Resend, OpenAI or an off-site backup bucket: those
 need your own accounts and keys. Recovery objectives for backups are targets, not demonstrated figures, until a restore

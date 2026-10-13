@@ -13,6 +13,12 @@ export function customerFields(c?: CustomerRow | null): FormField[] {
     { name: "state", label: "State", defaultValue: c?.state },
     { name: "country", label: "Country", defaultValue: c?.country },
     { name: "nationality", label: "Nationality", defaultValue: c?.nationality },
+    {
+      name: "gstin",
+      label: "GSTIN (business customers)",
+      defaultValue: c?.gstin,
+      placeholder: "27AAPFU0939F1ZV",
+    },
     { name: "notes", label: "Notes", type: "textarea", defaultValue: c?.notes },
   ];
 }
