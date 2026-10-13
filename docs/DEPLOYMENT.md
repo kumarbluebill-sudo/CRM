@@ -232,3 +232,10 @@ An accountant should confirm each item; the software does not assume any rate or
 - Follow-ups now has its own page (`/followups`); `/tasks` is unchanged. The Enquiries page lists enquiries added on a lead's Enquiry History tab; none exist until staff add them.
 - Leads keep their own name, mobile and email. Where a lead was linked to a customer, those were copied at migration time and are not kept in sync afterwards.
 - Nationality is saved as a nationality name ("Indian"). Older free-text values are kept and still shown when the record is edited.
+
+## 19. Sidebar and appearance themes (v1.3.0-rc.8)
+
+- Apply migration `040` (additive). No environment variables are needed.
+- With no theme saved anywhere the app looks exactly as before. An administrator can set the agency default under **Settings > Appearance**; anyone can choose their own under **Your profile > Appearance and theme**.
+- The sidebar now has four sections (Main menu, Sales & travel, Operations, Management) followed by Visa, Communications and More. Profile, Appearance and Sign out moved from the header into the sidebar footer (and the mobile drawer).
+- Agency branding colours (Settings > Agency branding) still apply only to PDFs and the customer portal.

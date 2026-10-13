@@ -14,6 +14,7 @@ export function AppShell({
   canSettings,
   headerSlot,
   banner,
+  sidebarCollapsed = false,
 }: {
   children: React.ReactNode;
   user: ShellUser;
@@ -23,6 +24,8 @@ export function AppShell({
   canSettings: boolean;
   headerSlot?: React.ReactNode;
   banner?: React.ReactNode;
+  /** Whether the desktop sidebar starts collapsed (read from a cookie on the server, so there is no flash). */
+  sidebarCollapsed?: boolean;
 }) {
   return (
     <div className="bg-muted/40 flex h-dvh overflow-hidden print:block print:h-auto print:overflow-visible">
@@ -32,10 +35,11 @@ export function AppShell({
       >
         Skip to content
       </a>
-      <Sidebar brand={brand} />
+      <Sidebar brand={brand} user={user} defaultCollapsed={sidebarCollapsed} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header
           user={user}
+          brand={brand}
           organizationName={brand.name || organizationName}
           quickActions={quickActions}
           canSettings={canSettings}

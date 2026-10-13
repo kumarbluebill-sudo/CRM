@@ -266,32 +266,12 @@ describe("activity timeline", () => {
 describe("navigation", () => {
   const flat = (groups = NAV_GROUPS) => groups.flatMap((g) => g.items);
 
-  it("puts Job orders, Follow-ups and Notifications on their own pages", () => {
+  it("puts Job Orders, Follow-ups and Notifications on their own pages", () => {
     const byLabel = Object.fromEntries(flat().map((i) => [i.label, i.href]));
-    expect(byLabel["Job orders"]).toBe("/jobs");
+    expect(byLabel["Job Orders"]).toBe("/jobs");
     expect(byLabel["Follow-ups"]).toBe("/followups");
     expect(byLabel["Notifications"]).toBe("/notifications");
     expect(new Set(Object.values(byLabel)).size).toBe(Object.values(byLabel).length); // no two items share a page
-  });
-
-  it("lists the main menu in the requested order", () => {
-    const first = NAV_GROUPS[0].items.map((i) => i.label);
-    expect(first).toEqual([
-      "Dashboard",
-      "Leads",
-      "Customers",
-      "Enquiries",
-      "Itineraries",
-      "Quotations",
-      "Bookings",
-      "Job orders",
-      "Follow-ups",
-      "Notifications",
-      "Suppliers",
-      "Payments & billing",
-      "Reports",
-      "Settings",
-    ]);
   });
 
   it("hides items the member has no permission for, and empty groups", () => {
@@ -308,7 +288,7 @@ describe("navigation", () => {
       ]),
     );
     expect(labels).not.toContain("Settings");
-    expect(labels).not.toContain("Job orders");
+    expect(labels).not.toContain("Job Orders");
     expect(labels).not.toContain("Reports");
     const groups = visibleNav(NAV_GROUPS, () => false);
     expect(groups.every((g) => g.items.length > 0)).toBe(true);

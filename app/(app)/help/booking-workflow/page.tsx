@@ -65,21 +65,21 @@ export default async function BookingWorkflowPage() {
           </div>
           <div className="flex items-center gap-2">
             <span
-              className="bg-card inline-block size-6 rotate-45 border-2 border-sky-600"
+              className="bg-card border-tone-info inline-block size-6 rotate-45 border-2"
               aria-hidden
             />
             Decision
           </div>
           <div className="flex items-center gap-2">
             <span
-              className="inline-block h-6 w-10 rounded-md border-2 border-dashed border-amber-600 bg-amber-50 dark:bg-amber-950"
+              className="border-tone-warn bg-tone-warn-soft inline-block h-6 w-10 rounded-md border-2 border-dashed"
               aria-hidden
             />
             Exception path
           </div>
           <div className="flex items-center gap-2">
             <span
-              className="inline-block h-6 w-10 rounded-md border-2 border-emerald-600 bg-emerald-50 dark:bg-emerald-950"
+              className="border-tone-ok bg-tone-ok-soft inline-block h-6 w-10 rounded-md border-2"
               aria-hidden
             />
             Start / finish
@@ -97,9 +97,7 @@ export default async function BookingWorkflowPage() {
               <div
                 className={cn(
                   "w-full max-w-xl break-inside-avoid rounded-xl border-2 p-3",
-                  terminal
-                    ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950"
-                    : "bg-card border-border",
+                  terminal ? "border-tone-ok bg-tone-ok-soft" : "bg-card border-border",
                 )}
               >
                 <p className="text-sm font-semibold tracking-wide uppercase">
@@ -122,7 +120,7 @@ export default async function BookingWorkflowPage() {
                   <Arrow />
                   <div className="w-full max-w-3xl break-inside-avoid">
                     <div className="mx-auto flex max-w-sm items-center justify-center">
-                      <div className="relative w-full border-2 border-sky-600 bg-sky-50 px-6 py-5 text-center [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)] max-sm:rounded-xl max-sm:[clip-path:none] dark:bg-sky-950">
+                      <div className="border-tone-info bg-tone-info-soft relative w-full border-2 px-6 py-5 text-center [clip-path:polygon(50%_0,100%_50%,50%_100%,0_50%)] max-sm:rounded-xl max-sm:[clip-path:none]">
                         <p className="text-sm font-semibold">{decision.question}</p>
                       </div>
                     </div>
@@ -220,10 +218,9 @@ function BranchCard({
     <li
       className={cn(
         "break-inside-avoid rounded-xl border-2 p-3 text-sm",
-        branch.kind === "exception" &&
-          "border-dashed border-amber-600 bg-amber-50 dark:bg-amber-950",
-        branch.kind === "loop" && "border-dashed border-sky-600 bg-sky-50/60 dark:bg-sky-950/60",
-        branch.kind === "main" && "bg-card border-emerald-600",
+        branch.kind === "exception" && "border-tone-warn bg-tone-warn-soft border-dashed",
+        branch.kind === "loop" && "border-tone-info bg-tone-info-soft/60 border-dashed",
+        branch.kind === "main" && "bg-card border-tone-ok",
       )}
     >
       <p className="flex items-center gap-1.5 font-semibold">

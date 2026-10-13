@@ -1,12 +1,16 @@
 import { BillingBanner } from "@/components/billing/billing-banner";
 import { AppShell } from "@/components/layout/app-shell";
 import { NavStateProvider } from "@/components/layout/nav-state";
+import { ThemeApplier } from "@/components/theme/theme-applier";
+import { buildThemeCss } from "@/lib/theme/css";
+import { getEffectiveTheme } from "@/lib/theme/server";
 import { followupBadgeCount } from "@/lib/crm/followups";
 import type { QuickAction } from "@/components/layout/header-actions";
 import { PrefsProvider } from "@/components/datetime/local-time";
 import { getDisplayPrefs } from "@/lib/datetime/prefs";
 import { requireOrgSession } from "@/lib/auth/session";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { SIDEBAR_COOKIE } from "@/components/layout/sidebar-cookie";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getOrgBrand } from "@/lib/branding";
@@ -19,6 +23,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const session = await requireOrgSession();
   const brand = await getOrgBrand(session.organization.name);
   const prefs = await getDisplayPrefs();
+  // null (nothing saved, or invalid) = the stylesheet that ships with the app
+  const theme = buildThemeCss(await getEffectiveTheme());
 
   // Agencies can require two-step verification for owners and admins. Until they set it up, only the page that
   // does it (and sign-out) is available; everything else shows a short explanation.
@@ -33,6 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     blockedForMfa =
       Boolean(settings?.require_admin_mfa) && !enrolled && !path.startsWith("/profile/security");
   }
+  const sidebarCollapsed = (await cookies()).get(SIDEBAR_COOKIE)?.value === "1";
   const can = (p: string) => session.permissions.has(p);
   const [unread, latest, followups] = await Promise.all([
     unreadCount().catch(() => 0),
@@ -50,6 +57,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   ].filter((a): a is QuickAction => Boolean(a));
   return (
     <PrefsProvider prefs={prefs}>
+      {theme && (
+        <>
+          <style id="crm-theme" dangerouslySetInnerHTML={{ __html: theme.css }} />
+          <ThemeApplier
+            mode={theme.mode}
+            lightIsDark={theme.lightIsDark}
+            darkIsDark={theme.darkIsDark}
+          />
+        </>
+      )}
       <NavStateProvider
         permissions={[...session.permissions]}
         badges={{ notifications: unread, followups }}
@@ -60,6 +77,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           brand={brand}
           quickActions={quickActions}
           canSettings={can("settings.manage")}
+          sidebarCollapsed={sidebarCollapsed}
           banner={<BillingBanner />}
           headerSlot={<NotificationBell initialUnread={unread} initialItems={latest} />}
         >

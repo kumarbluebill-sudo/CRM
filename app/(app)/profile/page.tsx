@@ -30,9 +30,14 @@ export default async function ProfilePage() {
         {session.email} · {session.role?.replace("_", " ").toLowerCase()} at{" "}
         {session.organization.name}
       </p>
-      <p className="mb-4 text-sm">
+      <p className="mb-2 text-sm">
         <a href="/profile/security" className="text-primary underline">
           Two-step verification and devices
+        </a>
+      </p>
+      <p className="mb-4 text-sm">
+        <a href="/profile/appearance" className="text-primary underline">
+          Appearance and theme
         </a>
       </p>
       <div className="bg-card rounded-xl border p-6">
