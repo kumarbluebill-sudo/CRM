@@ -233,3 +233,11 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - Leads and enquiries use the standard tenant row-level-security policies. The History tabs query each table under the user's own session and are skipped for a member without the matching permission (quotes, bookings, payments, documents, tasks), so a tab never reveals more than that member could already open. The timeline excludes sensitive documents (passports, visas) and failed payments.
 - The sidebar hides items the member lacks permission for. This is convenience only; every page and every database policy still enforce access.
 - The Booking workflow page is static reference text with links shown only where the member has the permission. It contains no customer data and does not change any status.
+
+## Appearance themes and the sidebar (v1.3.0-rc.8)
+
+- A theme is data, never code. The server re-validates it and builds the stylesheet only from `#rrggbb` values and a fixed list of status colours; a value that fails validation is ignored and the shipped look is used. The database also refuses any malformed theme (check constraint), so a forged request cannot store a CSS-injection string.
+- Contrast is enforced on the server as well as in the editor: a theme whose main text, muted text, sidebar text or active-menu text is hard to read cannot be applied.
+- Themes live in the database (agency default in `organization_settings`, personal choice in `profiles`), read under the user's own session, so one agency never sees another's. Only people with `settings.manage` can change the agency default; everyone can change their own.
+- No theme data is kept in browser storage. The only cookie added is `crm.sidebar.collapsed` (`0` or `1`, no personal data) so the server can draw the sidebar at the right width.
+- The preview draws with CSS variables on its own element, so it cannot change the page before Apply.

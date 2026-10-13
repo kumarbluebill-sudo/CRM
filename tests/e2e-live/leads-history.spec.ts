@@ -151,7 +151,7 @@ test("the sidebar has separate pages for job orders, follow-ups and notification
   await page.goto("/dashboard");
   const nav = page.getByRole("navigation", { name: "Main" }).first();
   for (const [name, href] of [
-    ["Job orders", "/jobs"],
+    ["Job Orders", "/jobs"],
     ["Follow-ups", "/followups"],
     ["Notifications", "/notifications"],
   ]) {
