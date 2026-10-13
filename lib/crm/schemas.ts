@@ -25,7 +25,12 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Enter a valid date");
 
 export const leadSchema = z
   .object({
-    title: z.string().trim().min(2, "Enter a title").max(200),
+    title: optional(z.string().trim().min(2, "Enter a title").max(200)),
+    contactName: optional(z.string().trim().min(2, "Enter a name").max(150)),
+    contactPhone: optional(phone),
+    contactEmail: optional(z.string().trim().toLowerCase().email("Enter a valid email").max(254)),
+    nationality: optional(z.string().trim().max(100)),
+    nextFollowUpDate: optional(isoDate),
     customerId: optional(uuid),
     destination: optional(z.string().trim().max(200)),
     departureDate: optional(isoDate),
@@ -49,6 +54,10 @@ export const leadSchema = z
   .refine((v) => !v.departureDate || !v.returnDate || v.returnDate >= v.departureDate, {
     path: ["returnDate"],
     message: "Return date must be on or after departure",
+  })
+  .refine((v) => Boolean(v.title || v.contactName), {
+    path: ["contactName"],
+    message: "Enter the lead's name",
   });
 export type LeadInput = z.infer<typeof leadSchema>;
 
@@ -92,3 +101,28 @@ export function sanitizeSearch(q: string | undefined): string {
     .trim()
     .slice(0, 80);
 }
+
+export const ENQUIRY_STATUSES = ["OPEN", "QUOTED", "WON", "LOST", "CLOSED"] as const;
+export type EnquiryStatus = (typeof ENQUIRY_STATUSES)[number];
+
+export const enquirySchema = z
+  .object({
+    requirements: optional(z.string().trim().max(5000)),
+    destination: optional(z.string().trim().max(200)),
+    departureDate: optional(isoDate),
+    returnDate: optional(isoDate),
+    travellers: optional(z.coerce.number().int().min(1).max(500)),
+    leadSourceId: optional(uuid),
+    assignedUserId: optional(uuid),
+    status: z.enum(ENQUIRY_STATUSES).default("OPEN"),
+    lostReason: optional(z.string().trim().max(500)),
+  })
+  .refine((v) => !v.departureDate || !v.returnDate || v.returnDate >= v.departureDate, {
+    path: ["returnDate"],
+    message: "Return date must be on or after departure",
+  })
+  .refine((v) => v.status !== "LOST" || Boolean(v.lostReason), {
+    path: ["lostReason"],
+    message: "Say why the enquiry was lost",
+  });
+export type EnquiryInput = z.infer<typeof enquirySchema>;

@@ -15,6 +15,7 @@ import {
   updatePassengerAction,
 } from "@/app/(app)/bookings/actions";
 import { passportExpiryWarning } from "@/lib/booking/schema";
+import { nationalityOptions } from "@/lib/geo/nationalities";
 
 type Passenger = {
   id: string;
@@ -49,7 +50,14 @@ const passengerFields = (p?: Passenger): FormField[] => [
     ],
     defaultValue: p?.gender,
   },
-  { name: "nationality", label: "Nationality", defaultValue: p?.nationality },
+  {
+    name: "nationality",
+    label: "Nationality",
+    type: "select",
+    options: nationalityOptions(p?.nationality),
+    defaultValue: p?.nationality,
+    placeholder: "Search nationality…",
+  },
   {
     name: "specialRequirements",
     label: "Special requirements",

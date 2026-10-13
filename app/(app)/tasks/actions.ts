@@ -27,6 +27,7 @@ export async function createTaskAction(_prev: FormState, formData: FormData): Pr
     });
     throwIfDbError(error, "create task");
     revalidatePath("/tasks");
+    revalidatePath("/followups");
     if (v.relatedType === "LEAD") revalidatePath(`/leads/${v.relatedId}`);
     if (v.relatedType === "VISA_APPLICATION") revalidatePath(`/visa/applications/${v.relatedId}`);
     return { ok: true, message: "Task created." };
@@ -48,6 +49,7 @@ export async function setTaskStatusAction(id: string, status: string): Promise<F
       .eq("id", id);
     throwIfDbError(error, "update task");
     revalidatePath("/tasks");
+    revalidatePath("/followups");
     return { ok: true };
   });
 }

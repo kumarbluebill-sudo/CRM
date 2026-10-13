@@ -9,9 +9,28 @@ import type { CustomerRow, LeadRow, Option, TaskRow, TeamMember } from "@/lib/cr
  * query to the caller's organization and permissions. No organization_id is passed.
  */
 
-const LEAD_COLUMNS = "*, customers ( id, name, phone )";
+const LEAD_COLUMNS = "*, customers ( id, name, phone, email )";
 
-export async function listLeads(params: { q?: string; status?: string; page?: number }) {
+export type LeadFilters = {
+  q?: string;
+  status?: string;
+  page?: number;
+  destination?: string;
+  source?: string;
+  assignee?: string;
+  from?: string;
+  to?: string;
+};
+
+/** Search text matches reference, title, destination and the lead's own contact details. */
+function leadSearch(q: string) {
+  return `title.ilike.%${q}%,destination.ilike.%${q}%,reference_number.ilike.%${q}%,contact_name.ilike.%${q}%,contact_phone.ilike.%${q}%,contact_email.ilike.%${q}%`;
+}
+
+const isUuid = (v?: string) => !!v && /^[0-9a-f-]{36}$/i.test(v);
+const isDate = (v?: string) => !!v && /^d{4}-d{2}-d{2}$/.test(v);
+
+export async function listLeads(params: LeadFilters) {
   const supabase = await createClient();
   const page = Math.max(1, params.page ?? 1);
   const q = sanitizeSearch(params.q);
@@ -21,7 +40,13 @@ export async function listLeads(params: { q?: string; status?: string; page?: nu
     .order("created_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   if (params.status) query = query.eq("status", params.status);
-  if (q) query = query.or(`title.ilike.%${q}%,destination.ilike.%${q}%`);
+  if (q) query = query.or(leadSearch(q));
+  const dest = sanitizeSearch(params.destination);
+  if (dest) query = query.ilike("destination", `%${dest}%`);
+  if (isUuid(params.source)) query = query.eq("lead_source_id", params.source!);
+  if (isUuid(params.assignee)) query = query.eq("assigned_user_id", params.assignee!);
+  if (isDate(params.from)) query = query.gte("created_at", `${params.from}T00:00:00+05:30`);
+  if (isDate(params.to)) query = query.lte("created_at", `${params.to}T23:59:59.999+05:30`);
   const { data, count, error } = await query;
   if (error) throw error;
   return { rows: (data ?? []) as LeadRow[], total: count ?? 0, page };
@@ -36,10 +61,48 @@ export async function listBoardLeads(q?: string) {
     .select(LEAD_COLUMNS)
     .order("created_at", { ascending: false })
     .limit(300);
-  if (search) query = query.or(`title.ilike.%${search}%,destination.ilike.%${search}%`);
+  if (search) query = query.or(leadSearch(search));
   const { data, error } = await query;
   if (error) throw error;
   return (data ?? []) as LeadRow[];
+}
+
+export type EnquiryListRow = {
+  id: string;
+  enquiry_number: string;
+  enquiry_date: string;
+  destination: string | null;
+  travellers: number | null;
+  status: string;
+  assigned_user_id: string | null;
+  lead_id: string;
+  leads: {
+    id: string;
+    reference_number: string;
+    title: string;
+    contact_name: string | null;
+    contact_phone: string | null;
+  } | null;
+};
+
+/** Every enquiry across all leads (the Enquiries page). */
+export async function listEnquiries(params: { q?: string; status?: string; page?: number }) {
+  const supabase = await createClient();
+  const page = Math.max(1, params.page ?? 1);
+  const q = sanitizeSearch(params.q);
+  let query = supabase
+    .from("enquiries")
+    .select(
+      "id, enquiry_number, enquiry_date, destination, travellers, status, assigned_user_id, lead_id, leads ( id, reference_number, title, contact_name, contact_phone )",
+      { count: "exact" },
+    )
+    .order("created_at", { ascending: false })
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+  if (params.status) query = query.eq("status", params.status);
+  if (q) query = query.or(`enquiry_number.ilike.%${q}%,destination.ilike.%${q}%`);
+  const { data, count, error } = await query;
+  if (error) throw error;
+  return { rows: (data ?? []) as unknown as EnquiryListRow[], total: count ?? 0, page };
 }
 
 export async function getLead(id: string) {

@@ -224,3 +224,11 @@ An accountant should confirm each item; the software does not assume any rate or
 - After applying it, open **Settings > Invoicing and GST** and check every tax code has a SAC. Codes verified earlier without one must be edited (add the SAC) and verified again, otherwise issuing is refused with a clear message.
 - Invoice numbers are limited to 16 characters (prefix up to 5, plus `/26-27/` and the counter). If an agency expects more than 9,999 invoices in a year, use a prefix of 4 or fewer characters.
 - Issue dates and financial years follow Indian time regardless of the agency's display time zone.
+
+## 18. Lead references, enquiries and navigation (v1.3.0-rc.7)
+
+- Apply migration `039` (additive). Existing leads are numbered once, oldest first per agency; nothing is deleted or rewritten except the new columns.
+- No new environment variables.
+- Follow-ups now has its own page (`/followups`); `/tasks` is unchanged. The Enquiries page lists enquiries added on a lead's Enquiry History tab; none exist until staff add them.
+- Leads keep their own name, mobile and email. Where a lead was linked to a customer, those were copied at migration time and are not kept in sync afterwards.
+- Nationality is saved as a nationality name ("Indian"). Older free-text values are kept and still shown when the record is edited.

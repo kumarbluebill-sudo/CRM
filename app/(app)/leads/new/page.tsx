@@ -27,7 +27,10 @@ export default async function NewLeadPage({
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-5">
-      <PageHeader title="New lead" />
+      <PageHeader
+        title="New lead"
+        description="A permanent reference number (LD-year-number) is assigned automatically when you save."
+      />
       <div className="bg-card rounded-xl border p-5">
         <EntityForm
           action={createLeadAction}
