@@ -217,3 +217,10 @@ An accountant should confirm each item; the software does not assume any rate or
 - Apply migration `037`. It adds `organization_tax_profile.invoice_layout` (classic, modern, compact or detailed; default classic, so nothing changes until an agency chooses). The tax calculation, numbering and immutability of issued invoices are untouched: a layout is presentation only, and unit tests assert every layout prints the same figures.
 - Layouts live in `lib/pdf/gst-pdf.tsx` and the list in `lib/invoicing/layouts.ts`. To add one, add its key to the list, to the database check constraint (new migration) and to the style switches in the PDF component, then extend `tests/unit/invoice-layouts.test.ts`.
 - The sign-in, register and password pages now show a travel illustration beside the form from the `lg` breakpoint up (`public/login-art/travel-hero.svg`, a plain SVG, no external image). Phones and tablets show the form only. Do not put files under `public/auth/`: `/auth/callback` is a route.
+
+## 17. GST invoice compliance (v1.3.0-rc.6)
+
+- Apply migration `038`. It is additive; no issued invoice is changed.
+- After applying it, open **Settings > Invoicing and GST** and check every tax code has a SAC. Codes verified earlier without one must be edited (add the SAC) and verified again, otherwise issuing is refused with a clear message.
+- Invoice numbers are limited to 16 characters (prefix up to 5, plus `/26-27/` and the counter). If an agency expects more than 9,999 invoices in a year, use a prefix of 4 or fewer characters.
+- Issue dates and financial years follow Indian time regardless of the agency's display time zone.

@@ -7,6 +7,7 @@ import {
   TASK_STATUSES,
   TRIP_TYPES,
 } from "@/lib/crm/constants";
+import { gstinValid } from "@/lib/gst/gstin";
 
 /** HTML forms submit "" for empty inputs; treat that as "not provided". */
 const blank = (v: unknown) => (typeof v === "string" && v.trim() === "" ? undefined : v);
@@ -62,6 +63,10 @@ export const customerSchema = z.object({
   state: optional(z.string().trim().max(100)),
   country: optional(z.string().trim().max(100)),
   nationality: optional(z.string().trim().max(100)),
+  gstin: z.preprocess(
+    (v) => blank(typeof v === "string" ? v.trim().toUpperCase() : v),
+    z.string().refine(gstinValid, "That GSTIN isn't valid. Check every character.").optional(),
+  ),
   notes: optional(z.string().trim().max(5000)),
 });
 export type CustomerInput = z.infer<typeof customerSchema>;

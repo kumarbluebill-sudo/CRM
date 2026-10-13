@@ -97,6 +97,14 @@ export function InvoiceEditor({
   );
   const [error, setError] = useState<string | null>(null);
   const set = (patch: Partial<EditorInvoice>) => setHead((h) => ({ ...h, ...patch }));
+  // warnings only: nothing here blocks saving or issuing
+  const gstinNote = !registered
+    ? null
+    : !head.customerGstin
+      ? "No customer GSTIN: this will be issued as a tax invoice to an unregistered customer. If the customer is a GST-registered business, add their GSTIN so they can claim input tax credit."
+      : head.placeOfSupply && head.customerGstin.slice(0, 2) !== head.placeOfSupply
+        ? `The customer's GSTIN starts with state code ${head.customerGstin.slice(0, 2)}, but the place of supply is ${head.placeOfSupply}. That is allowed, but check both are right.`
+        : null;
   const setLine = (key: string, patch: Partial<Line>) =>
     setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
 
@@ -229,6 +237,14 @@ export function InvoiceEditor({
           />
           Prices on the lines already include tax
         </label>
+        {gstinNote ? (
+          <p
+            role="note"
+            className="border-tone-warn/30 bg-tone-warn-soft text-tone-warn rounded-lg border p-3 text-sm sm:col-span-2"
+          >
+            {gstinNote}
+          </p>
+        ) : null}
       </div>
 
       <section aria-label="Invoice lines" className="flex flex-col gap-2">

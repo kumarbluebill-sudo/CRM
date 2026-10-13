@@ -189,3 +189,7 @@ Functions for signed-in managers: `save_backup_settings`, `request_restore_plan`
 ## Migration 037: invoice layouts
 
 `organization_tax_profile.invoice_layout` (check: classic, modern, compact, detailed; default classic). `save_tax_profile` was redefined to read `invoiceLayout` (missing or empty means classic); grants are unchanged.
+
+## Migration 038: GST invoice compliance
+
+`customers.gstin` (nullable; check uses `gstin_valid`). `india_today(timestamptz default now())` and `gst_fy_start(date)` give the Indian date and the April-March financial year. `verify_tax_code` now refuses a code with no SAC (`P0052`). `issue_gst_invoice` also refuses a line whose code has no SAC, stamps `issue_date` with the Indian date, and records each line's tax `treatment` in the frozen `lines` JSON. `next_doc_number` uses the Indian financial year, writes counters of 10000 and above in full (the old `lpad` cut 10000 to "1000") and refuses a number longer than 16 characters (`P0053`, the whole statement rolls back so no number is burnt). `credit_notes.issue_date` now defaults to the Indian date. Issued invoices are not rewritten. Verified tax codes that have no SAC stay verified in the table but can no longer be used; edit the code, add the SAC and verify it again.

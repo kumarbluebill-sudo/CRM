@@ -56,6 +56,17 @@ export function throwInvoicingError(error: DbError, context: string) {
         "That's more than was invoiced, or there's nothing left to credit.",
         "OVER_CREDIT",
       );
+    case "P0052":
+      return fail(
+        "A tax code is missing its SAC code. Add the SAC under Invoicing settings, then verify it again.",
+        "NO_SAC",
+        400,
+      );
+    case "P0053":
+      return fail(
+        "The next document number would be longer than 16 characters. Use a shorter invoice prefix in Invoicing settings.",
+        "NUMBER_TOO_LONG",
+      );
     case "22023":
       return fail("Some values are invalid. Please check the form.", "INVALID_VALUE", 400);
     case "23505":
