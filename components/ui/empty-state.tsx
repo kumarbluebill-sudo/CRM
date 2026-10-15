@@ -4,10 +4,13 @@ export function EmptyState({
   icon: Icon,
   title,
   description,
+  action,
 }: {
   icon: LucideIcon;
   title: string;
   description?: string;
+  /** Optional call to action, e.g. a New lead link or Clear filters. */
+  action?: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-6 py-10 text-center">
@@ -16,6 +19,7 @@ export function EmptyState({
       </span>
       <p className="text-sm font-medium">{title}</p>
       {description && <p className="text-muted-foreground max-w-xs text-sm">{description}</p>}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }
