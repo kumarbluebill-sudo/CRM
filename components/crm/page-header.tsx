@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function PageHeader({
   title,
   description,
@@ -19,9 +21,9 @@ export function PageHeader({
               <span key={b.label}>
                 {i > 0 && <span aria-hidden> / </span>}
                 {b.href ? (
-                  <a href={b.href} className="hover:text-foreground hover:underline">
+                  <Link href={b.href} className="hover:text-foreground hover:underline">
                     {b.label}
-                  </a>
+                  </Link>
                 ) : (
                   <span aria-current="page">{b.label}</span>
                 )}

@@ -1,4 +1,5 @@
 import { Header } from "@/components/layout/header";
+import { NavProgress } from "@/components/layout/nav-progress";
 import { Sidebar } from "@/components/layout/sidebar";
 import type { QuickAction } from "@/components/layout/header-actions";
 import type { OrgBrand } from "@/lib/branding";
@@ -35,6 +36,7 @@ export function AppShell({
       >
         Skip to content
       </a>
+      <NavProgress />
       <Sidebar brand={brand} user={user} defaultCollapsed={sidebarCollapsed} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Header
@@ -48,7 +50,7 @@ export function AppShell({
         {banner}
         <main
           id="main"
-          className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 print:overflow-visible print:p-0"
+          className="flex-1 overflow-y-auto [scrollbar-gutter:stable] p-3 sm:p-5 lg:p-6 print:overflow-visible print:p-0"
         >
           {children}
         </main>
