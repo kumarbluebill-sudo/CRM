@@ -199,7 +199,7 @@ export default async function JobsPage({
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[640px] text-sm">
                 <caption className="sr-only">
                   Open, overdue and completed jobs per staff member
                 </caption>

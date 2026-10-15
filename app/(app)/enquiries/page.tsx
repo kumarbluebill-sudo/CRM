@@ -83,7 +83,7 @@ export default async function EnquiriesPage({
         <>
           <Card>
             <CardContent className="overflow-x-auto p-0">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[640px] text-sm">
                 <thead className="text-muted-foreground border-b text-left text-xs uppercase">
                   <tr>
                     <th className="px-3 py-3">Enquiry</th>
