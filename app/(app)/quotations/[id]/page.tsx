@@ -56,6 +56,24 @@ export default async function QuotationPage({ params }: { params: Promise<{ id: 
             >
               <Download className="size-4" aria-hidden /> PDF
             </Button>
+            {doc.itineraryId &&
+              session.permissions.has("itinerary_pdf.generate") &&
+              session.permissions.has("itineraries.view") && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  nativeButton={false}
+                  render={
+                    <a
+                      href={`/api/itineraries/${String(doc.itineraryId)}/itinerary-pdf?quotation=${id}${doc.selectedOptionId ? `&option=${String(doc.selectedOptionId)}` : ""}`}
+                      target="_blank"
+                      rel="noopener"
+                    />
+                  }
+                >
+                  <Download className="size-4" aria-hidden /> Itinerary PDF
+                </Button>
+              )}
             {status === "APPROVED" && session.permissions.has("bookings.create") && (
               <ConvertToBookingButton quotationId={id} />
             )}

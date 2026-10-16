@@ -239,3 +239,10 @@ An accountant should confirm each item; the software does not assume any rate or
 - With no theme saved anywhere the app looks exactly as before. An administrator can set the agency default under **Settings > Appearance**; anyone can choose their own under **Your profile > Appearance and theme**.
 - The sidebar now has four sections (Main menu, Sales & travel, Operations, Management) followed by Visa, Communications and More. Profile, Appearance and Sign out moved from the header into the sidebar footer (and the mobile drawer).
 - Agency branding colours (Settings > Agency branding) still apply only to PDFs and the customer portal.
+
+## 20. Itinerary PDF Studio (v1.3.0-rc.10)
+
+- Apply migration `041` (additive). No environment variables are needed. It uses the same PDF library, storage bucket and branding as the other documents.
+- Staff who can see quotations get the new permission automatically. For custom roles, tick **Itinerary PDF > Generate** in **Settings > Roles**.
+- Open an itinerary, then **Package studio > 5. Itinerary PDF** (or the **Itinerary PDF** button on the itinerary page). A **Itinerary PDF** download button also appears on a quotation that is linked to an itinerary.
+- The built-in PDF fonts have no rupee sign, so amounts print as `INR 42,500`. A trip longer than nine days adds more day pages and goes past seven pages.
