@@ -5,6 +5,7 @@ import { Download, Printer } from "lucide-react";
 import { PageHeader } from "@/components/crm/page-header";
 import { StatusBadge } from "@/components/crm/status-badge";
 import { EntityForm } from "@/components/forms/entity-form";
+import { PdfStudio } from "@/components/itinerary-pdf/studio";
 import { ImageManager } from "@/components/packages/image-manager";
 import { PackagePreview } from "@/components/packages/package-preview";
 import { PackageStatusButtons } from "@/components/packages/status-buttons";
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireOrgSession } from "@/lib/auth/session";
 import { uuid } from "@/lib/crm/schemas";
+import { loadStudioData } from "@/lib/itinerary-pdf/load";
 import { buildPackageDocument } from "@/lib/packages/document";
 import { getPackageBundle, listPackageImages } from "@/lib/packages/queries";
 import { templateByKey } from "@/lib/packages/templates";
@@ -20,13 +22,14 @@ import { savePackageDetailsAction } from "@/app/(app)/itineraries/[id]/package/a
 
 export const metadata: Metadata = { title: "Package studio" };
 
-const TABS = ["template", "details", "photos", "preview"] as const;
+const TABS = ["template", "details", "photos", "preview", "pdf"] as const;
 type Tab = (typeof TABS)[number];
 const LABEL: Record<Tab, string> = {
   template: "1. Template",
   details: "2. Details and pricing",
   photos: "3. Photos",
   preview: "4. Preview and PDF",
+  pdf: "5. Itinerary PDF",
 };
 
 const HOTELS = [
@@ -52,14 +55,17 @@ export default async function PackageStudioPage({
   const bundle = await getPackageBundle(id); // null for missing or other-organization ids (RLS)
   if (!bundle) notFound();
   const tabParam = (await searchParams).tab;
-  const tab: Tab = TABS.find((t) => t === tabParam) ?? "template";
   const can = (p: string) => session.permissions.has(p);
+  const canPdf = can("itinerary_pdf.generate");
+  const tabs = TABS.filter((t) => t !== "pdf" || canPdf);
+  const tab: Tab = tabs.find((t) => t === tabParam) ?? "template";
   const canEdit = can("itineraries.update");
   const d = bundle.details;
   const tpl = templateByKey(bundle.templateKey);
   const doc = buildPackageDocument(bundle, session.organization.name);
   const base = `/itineraries/${id}/package`;
   const library = tab === "photos" ? await listPackageImages() : [];
+  const studioData = tab === "pdf" ? await loadStudioData(id, session.organization.name) : null;
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-5">
@@ -83,7 +89,7 @@ export default async function PackageStudioPage({
       />
 
       <nav aria-label="Package steps" className="flex flex-wrap gap-1 border-b">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <Link
             key={t}
             href={`${base}?tab=${t}`}
@@ -94,6 +100,24 @@ export default async function PackageStudioPage({
           </Link>
         ))}
       </nav>
+
+      {tab === "pdf" && studioData && (
+        <section aria-label="Itinerary PDF Studio" className="flex flex-col gap-3">
+          <p className="text-muted-foreground text-sm">
+            A customer-ready A4 itinerary: cover, overview, day plan, quotation and policies. Items and price lines are read
+            live, so edits to the itinerary or quotation show here straight away. Cost price and markup are never printed.
+          </p>
+          <PdfStudio
+            id={id}
+            source={studioData.source}
+            initial={studioData.settings}
+            quotations={studioData.quotationChoices}
+            images={studioData.imageChoices}
+            canEdit={canEdit}
+            canStore={can("documents.upload")}
+          />
+        </section>
+      )}
 
       {tab === "template" && (
         <section aria-label="Choose a template" className="flex flex-col gap-3">

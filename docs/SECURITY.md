@@ -241,3 +241,10 @@ cookie/passport/signature/card. `lib/utils/errors.ts` returns only user-safe mes
 - Themes live in the database (agency default in `organization_settings`, personal choice in `profiles`), read under the user's own session, so one agency never sees another's. Only people with `settings.manage` can change the agency default; everyone can change their own.
 - No theme data is kept in browser storage. The only cookie added is `crm.sidebar.collapsed` (`0` or `1`, no personal data) so the server can draw the sidebar at the right width.
 - The preview draws with CSS variables on its own element, so it cannot change the page before Apply.
+
+## Itinerary PDF Studio (v1.3.0-rc.10)
+
+- The customer PDF is built from selling data only. The quotation is always loaded with `quotation_document(id, false)`, so cost and markup are not even fetched, and `toSourceQuotation` copies fields one by one so an extra property in the raw data cannot reach the page model. Unit tests inject a cost, a markup and a profit figure and assert none of them appears in the model or in the extracted PDF text.
+- Generating needs `itinerary_pdf.generate` and `itineraries.view`; storing a copy also needs `documents.upload`. Every query runs under the person's own session, so row-level security keeps agencies apart; another agency's itinerary returns 404.
+- Stored PDFs go to the private documents bucket under the agency's own folder. The WhatsApp link is a signed link that expires after 7 days; the agency chooses whether to send it. Anyone holding the link can open that one file until it expires.
+- Bank details come from a definer function that returns only the caller's own agency and only to holders of the permission.
