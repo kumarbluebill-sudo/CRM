@@ -40,6 +40,16 @@ export default async function ItineraryBuilderPage({
             >
               Package studio
             </Button>
+            {session.permissions.has("itinerary_pdf.generate") && (
+              <Button
+                variant="outline"
+                size="sm"
+                nativeButton={false}
+                render={<Link href={`/itineraries/${id}/package?tab=pdf`} />}
+              >
+                Itinerary PDF
+              </Button>
+            )}
             <ItineraryActions
               id={id}
               canCreate={session.permissions.has("itineraries.create")}

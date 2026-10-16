@@ -75,6 +75,7 @@ export const PERMISSIONS = [
   "jobs.create",
   "jobs.assign",
   "jobs.manage",
+  "itinerary_pdf.generate",
   "users.manage",
   "settings.manage",
 ] as const;

@@ -21,6 +21,7 @@ const GROUP_LABEL: Record<string, string> = {
   backup: "Backups and restore",
   invoicing: "Invoices and GST",
   jobs: "Job orders",
+  itinerary_pdf: "Itinerary PDF",
   users: "Staff and roles",
   settings: "System settings",
 };
